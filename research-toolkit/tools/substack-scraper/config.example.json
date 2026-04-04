@@ -1,0 +1,8 @@
+{
+  "substack_url": "https://example.substack.com",
+  "rate_limit_seconds": 2.5,
+  "output_dir": "data/articles",
+  "auth_state_path": "auth/browser_state.json",
+  "progress_file": "progress.json",
+  "max_articles": null
+}

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "financial-mcp": {
+      "command": "financial-mcp"
+    },
+    "portfolio-mcp": {
+      "command": "portfolio-mcp",
+      "env": {
+        "PORTFOLIO_DATA_DIR": "${HOME}/.claude/local/portfolio"
+      }
+    },
+    "transparency-mcp": {
+      "command": "transparency-mcp"
+    }
+  }
+}

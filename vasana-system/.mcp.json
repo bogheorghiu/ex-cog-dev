@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "relational-memory": {
+      "command": "python3",
+      "args": ["-m", "claude_relational_memory"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/mcp-servers/relational-memory/src"
+      }
+    },
+    "edge-graph": {
+      "command": "python3",
+      "args": ["-m", "edge_graph"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/mcp-servers/edge-graph/src"
+      }
+    }
+  }
+}

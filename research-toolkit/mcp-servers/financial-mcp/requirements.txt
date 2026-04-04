@@ -1,0 +1,5 @@
+yfinance>=0.2.18
+mcp>=1.0.0
+
+# Development/Testing
+pytest>=7.0.0

@@ -1,0 +1,19 @@
+{
+  "name": "ex-cog-dev",
+  "owner": {
+    "name": "bogheorghiu",
+    "url": "https://github.com/bogheorghiu"
+  },
+  "plugins": [
+    {
+      "name": "research-toolkit",
+      "description": "Self-reflexive dialectical investigation protocols, frame rotation, iterative verification, STONK agent",
+      "source": "./research-toolkit"
+    },
+    {
+      "name": "vasana-system",
+      "description": "Pattern recognition across unrelated contexts - observe, record, test, browse behavioral patterns",
+      "source": "./vasana-system"
+    }
+  ]
+}
