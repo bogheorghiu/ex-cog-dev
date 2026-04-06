@@ -195,6 +195,10 @@ After reaching any conclusion in the verification loop, steel-man the strongest 
 
 This is not about fairness — it is about testing whether the conclusion survives its best counter-argument. If you cannot articulate the contrarian case with genuine force, your verification is incomplete.
 
+### Verdict-Tier Check
+
+Completion requires: verdict tier matches evidence tier. "No mainstream confirmation" = UNVERIFIED, not FALSE. Escalate to DISCONFIRMED only with specific counter-evidence.
+
 ## Self-Check Questions
 
 Before claiming completion, ask:

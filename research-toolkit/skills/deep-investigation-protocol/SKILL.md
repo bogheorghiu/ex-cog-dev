@@ -293,6 +293,10 @@ Prefer: "X does [specific thing] [evidence tier]. For use cases involving [A], t
 
 ---
 
+### Pre-Verdict Gate
+
+Before assigning verdict: CONFIRMED requires independent corroboration. DISCONFIRMED requires specific counter-evidence. Everything else is UNVERIFIED. Source-origin discounts credibility but does not falsify.
+
 ## Output Structure (MANDATORY)
 
 Every investigation produces THREE categories of output:
