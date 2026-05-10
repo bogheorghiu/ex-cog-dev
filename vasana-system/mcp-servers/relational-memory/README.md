@@ -36,18 +36,40 @@ Permanent principles and project learnings (always loaded)
 
 ## Installation
 
-```bash
-# Install the package
-pip install -e .
+**Option A: uvx (recommended — no install, isolated venv)**
 
-# Configure in Claude Code
-# Add to your .mcp.json:
+Add to `.mcp.json`:
+
+```json
 {
   "mcpServers": {
     "relational-memory": {
-      "command": "python",
-      "args": ["-m", "claude_relational_memory"],
-      "type": "stdio"
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=vasana-system/mcp-servers/relational-memory",
+        "relational-memory"
+      ]
+    }
+  }
+}
+```
+
+Requires `uv` installed once per machine (`curl -LsSf https://astral.sh/uv/install.sh | sh` on Linux/macOS, `winget install astral-sh.uv` on Windows). First run is slow (~10–60s while uvx clones and builds the venv); subsequent calls are fast.
+
+**Option B: pip install (local clone)**
+
+```bash
+pip install -e .
+```
+
+Add to `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "relational-memory": {
+      "command": "relational-memory"
     }
   }
 }

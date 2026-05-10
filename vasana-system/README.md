@@ -105,8 +105,33 @@ If upgrading from v1.x (standalone skills), update these paths:
 
 **MCP servers (.mcp.json):**
 ```
-# Old PYTHONPATH: .../research-toolkit/mcp-servers/relational-memory/src
-# New PYTHONPATH: .../vasana-system/mcp-servers/relational-memory/src
+# v1 (old): python3 -m + PYTHONPATH pointing at research-toolkit
+# v2 (old): python3 -m + PYTHONPATH pointing at vasana-system
+# v3 (current): uvx --from git+... (no PYTHONPATH, isolated venv, cross-OS)
+```
+
+Example current config (vasana-system plugin `.mcp.json`):
+```json
+{
+  "mcpServers": {
+    "relational-memory": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=vasana-system/mcp-servers/relational-memory",
+        "relational-memory"
+      ]
+    },
+    "edge-graph": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=vasana-system/mcp-servers/edge-graph",
+        "edge-graph"
+      ]
+    }
+  }
+}
 ```
 
 **Skill references:**
