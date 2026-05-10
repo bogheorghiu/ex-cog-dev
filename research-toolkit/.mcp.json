@@ -1,16 +1,31 @@
 {
   "mcpServers": {
     "financial-mcp": {
-      "command": "financial-mcp"
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=research-toolkit/mcp-servers/financial-mcp",
+        "financial-mcp"
+      ]
     },
     "portfolio-mcp": {
-      "command": "portfolio-mcp",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=research-toolkit/mcp-servers/portfolio-mcp",
+        "portfolio-mcp"
+      ],
       "env": {
         "PORTFOLIO_DATA_DIR": "${HOME}/.claude/local/portfolio"
       }
     },
     "transparency-mcp": {
-      "command": "transparency-mcp"
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=research-toolkit/mcp-servers/transparency-mcp",
+        "transparency-mcp"
+      ]
     }
   }
 }

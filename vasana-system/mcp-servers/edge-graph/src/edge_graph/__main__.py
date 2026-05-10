@@ -3,5 +3,10 @@
 import asyncio
 from .server import serve
 
-if __name__ == "__main__":
+
+def main() -> None:
     asyncio.run(serve())
+
+
+if __name__ == "__main__":
+    main()
