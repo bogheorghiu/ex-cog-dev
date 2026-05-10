@@ -16,22 +16,35 @@ Edge-defined graph system where patterns emerge from traversal weight, not node 
 
 ## Installation
 
-```bash
-cd edge-graph-mcp
-pip install -e .
-```
-
-## Configuration
+**Option A: uvx (recommended — no install, isolated venv)**
 
 Add to `.mcp.json`:
 
 ```json
 "edge-graph": {
-    "command": "python3",
-    "args": ["-m", "edge_graph"],
-    "env": {
-      "PYTHONPATH": "/path/to/edge-graph-mcp/src"
-    }
+    "command": "uvx",
+    "args": [
+        "--from",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=vasana-system/mcp-servers/edge-graph",
+        "edge-graph"
+    ]
+}
+```
+
+Requires `uv` installed once per machine (`curl -LsSf https://astral.sh/uv/install.sh | sh` on Linux/macOS, `winget install astral-sh.uv` on Windows). First run is slow (~10–60s while uvx clones and builds the venv); subsequent calls are fast.
+
+**Option B: pip install (local clone)**
+
+```bash
+cd edge-graph-mcp
+pip install -e .
+```
+
+Add to `.mcp.json`:
+
+```json
+"edge-graph": {
+    "command": "edge-graph"
 }
 ```
 
