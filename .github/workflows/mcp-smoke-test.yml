@@ -34,6 +34,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Smoke test all five MCPs
         run: |
@@ -47,9 +49,9 @@ jobs:
             local name="$1" path="$2" cmd="$3"
             echo ""
             echo "::group::$name"
-            local logfile
+            local logfile rc=0
             logfile=$(mktemp)
-            echo "$INIT" | timeout 120 uvx --from "$path" "$cmd" >"$logfile" 2>&1 || true
+            echo "$INIT" | timeout 120 uvx --from "$path" "$cmd" >"$logfile" 2>&1 || rc=$?
             if grep -q '"jsonrpc"' "$logfile"; then
               local info
               info=$(grep -o '"serverInfo":[^}]*}' "$logfile" | head -1)
@@ -59,9 +61,9 @@ jobs:
               rm -f "$logfile"
               return 0
             fi
-            echo "FAIL — no JSON-RPC response"
+            echo "FAIL — no JSON-RPC response (uvx exit code: $rc)"
             tail -50 "$logfile" | sed 's/^/  /'
-            results+=("| $name | ❌ FAIL |")
+            results+=("| $name | ❌ FAIL (rc=$rc) |")
             failures+=1
             echo "::endgroup::"
             rm -f "$logfile"
