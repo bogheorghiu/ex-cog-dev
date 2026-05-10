@@ -22,15 +22,18 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Note: env vars that depend on runner context (runner.temp etc.) must be
+    # set on the step, not the job — job-level env is evaluated before the
+    # runner is provisioned. Static /tmp/* paths are fine on ephemeral runners.
     env:
-      EDGE_GRAPH_PATH: ${{ runner.temp }}/edge-graph-ci
-      PORTFOLIO_DATA_DIR: ${{ runner.temp }}/portfolio-ci
-      CLAUDE_MEMORY_PATH: ${{ runner.temp }}/claude-memory-ci
+      EDGE_GRAPH_PATH: /tmp/edge-graph-ci
+      PORTFOLIO_DATA_DIR: /tmp/portfolio-ci
+      CLAUDE_MEMORY_PATH: /tmp/claude-memory-ci
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v8
+      - uses: astral-sh/setup-uv@v7
 
       - name: Smoke test all five MCPs
         run: |
