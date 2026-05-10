@@ -30,10 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - uses: astral-sh/setup-uv@v8
 
       - name: Smoke test all five MCPs
         run: |
@@ -47,30 +44,32 @@ jobs:
             local name="$1" path="$2" cmd="$3"
             echo ""
             echo "::group::$name"
-            local out
-            out=$(echo "$INIT" | timeout 120 uvx --from "$path" "$cmd" 2>&1 | tail -25)
-            if echo "$out" | grep -q '"jsonrpc"'; then
+            local logfile
+            logfile=$(mktemp)
+            echo "$INIT" | timeout 120 uvx --from "$path" "$cmd" >"$logfile" 2>&1 || true
+            if grep -q '"jsonrpc"' "$logfile"; then
               local info
-              info=$(echo "$out" | grep -o '"serverInfo":[^}]*}' | head -1)
+              info=$(grep -o '"serverInfo":[^}]*}' "$logfile" | head -1)
               echo "PASS — $info"
               results+=("| $name | ✅ PASS |")
               echo "::endgroup::"
+              rm -f "$logfile"
               return 0
-            else
-              echo "FAIL — no JSON-RPC response"
-              echo "$out" | sed 's/^/  /'
-              results+=("| $name | ❌ FAIL |")
-              failures+=1
-              echo "::endgroup::"
-              return 1
             fi
+            echo "FAIL — no JSON-RPC response"
+            tail -50 "$logfile" | sed 's/^/  /'
+            results+=("| $name | ❌ FAIL |")
+            failures+=1
+            echo "::endgroup::"
+            rm -f "$logfile"
+            return 1
           }
 
-          probe relational-memory vasana-system/mcp-servers/relational-memory  relational-memory || true
-          probe edge-graph        vasana-system/mcp-servers/edge-graph         edge-graph        || true
-          probe financial-mcp     research-toolkit/mcp-servers/financial-mcp   financial-mcp     || true
-          probe portfolio-mcp     research-toolkit/mcp-servers/portfolio-mcp   portfolio-mcp     || true
-          probe transparency-mcp  research-toolkit/mcp-servers/transparency-mcp transparency-mcp || true
+          probe relational-memory vasana-system/mcp-servers/relational-memory   relational-memory
+          probe edge-graph        vasana-system/mcp-servers/edge-graph          edge-graph
+          probe financial-mcp     research-toolkit/mcp-servers/financial-mcp    financial-mcp
+          probe portfolio-mcp     research-toolkit/mcp-servers/portfolio-mcp    portfolio-mcp
+          probe transparency-mcp  research-toolkit/mcp-servers/transparency-mcp transparency-mcp
 
           {
             echo "## MCP smoke test"

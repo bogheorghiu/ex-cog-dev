@@ -22,11 +22,10 @@ The intended flow is:
 3. **Once smoke test passes on `main`,** fast-forward `release` to that commit:
    ```bash
    git fetch origin
-   git push origin origin/main:release
-   ```
-   First time only (creates the branch):
-   ```bash
+   # First time only (creates the branch):
    git push origin origin/main:refs/heads/release
+   # Subsequent updates (fast-forward):
+   git push origin origin/main:release
    ```
 4. **Consumers** pick up the new code on next uvx cache refresh (~24h) or when they run `uvx --refresh`.
 
