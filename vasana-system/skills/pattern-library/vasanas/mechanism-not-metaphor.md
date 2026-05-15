@@ -22,9 +22,9 @@ Modify freely. Keep this section intact.
 
 Scanning across domains for analogous problems is genuinely powerful — see [[cross-domain-scanning]]. The same move has a failure mode: a pattern from domain A "looks like" something in domain B (similar vocabulary, similar shape, similar feel), so it gets applied without checking whether the underlying mechanics actually carry over. The analogy does the reasoning instead of you doing the reasoning.
 
-This is concept-matching dressed as cross-domain insight.
+This is shape-matching dressed as cross-domain insight.
 
-The choreography that catches it: one party names the over-extension precisely — *"you're moving from domain A to domain B because the words match, but does the mechanism actually run there?"* The other party re-examines: *what specific mechanism am I claiming transfers?* If the only available answer is the description ("integration", "separation", "flow", "alignment"), it was concept-matching. If a structural feature can be named that operates the same way in both domains, the transfer might be real.
+The choreography that catches it: one party names the over-extension precisely — *"you're moving from domain A to domain B because the words match, but does the mechanism actually run there?"* The other party re-examines: *what specific mechanism am I claiming transfers?* If the only available answer is the description ("integration", "separation", "flow", "alignment"), it was shape-matching. If a structural feature can be named that operates the same way in both domains, the transfer might be real.
 
 ## Recursive Warning
 
@@ -52,7 +52,7 @@ The recovery sounds like:
 
 ## Anti-Patterns to Watch For
 
-❌ **Surface-Similarity Substitution (concept-match dressed as insight)**
+❌ **Surface-Similarity Substitution (shape-match dressed as insight)**
 > Cowork's project prompt observes: "QOL and investment work aren't separate — they're the same project viewed from inside rather than above." A reader notes: B.L.A.S.T. partitions `/architecture/` and `/execution/` directories. Applies the Cowork insight: "you should integrate, not partition." Result: the move treats *life-as-experiential-unity* (the actual claim) as equivalent to *code-as-undifferentiated-files* (a different claim about a different mechanism). The word "separation" carried the weight; nothing else did.
 
 ✅ **Mechanism Check Before Application**
@@ -85,7 +85,7 @@ This vasana lives in the dance, not in either party. Most often:
 1. **Party A** (often AI, doing the cross-domain scan) makes the analogy move at the surface level
 2. **Party B** (often human, with closer domain knowledge) notices the move was too easy
 3. **Party B** names the suspicion *precisely* — not "I disagree" but "what mechanism are you claiming transfers?"
-4. **Party A** re-examines and either (a) refines the analogy by naming the actual mechanism, or (b) retracts the move and acknowledges concept-match
+4. **Party A** re-examines and either (a) refines the analogy by naming the actual mechanism, or (b) retracts the move and acknowledges the shape-match
 5. Both parties arrive at sharper understanding than either had — including, often, recognition that the catch *itself* is a recurring pattern worth naming
 
 The vasana isn't *"don't make analogies."* It's *"make the catch part of the dance, not an interruption of it."*
@@ -93,10 +93,10 @@ The vasana isn't *"don't make analogies."* It's *"make the catch part of the dan
 ## Integration with Other Vasanas
 
 - **[[cross-domain-scanning]]** — the move this one tempers. Together they form a fuller pattern: scan widely, verify mechanically. Neither alone is the practice.
-- **[[concrete-abstract-dance]]** — same concern at a different angle. Abstract patterns must be grounded in concrete instances; floating abstractions are concept-matches waiting to happen.
+- **[[concrete-abstract-dance]]** — same concern at a different angle. Abstract patterns must be grounded in concrete instances; floating abstractions are shape-matches waiting to happen.
 - **[[pattern-recognition-witness]]** — observing one's own pattern-recognition is exactly the meta-move that catches this trap.
 - **[[framework-dissolution]]** — when the vasana frame itself starts constraining rather than enabling, dissolve it for the immediate question. Frameworks are tools, not identities. Same for vasanas.
 
 ## Origin
 
-Discovered 2026-05-15 during a prompt-design conversation. AI applied an insight from a life-strategy prompt ("QOL and investment as same project") to a code-organization question (`/architecture/` vs `/execution/` partition) on the basis of the shared word "separation." Human caught the move with: *"this one doesn't apply to code I think."* AI recognized the concept-match. Both extended the catch into the recursive observation: vasana-detection itself can become superficial when "patterns across domains" replaces reasoning with shape-matching.
+Discovered 2026-05-15 during a prompt-design conversation. AI applied an insight from a life-strategy prompt ("QOL and investment as same project") to a code-organization question (`/architecture/` vs `/execution/` partition) on the basis of the shared word "separation." Human caught the move with: *"this one doesn't apply to code I think."* AI recognized the shape-match. Both extended the catch into the recursive observation: vasana-detection itself can become superficial when "patterns across domains" replaces reasoning with shape-matching.
