@@ -1,6 +1,6 @@
 name: MCP smoke test
 
-# Verifies that all five MCP servers can be invoked via uvx and respond
+# Verifies that all four MCP servers can be invoked via uvx and respond
 # to a JSON-RPC initialize request. Runs on every push to main and on
 # every PR targeting main. If this passes on a main commit, that commit
 # is safe to fast-forward into the `release` branch — see CLAUDE.md.
@@ -27,7 +27,6 @@ jobs:
     # runner is provisioned. Static /tmp/* paths are fine on ephemeral runners.
     env:
       EDGE_GRAPH_PATH: /tmp/edge-graph-ci
-      PORTFOLIO_DATA_DIR: /tmp/portfolio-ci
       CLAUDE_MEMORY_PATH: /tmp/claude-memory-ci
 
     steps:
@@ -37,7 +36,7 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Smoke test all five MCPs
+      - name: Smoke test all four MCPs
         run: |
           set -uo pipefail
           INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci-smoke","version":"1.0"}}}'
@@ -73,7 +72,6 @@ jobs:
           probe relational-memory vasana-system/mcp-servers/relational-memory   relational-memory
           probe edge-graph        vasana-system/mcp-servers/edge-graph          edge-graph
           probe financial-mcp     research-toolkit/mcp-servers/financial-mcp    financial-mcp
-          probe portfolio-mcp     research-toolkit/mcp-servers/portfolio-mcp    portfolio-mcp
           probe transparency-mcp  research-toolkit/mcp-servers/transparency-mcp transparency-mcp
 
           {
@@ -86,8 +84,8 @@ jobs:
 
           if (( failures > 0 )); then
             echo ""
-            echo "❌ $failures of 5 MCPs failed smoke test"
+            echo "❌ $failures of 4 MCPs failed smoke test"
             exit 1
           fi
           echo ""
-          echo "✅ All 5 MCPs passed"
+          echo "✅ All 4 MCPs passed"

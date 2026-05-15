@@ -1,6 +1,6 @@
 ---
 name: macro-monitor
-description: What is moving in the macro picture? Geopolitical/macro market indicators. Use when (1) China/US Treasury dynamics, (2) dollar-yield divergence, (3) Brent crude oil / energy price spikes, (4) geopolitical market risk, (5) one-command crisis check, (6) EUR/RON exchange rate monitoring. NOT for stock analysis or fundamentals.
+description: What is moving in the macro picture? Geopolitical/macro market indicators. Use when (1) China/US Treasury dynamics, (2) dollar-yield divergence, (3) Brent crude oil / energy price spikes, (4) geopolitical market risk, (5) one-command crisis check. NOT for stock analysis or fundamentals.
 ---
 
 ## Vasana
@@ -82,26 +82,6 @@ Structured monitoring of macro/geopolitical financial indicators using **free pu
 | 0-50bp | Flattening, watch closely |
 | <0bp | Inverted - recession signal |
 
-### 5. EUR/RON Exchange Rate (Daily)
-
-**Source:** BNR (National Bank of Romania) XML feed
-- Current day: https://www.bnr.ro/nbrfxrates.xml
-- Last 10 days: https://www.bnr.ro/nbrfxrates10days.xml
-
-**What to check:**
-- Current EUR/RON rate
-- 10-day trend direction and magnitude
-- Proximity to alert thresholds
-
-**Red flags:**
-| EUR/RON | Level | Interpretation |
-|---------|-------|----------------|
-| < 5.05 | Normal | Stable, within historical range |
-| >= 5.05 | WARNING | RON weakening, monitor inflation impact on savings |
-| >= 5.10 | CRITICAL | Significant depreciation, consider hedging |
-
-**Why it matters:** EUR/RON directly impacts purchasing power for EUR-denominated goods/services and savings held in RON. A weakening RON erodes real value of RON savings and increases import costs.
-
 ## Data Retrieval
 
 ### Automated Scripts
@@ -111,11 +91,6 @@ Structured monitoring of macro/geopolitical financial indicators using **free pu
 - `divergence` — yield-dollar divergence check with interpretation
 - `crisis` — red flag alert check (Brent >$120, VIX >35, 10Y >5%, yield curve inverted, USD/EUR >1.20)
 - `[SERIES_ID]` — latest value for any FRED series
-
-**BNR data:** `python3 scripts/bnr_fetcher.py [latest|trend|alert]`
-- `latest` (default) — current EUR/RON rate from BNR
-- `trend` — 10-day EUR/RON trend with direction and magnitude
-- `alert` — check EUR/RON against warning (5.05) and critical (5.10) thresholds
 
 **TIC data:** `python3 scripts/tic_parser.py`
 
@@ -169,4 +144,4 @@ See `reference/` subdirectory for:
 
 ---
 
-**Update frequency:** Check TIC monthly (mid-month release), FRED daily for divergence monitoring, BNR daily for EUR/RON.
+**Update frequency:** Check TIC monthly (mid-month release), FRED daily for divergence monitoring.
