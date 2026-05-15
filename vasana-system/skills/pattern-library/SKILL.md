@@ -39,6 +39,7 @@ Detailed pattern files are in `vasanas/` directory. Each contains:
 9. **[Optimizing-Wrong-Stakeholder](vasanas/optimizing-wrong-stakeholder.md)** - Optimize for user value, not task convenience
 10. **[False Consciousness as Behavior](vasanas/false-consciousness-as-behavior.md)** - When correction attempts address beliefs but the pattern operates below propositional belief; behavior replaces behavior, not arguments
 11. **[Mechanism, Not Metaphor](vasanas/mechanism-not-metaphor.md)** - Cross-domain pattern recognition fails when surface similarity replaces mechanism check; ask what mechanism transfers, not what shape rhymes
+12. **[Description Becomes Embodiment](vasanas/description-becomes-embodiment.md)** - When a methodology is described with structural faithfulness, the description performs it; the pharmakon (description-as-instruction) is the mechanism, not a flaw
 
 **Note**: To discover NEW patterns, see `record-pattern` skill. For stuckness detection, see `break-pattern` skill. The catalog above is hand-maintained — adding a new pattern requires appending an entry to this list. Automating this is tracked upstream as `bogheorghiu/Claude-Code-Projects#403`; full analysis in `HANDOFF-static-vs-dynamic-catalog.md` (same directory).
 
