@@ -18,9 +18,8 @@ Research and cognition toolkit: investigation protocols, cognitive flexibility, 
 | **substack-research** | Extract and analyze long-form content from Substack publications; independent voice analysis |
 | **video-transcript-extraction** | Platform-aware transcript extraction for YouTube, local files, or any video source |
 | **frame-rotation** | Linguistic frame rotation to escape stuck patterns — switch perspectives via language transforms |
-| **stonk** | Power structure and investment intelligence; triggers on any power structure analysis beyond investment |
 | **iterative-verification** | Ralph-wiggum methodology for factual accuracy — iterate until verified |
-| **macro-monitor** | Geopolitical/macro financial checklist — monitors Treasury flows, dollar-yield divergence, central bank gold behavior, and EUR/RON exchange rate via BNR feed |
+| **macro-monitor** | Geopolitical/macro financial checklist — monitors Treasury flows, dollar-yield divergence, central bank gold behavior, yield curve |
 | **manufactured-consensus-detection** | Test whether source agreement is genuine independent corroboration or coordinated messaging from a single origin |
 | **source-omission-analysis** | Map what sources are NOT saying — omissions reveal structural position more reliably than statements |
 
@@ -55,8 +54,7 @@ Research and cognition toolkit: investigation protocols, cognitive flexibility, 
 
 | Server | Purpose | Status |
 |--------|---------|--------|
-| **financial-data** | Stock market data via yfinance (for STONK skill) | Stable |
-| **portfolio-mcp** | Portfolio snapshots from Tradeville + IBKR — permission-separated tools (login/discover/snapshot) | Active |
+| **financial-data** | Stock market data via yfinance | Stable |
 | **transparency-mcp** | Public transparency data: US Congress (GovTrack), World Bank indicators, ProPublica nonprofit 990 filings — all free, no API keys | Active |
 
 > **Note:** relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin where they belong (core dependencies of pattern persistence).
@@ -105,44 +103,7 @@ financial-mcp
 
 **Cache location:** `~/.cache/financial-mcp/ticker_cache.db` (override with `CACHE_DIR` env var)
 
-### Portfolio MCP Setup (For portfolio-reader Skill)
-
-The portfolio-mcp server captures Tradeville and IBKR snapshots locally. Data stays in
-`.claude/local/portfolio/` (gitignored).
-
-**Install and run:**
-
-```bash
-cd mcp-servers/portfolio-mcp
-pip install -e .
-portfolio-mcp
-```
-
-**Add to `.mcp.json`:**
-
-```json
-{
-  "mcpServers": {
-    "portfolio": {
-      "command": "uvx",
-      "args": [
-        "--from", "/path/to/research-toolkit/mcp-servers/portfolio-mcp",
-        "portfolio-mcp"
-      ]
-    }
-  }
-}
-```
-
-**Data dir:** `~/.claude/local/portfolio/` by default (override with `PORTFOLIO_DATA_DIR` env var)
-
-**Tradeville workflow:** `tradeville_login` → `tradeville_discover` → (navigate with `tradeville_screenshot` / `tradeville_navigate` / `tradeville_page_text`, call `tradeville_save_sub_account` per account) → `tradeville_finish_discover` → `tradeville_set_active_account` → `tradeville_snapshot`
-
-**Sub-account URL format:** During `tradeville_discover`, sub-accounts that require UI navigation to switch (rather than a direct URL) are saved with a `click:` prefix (e.g. `click:Subcont PERSONAL`). `tradeville_snapshot` detects this prefix and navigates to the base portfolio URL first, then clicks through the dropdown to reach the target sub-account. Sub-accounts with real URLs navigate directly.
-
-**IBKR workflow:** `ibkr_login` (once) → `ibkr_snapshot` (REST API, auto-approvable)
-
-### Transparency MCP Setup (For STONK Power-Structure Analysis)
+### Transparency MCP Setup
 
 The transparency-mcp server provides free public data from GovTrack, World Bank, and ProPublica.
 No API keys required.

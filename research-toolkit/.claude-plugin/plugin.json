@@ -1,8 +1,8 @@
 {
   "name": "research-toolkit",
-  "description": "Relentless self-reflexive dialectical thinking that questions its own premises. Investigation protocols (DIP, cui-bono), epistemic depth (text-deconstruction, negative-dialectical-spiral), dialectic testing, frame rotation, iterative verification, video/substack extraction. STONK agent composes cui-bono with financial MCPs for investment analysis. Includes financial-mcp, portfolio-mcp, transparency-mcp.",
+  "description": "Relentless self-reflexive dialectical thinking that questions its own premises. Investigation protocols (DIP, cui-bono), epistemic depth (text-deconstruction, negative-dialectical-spiral), dialectic testing, frame rotation, iterative verification, video/substack extraction. Includes financial-mcp, transparency-mcp.",
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "3.1.0"
+  "version": "3.2.0"
 }

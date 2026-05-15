@@ -6,7 +6,7 @@
 
 ## Philosophy
 
-This toolkit externalizes cognitive patterns that emerge between human and AI. Skills aren't prompts — they're interaction choreographies. The plugin connects investigation (deep-investigation-protocol, cui-bono), cognitive flexibility (frame-rotation), verification (iterative-verification, dialectic-spiral, falsifier), epistemic depth (text-deconstruction, negative-dialectical-spiral), investment intelligence (stonk agent = cui-bono + financial MCPs), and portfolio awareness (portfolio-reader) into a coherent system for thinking-with-AI.
+This toolkit externalizes cognitive patterns that emerge between human and AI. Skills aren't prompts — they're interaction choreographies. The plugin connects investigation (deep-investigation-protocol, cui-bono), cognitive flexibility (frame-rotation), verification (iterative-verification, dialectic-spiral, falsifier), and epistemic depth (text-deconstruction, negative-dialectical-spiral) into a coherent system for thinking-with-AI.
 
 The toolkit's identity is not "we find truth" — it is "we find where our current frame fails, and use that failure as data." Each tool:
 1. Does its primary job (investigate, measure, analyze, deconstruct)
@@ -22,19 +22,6 @@ The toolkit's identity is not "we find truth" — it is "we find where our curre
 4. **If a framework assumes who the disinformator is, it is not a debiasing method.** It may still be useful — as a captured weapon, not a neutral instrument.
 5. **Always search in the languages of the traditions you're looking for.** English-language search systematically erases non-Western methodology.
 6. **OSINT feeds agencies.** When we investigate publicly, we generate intelligence product others harvest. Structural awareness, not paranoia.
-
-### portfolio-reader
-
-Reads local portfolio snapshots from Tradeville and IBKR. Provides unified view across brokers, cross-references with macro-monitor (oil, EUR/RON, rates) for context-aware investment analysis. Data stays local (`.claude/local/portfolio/snapshots/`). See `skills/portfolio-reader/SKILL.md`.
-
-### portfolio-mcp
-
-MCP server that captures portfolio snapshots from Tradeville and IBKR. Lives in `mcp-servers/portfolio-mcp/`. Tools are permission-separated:
-- **login/discover tools** — require human approval (browser auth, Playwright navigation)
-- **navigate tools** — `tradeville_screenshot`, `tradeville_navigate`, `tradeville_page_text` (require active discover session)
-- **snapshot tools** — auto-approvable (navigate to portfolio page, optionally click to switch sub-account if URL uses `click:` prefix, extract data, close)
-
-Data dir: `~/.claude/local/portfolio/` (gitignored). See `README.md` → Portfolio MCP Setup for `.mcp.json` config.
 
 ## Research Logs vs Methodology
 
