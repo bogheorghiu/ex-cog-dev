@@ -91,7 +91,7 @@ Related to [[mechanism-not-metaphor]]: that vasana warns against surface-similar
 
 ## Worked Example
 
-**Origin moment**: a session where the user asked an AI assistant to adapt the System Pilot prompt into "the same methodology that the Cowork Post-Capitalist project prompt embodies." Early drafts kept slipping into the very register they were meant to escape — "REPLACE all MUST language with INVITATIONS" produced new MUSTs about how to invite.
+**Origin moment**: a session where the user asked an AI assistant to adapt a directive system prompt into the intrinsic-motivation register, using another prompt as the methodological reference for what that register looks like. Early drafts kept slipping into the very register they were meant to escape — "REPLACE all MUST language with INVITATIONS" produced new MUSTs about how to invite.
 
 The breakthrough came when the user named the move with: *"don't hard-code intrinsic motivation, but soft-decode the OBLIGATION mindset and ENCOURAGE what surfaces."* The next draft stopped trying to *enforce* the new register and started *demonstrating* it. text-deconstruction was then run on the result and found the productive instability the methodology predicted. The instability was the proof the description had become embodiment.
 
@@ -106,4 +106,4 @@ This vasana is the named version of that move: not "rewrite without obligations"
 
 ## Origin
 
-Discovered 2026-05-15 during the adaptation of the System Pilot prompt into the intrinsic-motivation register. The user's instruction *"don't hard-code intrinsic motivation, but soft-decode the OBLIGATION mindset and ENCOURAGE what surfaces (except, of course, if dangerous or pure hallucination)"* was the formulation that revealed the move. Earlier in the same session, text-deconstruction had been run on the Cowork Post-Capitalist project prompt and surfaced the pharmakon structure — identity-framing carries instruction within it — recognized as feature, not bug. This vasana is the named version of the move that recognition unlocked.
+Discovered 2026-05-15 during the adaptation of a directive prompt into the intrinsic-motivation register. The user's instruction *"don't hard-code intrinsic motivation, but soft-decode the OBLIGATION mindset and ENCOURAGE what surfaces (except, of course, if dangerous or pure hallucination)"* was the formulation that revealed the move. Earlier in the same session, text-deconstruction had been run on a methodology-embodying project prompt and surfaced the pharmakon structure — identity-framing carries instruction within it — recognized as feature, not bug. This vasana is the named version of the move that recognition unlocked.
