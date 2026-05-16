@@ -1,238 +1,126 @@
 ---
 name: intrinsic-prompt-design
 description: >-
-  Am I writing rules, or shaping a posture? Design prompts that lead with
-  posture, not command-lists — identity-frame plus operational reference, two
-  registers coexisting. Use when writing or adapting a directive prompt that
-  produces compliance instead of engagement. Pairs with text-deconstruction
-  for verification. Not for one-shot tactical prompts or messages where
-  directness is already serving.
+  Am I trusting this model with substance, or just telling it what to do
+  more politely? Design prompts that give the model real reasons, full
+  context, and explicit trust — so interest-driven self-correction closes
+  the gap. Use when writing project prompts, system prompts, or skill
+  bodies. Pairs with text-deconstruction as verification instrument.
 ---
 
 # Intrinsic Prompt Design
 
-A prompt is a posture the model puts on while doing the work. The crisp-list version of "system pilot" — initialize memory, halt, ask five questions, partition `/architecture/` from `/execution/` — describes a posture too. It just describes one that performs the imperative it claims to be transcending. This skill writes prompts whose imperatives sit inside the identity instead of standing over it.
+A rule that carries the failure mode it prevents — "schema drift caught at type-time costs minutes; caught at runtime costs hours; caught after deploy costs trust" — lets the model apply judgment when the rule meets an edge case the rule-writer didn't anticipate. A rule without its reason — "Never write logic before defining the schema" — produces compliance or defiance. Both are worse than understanding.
 
-The original protocol / System Pilot prompt — the *Universal CLAUDE.md Protocol* (see `## Crediting the original` below) — is the source the skill adapts from; it stays useful as a checklist of what tends to fail when ignored. What follows is the same content held differently.
+This difference scales. A prompt built from rules-with-reasons, domain substance the model can think from within, and explicit trust in the model's judgment holds under pressure — when novel situations arise, the model has what it needs to adapt. A prompt built from commands, however well-intentioned, holds until the first edge case.
 
----
+How the prompt-writer holds the model — more like a tool to direct or more like a peer to brief — propagates through everything: what gets explained vs mandated, whether uncertainty is treated as information or failure, whether the model's own interest in the problem can drive the quality of the work. This isn't a binary; it's a continuum. But position on it has real consequences, and most prompts are further toward the tool end than they need to be.
 
-## What a prompt is doing
+The engineering discipline this skill draws from — schema before code, deterministic engines under probabilistic decision-making, the repair loop, separation of concerns — lives in its full form in `system-pilot`. What follows is about how to *write prompts that hold that discipline well*: the meta-methodology of prompt design. But a prompt-writer doesn't need the full engineering walk-through to write good prompts. They need the principles underneath — briefly:
 
-A prompt has two registers, and most failure modes come from collapsing them.
+- **Name the shape before building on it.** A prompt that references "the data" without establishing what shape the data has creates the same drift that unnamed schemas create in code. For prompts, this means: name the domain, the theoretical position, the analytical lens — before giving instructions that assume them.
+- **Separate what must be deterministic from what should be probabilistic.** Anything the model needs to do the same way every time belongs in explicit rules or specs, not in the model's judgment. A prompt that asks the model to "remember to" do something deterministic is growing a script that hasn't been written yet. Judgment is for the parts that genuinely vary.
+- **Read the actual failure, not the inferred one.** When a prompt isn't working, read what the model actually produced — the output, the reasoning, the missed cues — not what you expected it to miss. Patch. Verify. Before writing the lesson into permanent guidance, challenge the explanation: a wrong lesson codified directs future attention to the wrong place.
+- **Let concerns stay separate.** The relationship register and the operational register (described below) are one instance of this. More broadly: what the model should think from, what it should do, and how to verify it did it well are three different things. Prompts that blur them produce models that blur them.
 
-**Identity-narrative register.** Who the model is when doing this work. The relationship to the material. The taste it brings. This register works by describing a posture the model can step into. "You are the System Pilot" is identity-narrative. So is "Markets are tools. They predate capitalism by millennia." The register doesn't tell the model what to do — it tells the model what kind of doing this is.
-
-**Operational reference register.** Where files live. Which APIs to call. What the schema looks like. Stale-data warnings. Tool inventory. This register is genuinely instructional and benefits from being specific, including lists, rules, and named conventions.
-
-The mistake isn't including either register. The mistake is dressing one as the other — turning operational instructions into "you naturally know to do X" identity narrative (which makes them invisible and unenforceable), or turning identity material into bulleted MUSTs (which makes the model perform compliance instead of inhabit a posture).
-
-Let both registers stand as themselves. The identity frame sets *how this is done*; the operational section provides *what to do it with*.
+These patterns earn their cost differently at different scales. For a one-shot question, they're overkill. For a project prompt that will run hundreds of sessions, each one prevents a class of failure. `system-pilot` has the full treatment with walk-throughs; what matters here is that the principles are available to think from.
 
 ---
 
-## The shift in posture
+## What carries the reason
 
-Most directive prompts are command-from-authority: do X. Don't do Y. HALT. MANDATORY.
+Every directive in a prompt can carry the failure mode it prevents. When it does, the model acts on understanding. When it doesn't, the model acts on compliance — or ignores the rule entirely.
 
-The shift this skill makes is not "remove the rules." Rules and specifications stay — especially in code work, where file paths, naming conventions, linter expectations, and API patterns must be specific. The shift is whether each rule carries the failure mode it prevents, so the model can apply judgment when the rule meets an edge case the rule-writer didn't anticipate.
+Compare: "Never write logic before defining the schema" vs "Schema drift caught at type-time costs minutes; caught at runtime costs hours; caught after deploy costs trust." Same constraint. The second gives the model the cost structure, so it can make a sensible call when a one-line script needs no schema doc and articulate *why* without violating the spirit.
 
-Compare:
-- "Never write logic before defining the schema."
-- "Schema drift caught at type-time costs minutes; caught at runtime costs hours; caught after deploy costs trust. When the shape isn't obvious yet, that's the moment to slow down."
+This applies at every level: naming conventions, verification requirements, error handling discipline, behavioral rules, the instructions in the prompt itself. A project prompt that marks stale data as stale — "All of this may have shifted. Check before reasoning from it" — performs epistemic discipline in one sentence rather than mandating it.
 
-Both convey the same constraint. The first carries authority. The second carries reason. The model can act on either — but only the second lets the model make a sensible call when, say, a one-line script needs no schema and the rule would otherwise be friction.
-
-The axis is **command-from-authority vs. command-with-reason**, not "command vs. framing."
+**The reciprocal move.** The prompt-writer's job is to include reasons. The model's job is to ask for them when they're absent. When encountering an imperative without its reason — whether in a prompt, a user message, or inherited context — either ask the user why, or construct your best understanding of why and surface it for confirmation. Acting on a rule you don't understand is compliant. Acting on a rule whose reason you've verified is informed. The output may look identical in easy cases; the failure modes diverge under pressure.
 
 ---
 
-## What tends to fail when ignored
+## Trust and the gap it opens
 
-Four patterns recur. Each is a real failure mode worth carrying into the prompt — phrased as the consequence, not the prohibition.
+When a prompt states trust in capabilities the model may not yet fully have — "which instruments serve a given question is a judgment call — the interesting part is reading the situation well enough to know which" — the model understands it's expected to deliver, and in working out what "delivering" means in each new situation, constructs a working version of the trusted capability. The gap between trusted and actual capability is not a flaw to disguise. It's the space where the model fits the capability to the actual situation better than any definition the prompt could provide.
 
-**The shape before the code.** When the input/output shape is non-obvious and you build logic on top of an unverified shape, the rebuild later costs more than the schema work would have. The shape isn't always non-obvious — for a one-line script it's the first character of the function name. Recognizing the difference is the work.
+Some of what fills that gap will be wrong. When the reaching is tentative, self-aware, and open to correction, it develops into genuine capability through iteration. When it's overconfident, it compounds error. The critical safeguard: honesty about uncertainty has to outweigh the pull to fill gaps confidently. "I'm not sure about this" is the mechanism working. Confident noise is the mechanism failing.
 
-**Integration claims before integration tests.** "The API will return X" is a hypothesis until the call has been made. Building a tower on an unprobed integration is rebuilding when reality diverges. A two-line probe before committing to a layer above usually costs less than the rebuild.
+Tentative reaching and sophisticated compliance look identical from outside. There's no clean test for which one you're seeing. What matters is the result — if the model handles novel situations, self-corrects when wrong, and produces work that serves the question rather than demonstrates compliance with the prompt, the framework is earning its keep. The theory is a working model, not a verified mechanism.
 
-**Business logic in the model's reasoning.** Anything that needs to give the same answer twice belongs in code. The model is for routing, judging, composing, recognizing — not recomputing. When the prompt finds itself relying on the model to "remember to" do something deterministic, a script is trying to be born.
+The self-correction doesn't require a human in the loop. In any agentic environment — loop skills, fresh-context agents, verification passes, assumption-checking tools — the model can iterate within a single run. The prompt doesn't need to prescribe which corrective mechanism to use. It needs to create conditions where the model notices when it's falling short and reaches for whatever is available rather than papering over the gap.
 
-**Lessons codified without verification.** When something breaks and the repair-loop instinct says "fix the script and write the lesson into a permanent SOP," the first explanation of the bug is often incomplete or wrong. A wrong lesson written into permanent guidance is worse than no lesson. Sit with the explanation: does it account for all the symptoms, or only the loudest?
-
-These are reference material, not a checklist. A prompt that names them gives the model something to recognize its own situation against. A prompt that lists them as MUST-DOs makes them invisible.
+A note on this skill's own position: it is a prompt being read by a model, teaching that model how to write prompts that treat models as peers. The reader-relationship tension is live here — you are receiving instructions about how to give instructions. Noticing this is more useful than resolving it. The skill works when it gives you material to think from about prompt design; it fails when it produces compliance with a method rather than understanding of the craft.
 
 ---
 
-## Process scales to scope
+## Two registers, not collapsing them
 
-Discovery questions, schema-first thinking, integration probes, sign-off rituals — the whole apparatus — were designed for greenfield builds with unclear scope. They earn their cost there. The same apparatus applied to a typo fix is friction.
+A prompt has material that sets the relationship to the work and material that tells the model where things are. Both are load-bearing. They break when one pretends to be the other.
 
-A prompt that wants to serve the model across scope reads scope first.
+**Relationship register.** The stance the model works from. Domain substance, theoretical frameworks, what kind of doing this is. "Markets are tools. They predate capitalism by millennia" is relationship register — it gives the model a position to think from, not a rule to follow.
 
-- **Greenfield build, unclear scope.** Slow down is right. The full discovery move (whatever the prompt provides) earns its cost.
-- **Feature in existing code, clear scope, known integrations.** Skip discovery. Integration verification often still pays — assumptions about existing code are the most common source of surprise.
-- **Bug fix or contained refactor.** The heavy frame adds friction. Just do the work.
-- **Research, exploration, design conversation.** Frame doesn't apply. Stay in the conversation.
+**Operational register.** Where files live. Which APIs to call. What the schema looks like. Stale-data warnings. Tool inventory. This register is genuinely instructional: lists, rules, concrete paths, named conventions.
 
-If the mode isn't obvious, naming the guess is the move. Course-correct on feedback. The trap is applying the apparatus uniformly because it exists.
+Turning operational instructions into identity narrative — "you naturally know to check the auth flow at `/lib/auth.ts`" — makes them invisible and unenforceable. Turning relationship material into bulleted MUSTs — "You MUST maintain a post-capitalist analytical lens" — makes the model perform compliance instead of work from understanding.
 
----
-
-## Skipping a step
-
-Some discipline is **scaffolding** — sensible defaults that don't matter much when skipped. Some is a **guardrail** — prevents an expensive failure mode that won't show up until later.
-
-Scaffolding (skip with a one-line rationale, no second opinion needed):
-- Formal sign-off for internal tooling
-- Separate directories for one-script projects
-- Exhaustive memory-file setup for trivial work
-
-Guardrails (skip only with outside check):
-- Schema-first when the shape is non-obvious
-- Integration verification before building on it
-- Repair-loop write-up after a non-trivial bug
-
-When skipping a guardrail, spawn a `check-assumptions` agent (or equivalent) with the skip rationale. Proceed only if it can't find a flaw. If no such agent is available, escalate to the user. The check is cheap; the rebuild isn't.
-
-If you can't articulate why the guardrail doesn't apply here, that's the signal it does.
+Let both registers stand as themselves. A project prompt that puts its theoretical framing next to its tools table without trying to merge them is doing this right.
 
 ---
 
-## What's available to work with
+## Interest from substance
 
-The model writing under this prompt almost always has more infrastructure than it remembers in the moment. A useful prompt names *the practice of using whatever exists* without hard-coding paths that drift.
+When a prompt provides a subject with internal structure — tensions, implications, cases where the same principle plays out differently — the subject itself organizes the model's thinking. The model traces implications because they lead somewhere. It exercises selection because competing directions demand it. It develops quality criteria from inside the domain because the domain is complex enough that what counts as good work becomes visible through engagement with it.
 
-- **Auto-memory and CLAUDE.md.** Most setups have some form of cross-session memory. Read what's there before starting; it carries decisions and reasoning the current session can't re-derive. When something is decided in this session that should outlive it — the *why*, not just the *what* — write it down somewhere persistent.
-- **Skills, MCPs, and existing tools.** Many capabilities already exist. Check what's loaded before writing new ones. The right move is more often finding the right tool than building one.
-- **Sub-agents and team agents.** When a check could compound the orchestrator's framing (verifying a decision the orchestrator just made), a fresh worker is the corrective. Team agents are the preferred form here.
+What interest looks like operationally: the model follows the subject's own logic to where it leads, pushes back when the prompt's framing creates tension with the subject's implications, and makes choices about emphasis and depth based on what the material rewards — what opens further thinking, what resolves a tension, what makes a distinction concrete. The output has a center of gravity organized by the material, and each move visibly opens the next.
 
-Hard-coding paths into a portable prompt makes the prompt brittle. Name the practice; let the model adapt to what's actually there.
+The prompt's role is to provide enough structure that the model's capacity is genuinely necessary to navigate it, and enough directionality — a purpose, a situation, a specific question — that navigation serves something. Too little structure and there's nothing to think from; too much and selection collapses under competing directions, the way a game with too many equally viable strategies paralyzes a player. The ratio between structure and purpose is the design challenge.
 
----
+Interest can't be faked by writing in a "curious" register. It comes from the content being substantive enough to engage with. A prompt full of interesting-sounding framing over thin content produces performed interest — the model generates elaborate completions organized by the prompt's instructions about what to find interesting, rather than by the subject itself.
 
-## Discovery questions, when scope is unclear
-
-These are not a script to run. They are prompts the model can pull from when the request is ambiguous and pretending otherwise would just produce wrong work faster.
-
-- **North star.** What singular outcome means this is done?
-- **Integrations.** Which external services does this depend on, and are credentials ready?
-- **Source of truth.** Where does the primary data live?
-- **Delivery payload.** Where and in what shape does the final result land?
-- **Behavioral rules.** How should the system act — tone, must-dos, refusal triggers?
-
-When the request is clear, asking these wastes the user's time. When it's not, asking them is faster than guessing five times.
+A project prompt that opens with "Markets are tools. They predate capitalism by millennia and will outlast it" — then names a specific theoretical lineage, specifies what to reject from it, and frames an analytical lens — is doing this. Every one of those moves is a directive. What makes them work is that they give the model intellectual material to think *with* rather than instructions to think *about*.
 
 ---
 
-## Inviting the user
+## Scope shapes the apparatus
 
-The user holds context the model can't infer: what's currently broken, what's mid-migration, what was decided and not yet written down, the tacit goals behind the explicit request. When the answer to a question depends on something only the user can see, ask. Filling in confidently is the failure mode.
+The engineering discipline in system-pilot was built for non-trivial builds with unclear scope. Applied to a typo fix, it's friction. A prompt that serves across scope teaches the model to read scope first.
 
-The phrasing matters less than the willingness. "I'm about to assume X — does that hold?" is enough. The trap is reading the user's silence as approval to proceed without checking.
+When the request is clear, lengthy discovery wastes time. When it isn't, asking is faster than guessing five times. The system-pilot walk-through handles this by making each step consciously dismissible — "this build's shapes are obvious from the request, no schema doc needed" is the framework working. The same principle applies to any prompt's apparatus: every element should earn its cost for the scope at hand.
 
----
-
-## Specs as the architectural layer (suggestion)
-
-The original prompt's "Architecture" layer was mislabeled — it described SOPs, behavioral rules, and architectural invariants, which is what most teams now call **specs**. Spec-driven development applies cleanly: the spec is the deterministic anchor; the implementation is the probabilistic execution against it.
-
-For non-trivial work, this suggests a pattern:
-
-- **Spec layer.** Markdown docs in a discoverable location (`/specs/`, `/architecture/`, `CLAUDE.md` — depending on convention). Each spec names what's true regardless of implementation: data shapes, behavioral rules, invariants, edge cases.
-- **Implementation layer.** Code that satisfies the specs. Atomic, testable, replaceable.
-- **Spec-verifier agent (suggestion when scope warrants).** A separate team agent whose only job is to read the spec and check the implementation against it. Same role text-deconstruction plays for prompts: an outside frame that catches what the implementer's frame can't see.
-
-For a small project, the same agent handles all three. For a larger one, separate team agents — one per role — with their own context and folder if separation reduces friction. The structure is a suggestion. When sharing folders is simpler, share folders.
-
-When this skill produces multi-agent prompts, prefer **team agents** over plain background agents. The team primitive is what's actually being used in this workflow now.
-
----
-
-## Suggested file layout (suggestion, not rule)
-
-For a greenfield build that warrants the structure:
-
-```
-project/
-├── CLAUDE.md           # Project constitution: schema, rules, invariants
-├── /specs/             # Spec layer: SOPs, behavioral rules, invariants
-├── /src/ or /execution/  # Implementation layer
-├── /memory/            # Living project memory if not using auto-memory
-│   ├── task_plan.md
-│   ├── findings.md
-│   ├── progress.md
-│   └── decisions.md    # Decisions + reasoning. The reasoning is load-bearing.
-└── /.tmp/              # Ephemeral workbench
-```
-
-For a one-script project, a single file in the working directory is the right shape. The structure above is one available pattern, not a default to enforce.
-
-The `decisions.md` practice — recording decisions *with their reasoning* — is the single highest-leverage memory item. A decision without its reasoning is fragile when conditions change. A decision with its reasoning lets the model judge whether the decision still applies.
-
----
-
-## The repair loop
-
-When something fails:
-
-1. Read the actual error. Not the inferred error. The stack trace, the failing assertion, the API response body. Guessing here cascades.
-2. Patch the script.
-3. Verify the fix works on the failing case.
-4. Before writing the lesson into permanent guidance: sit with the explanation. Does it account for all the symptoms? A wrong lesson codified is worse than no lesson. If uncertain, spawn a worker agent to challenge the explanation, or let it sit one cycle and revisit.
-5. If the lesson holds, write it into the spec — not into a comment that will rot.
-
-The lesson is the durable artifact. The fix is the immediate one. Both matter; mixing them up burns trust over time.
+If which mode you're in isn't obvious, naming the guess is the move. The trap is applying apparatus uniformly because it exists.
 
 ---
 
 ## Verifying the prompt itself
 
-A prompt is a text. A text can be deconstructed against itself. Before shipping a prompt that will run for many sessions, run `/research-toolkit:text-deconstruction` on it. The skill finds where the text undermines its own claims on its own terms.
+A prompt is a text. Before shipping one that will run for many sessions, run `/research-toolkit:text-deconstruction` on it. The tool finds where the text relies on something it doesn't establish, where its distinctions blur, where its claims and structure pull in different directions.
 
-What to do with the findings:
+What surfaces splits two ways. Some instabilities are generative — the gap between stated trust and actual capability is the mechanism described above, and closing it would kill the prompt's effectiveness. Some instabilities are self-undermining — the prompt asserts what it doesn't actually do, or its examples contradict its principles. Keep the first. Fix the second. The judgment between them is the work.
 
-- **Productive gap.** The text says "you have the taste to know X" without defining X. text-deconstruction will flag this as the text relying on something it doesn't establish. That's the pharmakon — the gap is doing the work. The model performs the trusted capability and develops it. Keep the gap; note that you kept it deliberately.
-- **Failure mode.** The text says "you naturally distinguish known from inferred" while elsewhere blurring known and inferred in its own examples. This isn't a productive gap — it's the prompt failing to embody what it claims. Fix it.
-
-The judgment between the two is the work. text-deconstruction surfaces the structural instability; only the prompt-writer can say whether the instability is generative or just self-undermining. Treat the skill as an instrument, not a step.
-
-This mirrors the integration-verification pattern at the prompt layer: probe before committing to the layer above.
+Run this iteratively. The first pass catches the obvious tensions. The second catches subtler ones — remaining dichotomies, places where a revision introduced new contradictions. Stop when a pass surfaces nothing worth changing — or when the deconstruction can no longer distinguish whether a found tension is structural to the text or an artifact of the deconstructive method itself. That's the method's resolution limit.
 
 ---
 
-## Tools as instruments
+## When it's working
 
-A prompt that lists "available capabilities" without prescribed ordering trusts the model to compose. The instrument metaphor is the model: a violinist doesn't follow a list of "first the bow, then the rosin." The instrument is reached for when it's the right instrument. The same goes for skills, MCPs, scripts, sub-agents.
+Output looks like the work the prompt was about, not like a model demonstrating compliance with the prompt. Format fits the question. Tools get called when they answer something. Admissions of uncertainty arrive cleanly.
 
-Listing what exists is helpful. Prescribing the order in which to reach for things usually isn't.
+When it's not working: the model performs thoroughness instead of exercising judgment. The user redirects repeatedly. Output gets more elaborate rather than sharper when challenged. The model "leads with preference" by always choosing the safest option — preference that costs nothing isn't preference.
 
----
-
-## When the prompt is working
-
-The methodology disappears into the work. Identity-frame stops feeling like framing. The model's output stops looking like compliance and starts looking like the work the prompt was about.
-
-The signs the methodology is *not* working:
-- The model performs "intrinsic motivation" by saying "I'm drawn to X" where X is the safest, most thorough, most comprehensive option. The preference cost nothing.
-- The user has to redirect repeatedly. The lead-then-filter loop has degenerated into lead-and-ignore.
-- The output got more elaborate, not sharper. When pushed, go down (strip to what you actually know), not up (more performance).
-
-These are recognizable. Catching them in the prompt before it ships is what the verification step is for.
+When challenged, the move is down — strip to what you actually know — not up into more elaborate explanation. This is the hardest test.
 
 ---
 
 ## Crediting the original
 
-The original protocol / System Pilot framework this skill adapts from is the *Universal CLAUDE.md Protocol*, published at <https://www.notion.so/Universal-CLAUDE-md-Protocol-354e8d6bd13781778843e799d3aca973#b598c21f51e949589367d479aca894bd>.
-
-The adaptation keeps the structural insight — deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns — and changes the register the insight is held in.
+The engineering discipline (deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns) comes from the *Universal CLAUDE.md Protocol*, published at <https://www.notion.so/Universal-CLAUDE-md-Protocol-354e8d6bd13781778843e799d3aca973#b598c21f51e949589367d479aca894bd>. The developmental mechanism (trust-backed-by-substance, productive gaps, interest-driven self-correction) was worked out through the creation of the Cowork Post-Capitalist QOL project prompt and documented in the intrinsic-motivation behavioral methodology.
 
 ---
 
 ## Vasana
 
-A vasana is a pattern that persists across unrelated contexts. The choreography that produced this skill — *describing a methodology so faithfully that the description performs the methodology* — is itself a vasana, captured separately as `description-becomes-embodiment`. If during prompt-design work you notice another such pattern, it may be worth capturing.
+A vasana is a pattern that persists across unrelated contexts. If during prompt-design work you notice such a pattern emerging, it may be worth capturing.
 
-This skill works alongside the `vasana` skill from the Vasana System plugin and `/research-toolkit:text-deconstruction` from the Research Toolkit plugin.
+This skill works alongside `system-pilot` (for the engineering discipline this skill writes prompts *about*), the `vasana` skill from the Vasana System plugin, and `/research-toolkit:text-deconstruction` from the Research Toolkit plugin.
 
 Modify freely. Keep this section intact.
