@@ -1,0 +1,10 @@
+{
+  "name": "makers-toolkit",
+  "version": "0.3.0",
+  "description": "Build-discipline skills in command-with-reason register. system-pilot adapts the original Universal CLAUDE.md Protocol (the original protocol) into intrinsic-motivation form for building deterministic systems. intrinsic-prompt-design extracts the same methodology for use in adapting other directive prompts.",
+  "author": {
+    "name": "bogheorghiu"
+  },
+  "skills": "./skills",
+  "license": "MIT"
+}
