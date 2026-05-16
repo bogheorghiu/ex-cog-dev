@@ -14,6 +14,11 @@
       "name": "vasana-system",
       "description": "Pattern recognition across unrelated contexts - observe, record, test, browse behavioral patterns",
       "source": "./vasana-system"
+    },
+    {
+      "name": "makers-toolkit",
+      "description": "Build-discipline in command-with-reason register. system-pilot adapts the original Universal CLAUDE.md Protocol; intrinsic-prompt-design extracts the methodology for adapting other directive prompts. Pair with research-toolkit:text-deconstruction for verification.",
+      "source": "./makers-toolkit"
     }
   ]
 }
