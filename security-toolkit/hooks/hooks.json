@@ -1,0 +1,37 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "mcp__desktop-commander__*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/block-dc-execute.sh\""
+        },
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/block-dc-config.sh\""
+        }
+      ]
+    },
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.sh\""
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/detect-prompt-injection.sh\""
+        }
+      ]
+    }
+  ]
+}
