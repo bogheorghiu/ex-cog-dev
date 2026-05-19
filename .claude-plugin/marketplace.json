@@ -19,6 +19,11 @@
       "name": "makers-toolkit",
       "description": "Build-discipline skills in command-with-reason register. system-pilot adapts the original Universal CLAUDE.md Protocol into intrinsic-motivation form for building deterministic systems. intrinsic-prompt-design is the meta-methodology of prompt design — how to write prompts that hold that discipline well, by giving the model reasons, substance, and explicit trust. Pair with research-toolkit:text-deconstruction for verification.",
       "source": "./makers-toolkit"
+    },
+    {
+      "name": "security-toolkit",
+      "description": "Threat-detection and dangerous-action-blocking hooks: tiered prompt-injection detection (covers MCP tool outputs via the * matcher), block dangerous git operations (push to main, force push, reset --hard, --no-verify, etc.), and Desktop Commander input safeguards (block start_process and set_config_value).",
+      "source": "./security-toolkit"
     }
   ]
 }
