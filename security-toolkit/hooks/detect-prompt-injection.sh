@@ -47,8 +47,12 @@ fi
 [ -z "$tool_output" ] && { echo '{}'; exit 0; }
 
 # Path allowlist. Skip files that legitimately describe the patterns
-# (the hook itself, hook README, prompt-injection awareness docs).
-DEFAULT_ALLOWLIST_GLOB='*/.claude/hooks/scripts/detect-prompt-injection*:*/.claude/hooks/scripts/README.md:*/docs/protocols/*:*/docs/guides/security.md:*PROMPT-INJECTION-AWARENESS*:*prompt-injection-awareness*'
+# (the hook itself wherever it lives, hook README, prompt-injection
+# awareness docs, security guides).
+# Two location patterns: CCP-style project-scope at
+# .claude/hooks/scripts/ AND plugin-installed at
+# .../security-toolkit/hooks/ (resolved under ~/.claude/plugins/...).
+DEFAULT_ALLOWLIST_GLOB='*/.claude/hooks/scripts/detect-prompt-injection*:*/security-toolkit/hooks/detect-prompt-injection*:*/.claude/hooks/scripts/README.md:*/security-toolkit/README.md:*/docs/protocols/*:*/docs/guides/security.md:*PROMPT-INJECTION-AWARENESS*:*prompt-injection-awareness*'
 ALLOWLIST_GLOB="${PROMPT_INJECTION_ALLOWLIST_GLOB-$DEFAULT_ALLOWLIST_GLOB}"
 if [ -n "$file_path" ] && [ -n "$ALLOWLIST_GLOB" ]; then
     IFS=':' read -ra _globs <<< "$ALLOWLIST_GLOB"
@@ -116,7 +120,11 @@ if [ ${#high_matched[@]} -eq 0 ] && [ ${#low_matched[@]} -eq 0 ]; then
 fi
 
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-preview=$(echo "$tool_output" | head -c 200 | tr '\n' ' ' | sed 's/\\/\\\\/g; s/"/\\"/g')
+# Truncate + collapse newlines first. JSON escaping is conditional:
+# jq --arg does its own encoding, so it must receive the RAW string.
+# The no-jq fallback inlines the value directly into a JSON template,
+# so it needs sed-based escaping for backslashes and double-quotes.
+preview_raw=$(echo "$tool_output" | head -c 200 | tr '\n' ' ')
 
 confidence="low"
 [ ${#high_matched[@]} -gt 0 ] && confidence="high"
@@ -128,11 +136,12 @@ if command -v jq &> /dev/null; then
        --arg conf "$confidence" \
        --argjson hi "${#high_matched[@]}" \
        --argjson lo "${#low_matched[@]}" \
-       --arg prev "$preview" \
+       --arg prev "$preview_raw" \
        '{timestamp:$ts, event:"prompt_injection_detected", tool:$tool, confidence:$conf, high_count:$hi, low_count:$lo, preview:$prev}' \
        >> "$LOG_FILE"
 else
-    echo "{\"timestamp\":\"${timestamp}\",\"event\":\"prompt_injection_detected\",\"tool\":\"${tool_name}\",\"confidence\":\"${confidence}\",\"high_count\":${#high_matched[@]},\"low_count\":${#low_matched[@]},\"preview\":\"${preview}\"}" >> "$LOG_FILE"
+    preview_escaped=$(printf '%s' "$preview_raw" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    echo "{\"timestamp\":\"${timestamp}\",\"event\":\"prompt_injection_detected\",\"tool\":\"${tool_name}\",\"confidence\":\"${confidence}\",\"high_count\":${#high_matched[@]},\"low_count\":${#low_matched[@]},\"preview\":\"${preview_escaped}\"}" >> "$LOG_FILE"
 fi
 
 if [ ${#high_matched[@]} -gt 0 ]; then
