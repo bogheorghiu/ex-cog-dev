@@ -1,6 +1,6 @@
 {
   "name": "security-toolkit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Threat-detection and dangerous-action-blocking hooks for Claude Code: prompt-injection detection (tiered, with allowlist; covers MCP tool outputs via the * matcher), block dangerous git operations (push to main, force push, reset --hard, --no-verify, etc.), and Desktop Commander input safeguards (block start_process and set_config_value).",
   "author": {
     "name": "bogheorghiu"
