@@ -20,8 +20,68 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 # Extract base command (first 7 tokens) to avoid matching inside quoted strings
 # This prevents false positives like: gh pr comment --body "text about push to main"
 # Using 7 tokens to handle: command git -C /some/path push origin main
-# Also normalize "command git" to "git" for matching
-BASE_CMD=$(echo "$COMMAND" | sed -E 's/^command[[:space:]]+git/git/' | awk '{print $1, $2, $3, $4, $5, $6, $7}')
+# Also normalize "command git" to "git" for matching.
+#
+# FIX 2026-05-20: Strip leading shell-chain prefixes (cd PATH &&, pushd PATH &&,
+# (cd PATH;) before tokenizing. Without this, `cd /x && gh pr merge` slipped past
+# every rule because BASE_CMD started with `cd`, not the dangerous verb. The :loop/t
+# pair re-applies the strip until the command no longer starts with a chain prefix,
+# handling `cd a && cd b && <dangerous>`.
+#
+# The `s/^command[[:space:]]+git/git/` runs both BEFORE and AFTER the strip loop.
+# Pre-loop catches the plain form (`command git push origin main`); post-loop
+# catches the chain form (`cd /x && command git push origin main`) — after the
+# strip exposes `command git ...` at the start of the line, it needs another pass
+# of the normalization. Without the second application, chain + command-git would
+# bypass the `^git push` matcher.
+#
+# Out of scope (defense in depth, not airtight):
+# - `bash -c '<dangerous>'`, `eval '<dangerous>'`, `xargs -I{} <dangerous> {}`
+#   (wrapper-execs — BASE_CMD's first token is the wrapper, not the verb)
+# - `<safe> && <dangerous>` (dangerous in second segment after a non-cd command)
+# - Base64 / hex obfuscation
+# - Quoted/escaped paths with spaces (`cd "/path with spaces" && <dangerous>`
+#   or `cd /path/with\ spaces && <dangerous>` — the chain-prefix regex
+#   requires a space-free path token, so both forms slip through)
+# - `popd && <dangerous>` (popd is not in the chain-prefix alternation, since
+#   popd takes no path argument the regex shape doesn't match it)
+# - `cd && <dangerous>` / `pushd && <dangerous>` (no path argument — the
+#   `[^[:space:]]+` regex consumes `&&` as the "path" token then fails the
+#   second `(&&|;)` match, so the strip never fires)
+# - Bare subshell with no chain prefix: `(rm -rf /dir)`, `(gh pr merge 5)` —
+#   the strip-loop only fires when the leading-paren is followed by cd/pushd,
+#   so bare-subshell forms reach BASE_CMD with `(` still attached and the
+#   `^verb` matchers miss. Latent issue, pre-exists this fix.
+#
+# These need a real shell parser or an advisory PostToolUse layer.
+#
+# Edge case (mitigated): stripping `(cd PATH;` from a subshell form leaves
+# a trailing `)` behind — `(cd /repo; gh pr merge 5)` would normalize to
+# `gh pr merge 5)`. Harmless for current prefix-anchored rules but a latent
+# footgun for any future rule using suffix or exact-token matching. The final
+# `s/[)]*$//` substitution strips trailing `)` to remove this artifact.
+NORMALIZED=$(echo "$COMMAND" | sed -E '
+    s/^command[[:space:]]+git/git/
+    : cstrip
+    s/^[[:space:]]*\(*[[:space:]]*(cd|pushd)[[:space:]]+[^[:space:]]+[[:space:]]*(&&|;)[[:space:]]*//
+    t cstrip
+    s/^command[[:space:]]+git/git/
+    s/[)]*$//
+')
+# CAUTION for future rule authors: NORMALIZED has trailing `)` stripped,
+# so rules MUST use prefix anchors (`^verb`), NOT suffix or exact-token
+# matching, or the artifact stripping could mask a real match.
+BASE_CMD=$(echo "$NORMALIZED" | awk '{print $1, $2, $3, $4, $5, $6, $7}')
+
+# Variable convention for rule authors:
+# - BASE_CMD  → verb-prefix matching (`^gh pr merge`, `^git push`, etc.).
+#               Normalized: chain prefixes stripped, `command git` rewritten,
+#               trailing `)` removed. First 7 tokens only.
+# - COMMAND   → flag/branch-name matching elsewhere in the line (`--force`,
+#               ` origin main`, `--no-verify`, etc.). Original, unmodified —
+#               so substrings of the user's actual input are reliably found
+#               regardless of where in the line they sit.
+# - NORMALIZED → rarely used directly; mostly an intermediate. Prefer BASE_CMD.
 
 # Audit log helper: logs blocked attempts for security monitoring
 # Usage: log_blocked_attempt "rule-name" "$COMMAND"

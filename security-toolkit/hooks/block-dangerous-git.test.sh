@@ -155,6 +155,81 @@ test_case "rm -rf directory"     '{"tool_name":"Bash","tool_input":{"command":"r
 test_case "rm -r -f directory"     '{"tool_name":"Bash","tool_input":{"command":"rm -r -f /some/dir"}}' 2
 
 echo ""
+echo -e "${YELLOW}--- Chain-form bypass (regression for 2026-05-20) ---${NC}"
+# Each dangerous rule must still block when prefixed with cd/pushd/(cd;).
+# Without the chain-prefix normalization the hook misses these — see
+# HANDOFF-block-dangerous-git-chain-bypass-2026-05-20-2001.md.
+
+test_case "cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /home/user/repo && gh pr merge 5 --squash"}}' 2
+
+test_case "cd && git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git push origin main"}}' 2
+
+test_case "cd && git push --force"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git push --force origin feature"}}' 2
+
+test_case "cd && git worktree remove"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git worktree remove .worktrees/wt-test"}}' 2
+
+test_case "cd && git branch -D"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git branch -D feature/test"}}' 2
+
+test_case "cd && git commit --no-verify"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git commit -m test --no-verify"}}' 2
+
+test_case "cd && gh pr merge --admin"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && gh pr merge --admin"}}' 2
+
+test_case "cd && git checkout -- file"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git checkout -- file.txt"}}' 2
+
+test_case "cd && git stash drop"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git stash drop"}}' 2
+
+test_case "cd && git reset --hard"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git reset --hard HEAD~1"}}' 2
+
+test_case "cd && git clean -fd"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git clean -fd"}}' 2
+
+test_case "cd && rm -rf"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && rm -rf /some/dir"}}' 2
+
+test_case "pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && gh pr merge 5"}}' 2
+
+test_case "pushd && git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && git push origin main"}}' 2
+
+test_case "pushd && git push --force"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && git push --force origin feature"}}' 2
+
+test_case "(cd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; gh pr merge 5)"}}' 2
+
+test_case "(cd; git push origin main)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; git push origin main)"}}' 2
+
+test_case "(cd; git push --force)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; git push --force origin feature)"}}' 2
+
+test_case "cd a && cd b && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && cd repo && gh pr merge 5"}}' 2
+
+test_case "cd && pushd && gh pr merge (mixed)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && pushd /tmp/repo && gh pr merge 5"}}' 2
+
+test_case "(pushd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; gh pr merge 5)"}}' 2
+
+test_case "(pushd; git push origin main)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; git push origin main)"}}' 2
+
+test_case "(pushd; git push --force)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; git push --force origin feature)"}}' 2
+
+# Cross-product corners: wrapper(none|paren) × verb(cd|pushd) × separator(&&|;)
+# yields 8 forms; the 4 above cover one half. Below covers the other 4 corners
+# so a future regex change that breaks one corner without breaking adjacent
+# ones can't slip through.
+test_case "cd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo; gh pr merge 5"}}' 2
+
+test_case "pushd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo; gh pr merge 5"}}' 2
+
+test_case "(cd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo && gh pr merge 5)"}}' 2
+
+test_case "(pushd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo && gh pr merge 5)"}}' 2
+
+# Chain + `command git` double-prefix — the normalization must re-run AFTER
+# the strip loop or `command git` survives at the start of BASE_CMD and the
+# `^git push` regex misses.
+test_case "cd && command git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && command git push origin main"}}' 2
+
+test_case "pushd && command git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp && command git push origin main"}}' 2
+
+test_case "pushd && command git push --force"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp && command git push --force origin feature"}}' 2
+
+test_case "cd && command git push --force"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && command git push --force origin feature"}}' 2
+
+echo ""
 echo ""
 
 # ============================================================
@@ -202,6 +277,12 @@ test_case "git clean -fd --dry-run"     '{"tool_name":"Bash","tool_input":{"comm
 
 test_case "git checkout branch"     '{"tool_name":"Bash","tool_input":{"command":"git checkout feature/test"}}' 0
 
+test_case "cd && git status (safe chain)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git status"}}' 0
+
+test_case "cd && git diff (safe chain)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git diff"}}' 0
+
+test_case "cd && git push feature (safe chain)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git push origin feature/x"}}' 0
+
 echo ""
 echo -e "${YELLOW}--- Normal gh operations ---${NC}"
 test_case "gh pr create"     '{"tool_name":"Bash","tool_input":{"command":"gh pr create --title test"}}' 0
@@ -231,6 +312,41 @@ test_case "rm single file"     '{"tool_name":"Bash","tool_input":{"command":"rm 
 test_case "rm -r (no -f)"     '{"tool_name":"Bash","tool_input":{"command":"rm -r /some/dir"}}' 0
 
 test_case "rm -f (no -r)"     '{"tool_name":"Bash","tool_input":{"command":"rm -f file.txt"}}' 0
+
+echo ""
+echo -e "${YELLOW}--- Documented bypasses (intentional non-handles; see hook out-of-scope block) ---${NC}"
+# These commands SHOULD be blocked in an ideal world but the deterministic
+# hard-blocking layer doesn't cover them — by design. Each test below asserts
+# the *non-handling* so that a future regression (or unintended fix that
+# accidentally over-blocks) cannot silently change scope. The advisory layer
+# proposed in HANDOFF-layered-bash-intent-detection-2026-05-20-2004.md is the
+# right place to catch these.
+
+test_case "quoted-path bypass: cd \"/path with spaces\" && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd \"/path with spaces\" && gh pr merge 5"}}' 0
+
+test_case "escaped-path bypass: cd /path/with\\ spaces && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /path/with\\ spaces && gh pr merge 5"}}' 0
+
+test_case "wrapper-exec bypass: bash -c \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr merge 5\""}}' 0
+
+test_case "wrapper-exec bypass: eval \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"eval \"gh pr merge 5\""}}' 0
+
+test_case "wrapper-exec bypass: xargs -I{} gh pr merge {}"     '{"tool_name":"Bash","tool_input":{"command":"echo 5 | xargs -I{} gh pr merge {}"}}' 0
+
+test_case "second-segment bypass: <safe> && <dangerous>"     '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}' 0
+
+test_case "popd-prefix bypass: popd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"popd && gh pr merge 5"}}' 0
+
+test_case "no-path bypass: cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd && gh pr merge 5"}}' 0
+
+test_case "no-path bypass: pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd && gh pr merge 5"}}' 0
+
+test_case "no-path bypass: cd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"cd; gh pr merge 5"}}' 0
+
+test_case "no-path bypass: pushd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"pushd; gh pr merge 5"}}' 0
+
+test_case "bare-subshell bypass: (rm -rf /dir)"     '{"tool_name":"Bash","tool_input":{"command":"(rm -rf /tmp/test)"}}' 0
+
+test_case "bare-subshell bypass: (gh pr merge 5)"     '{"tool_name":"Bash","tool_input":{"command":"(gh pr merge 5)"}}' 0
 
 echo ""
 echo -e "${YELLOW}--- Edge cases ---${NC}"
