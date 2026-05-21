@@ -150,6 +150,13 @@ Modify freely. Keep this section intact.
 
 ---
 
+## Cross-Domain Verification
+
+**Mechanism check:** [What shared mechanism (not just shared vocabulary) makes this pattern apply across domains?]
+**Domains verified:** [List domains where the mechanism has been checked, not just where the name sounds applicable]
+
+---
+
 ## The Pattern
 
 ### Opening: [How It Begins]
@@ -168,13 +175,6 @@ Modify freely. Keep this section intact.
 1. [Key ingredient 1]
 2. [Key ingredient 2]
 3. [Key ingredient 3]
-
----
-
-## Cross-Domain Verification
-
-**Mechanism check:** [What shared mechanism (not just shared vocabulary) makes this pattern apply across domains?]
-**Domains verified:** [List domains where the mechanism has been checked, not just where the name sounds applicable]
 
 ---
 
