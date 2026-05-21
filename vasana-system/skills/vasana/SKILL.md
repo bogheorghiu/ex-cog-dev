@@ -220,7 +220,7 @@ mcp__relational-memory__create_relation(
 mcp__relational-memory__discover_patterns(min_occurrences=3)
 ```
 
-See: `docs/speculative/vasana-pattern-seed-system.md` for full framework.
+See: `~/ClaudeShared/pattern-library/_notes/ANALYSIS-recursive-loop-pattern-seed-2026-05-19.md` (canonical pattern-library, configurable per user) for the current pattern-seed analysis.
 
 ---
 

@@ -39,7 +39,7 @@ This skill activates when detecting:
 
 ### 2. Pattern Check
 
-Reference: `pattern-library` skill, `vasanas/*.md`
+Reference: `pattern-library` skill, `patterns/*.md`
 
 | Pattern | Question |
 |---------|----------|

@@ -50,7 +50,20 @@ Avoid:
 - Vague names (`good-conversation`)
 - AI-centric names (`ai-helps-user`)
 
-### Step 3: Describe the Pattern
+### Step 3: Mechanism-Not-Metaphor Check (REQUIRED)
+
+Before describing the pattern, apply this guardrail:
+
+1. **State the cross-domain claim precisely.** If the pattern claims to apply across domains, what mechanism transfers?
+2. **Classify the similarity:**
+   - **Genuine mechanism**: shared math, shared causal structure, shared constraint (e.g., Fourier uncertainty applies to both quantum mechanics and signal processing — same math)
+   - **Surface resemblance**: shared vocabulary, shared vibe, shared shape (e.g., "quantum entanglement is like team bonding" — no shared mechanism)
+3. **If surface only**: the cross-domain claim fails. The pattern may still be valid within a single domain. Record it as such — don't inflate.
+4. **If genuine mechanism**: proceed. The pattern has cross-domain predictive power.
+
+Reference: `mechanism-not-metaphor` pattern in the canonical library.
+
+### Step 4: Describe the Pattern
 
 **What conditions signal it applies:**
 - When does this pattern help?
@@ -67,7 +80,7 @@ Avoid:
 - What must be present
 - What breaks it
 
-### Step 4: Add Testing Notes
+### Step 5: Add Testing Notes
 
 ```markdown
 ## Testing This Pattern
@@ -81,7 +94,7 @@ Before relying on this:
 **Honest note:** [Any limitations, time requirements, etc.]
 ```
 
-### Step 5: Include Vasana Section (REQUIRED)
+### Step 6: Include Vasana Section (REQUIRED)
 
 ```markdown
 ## Vasana
@@ -158,6 +171,13 @@ Modify freely. Keep this section intact.
 
 ---
 
+## Cross-Domain Verification
+
+**Mechanism check:** [What shared mechanism (not just shared vocabulary) makes this pattern apply across domains?]
+**Domains verified:** [List domains where the mechanism has been checked, not just where the name sounds applicable]
+
+---
+
 ## Testing This Pattern
 
 Before relying on this:
@@ -173,4 +193,14 @@ Before relying on this:
 
 ## Where to Save
 
-New patterns go in the pattern-library: `skills/pattern-library/vasanas/[pattern-name].md`
+New patterns go to the **canonical pattern-library**, not the plugin cache.
+
+- **Default (not yet library-ready):** `~/ClaudeShared/pattern-library/_drafts/[pattern-name].md`
+- **Library-quality (tested, cross-domain):** `~/ClaudeShared/pattern-library/patterns/[pattern-name].md`
+- **Pattern seeds:** `~/ClaudeShared/pattern-library/patterns/pattern-seeds/[seed-name].md`
+
+The canonical library path is configured per-user; substitute the user's configured path if it differs from the `~/ClaudeShared/pattern-library/` default.
+
+**Do NOT save user-recorded patterns to** `skills/pattern-library/patterns/` — that path is plugin cache (read-only, overwritten on update).
+
+**Exception:** Official plugin releases may add seed patterns to `skills/pattern-library/patterns/` as part of the bundled library. That's distinct from user-recorded patterns and happens via PR to the plugin source, not via this skill.
