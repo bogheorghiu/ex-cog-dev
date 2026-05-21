@@ -14,7 +14,7 @@ When vasana-system was installed as a remote plugin, the pattern library was rea
 
 The canonical pattern-library now lives at a user-writable location (`ClaudeShared/pattern-library/` by default). All reads and writes go there. The plugin's bundled patterns serve as seed data for first-time setup.
 
-The full design of the install hook, runtime path resolution, and three-way merge on plugin update is captured in `HANDOFF-pattern-library-relocation-2026-05-21.md`, bundled at the plugin root. The deferred items in this file summarize what's pending; the bundled handoff has the full rationale and implementation sketches. See also PR #419 for the rationale of the current canonical-library approach.
+The full design of the install hook, runtime path resolution, and three-way merge on plugin update is captured in `DESIGN-pattern-library-relocation.md`, bundled at the plugin root. The deferred items in this file summarize what's pending; the bundled design doc has the full rationale and implementation sketches. See also PR #419 for the rationale of the current canonical-library approach.
 
 ### Current workaround (single-user)
 
@@ -39,4 +39,4 @@ The `/pattern-library browse` and `/pattern-library update` commands assume `~/C
 3. **Three-way merge on update** — reconcile upstream changes with user additions
 4. **Two-way contribution flow** — user patterns can be proposed upstream via PR
 
-These are tracked in the HANDOFF file above.
+These are tracked in `DESIGN-pattern-library-relocation.md` (bundled at the plugin root).
