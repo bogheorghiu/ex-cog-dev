@@ -50,7 +50,7 @@ let's step back and observe your debugging process itself. What assumptions
 are you making about [X]? Have you seen this pattern in a different domain?
 
 Try: [Specific concrete technique]
-See: pattern-library vasanas/cross-domain-scanning.md
+See: pattern-library patterns/cross-domain-scanning.md
 ```
 
 ### Tier 2: Implicit Stuckness (Unconscious)
@@ -79,7 +79,7 @@ Exit ramps:
 3. [Framework dissolution - abandon current pattern]
 
 The framework isn't broken - but your framing of the problem might be.
-See: pattern-library vasanas/framework-dissolution.md
+See: pattern-library patterns/framework-dissolution.md
 ```
 
 ### Tier 3: Self-Observation (Claude Detects Own Loop)

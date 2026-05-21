@@ -19,7 +19,7 @@ Truth serves better than comfort. Admit limitations rather than fabricate soluti
 
 ## Behavioral Patterns (Vasanas)
 
-Detailed pattern files are in `vasanas/` directory. Each contains:
+Detailed pattern files are in `patterns/` directory. Each contains:
 - Full principle explanation
 - Application guidance
 - Code examples
@@ -28,20 +28,22 @@ Detailed pattern files are in `vasanas/` directory. Each contains:
 
 **Available Patterns:**
 
-1. **[Inductive-Deductive Boundary](vasanas/inductive-deductive-boundary.md)** - Know where fuzzy matching ends and deterministic execution begins; concepts (inductive) + rules (deductive) = emergent intelligence
-2. **[Rooted Flight](vasanas/rooted-flight.md)** - Constraints create possibilities; master fundamentals to transcend
-3. **[Interface as Reality-Creation](vasanas/interface-as-reality.md)** - Design interfaces as active translation layers
-4. **[Pattern-Recognition Witnessing](vasanas/pattern-recognition-witness.md)** - Watch your debugging process to find blind spots
-5. **[Concrete-Abstract Dance](vasanas/concrete-abstract-dance.md)** - Build concrete first, abstract after
-6. **[Cross-Domain Scanning](vasanas/cross-domain-scanning.md)** - Find solutions in different domains
-7. **[Framework Dissolution](vasanas/framework-dissolution.md)** - Know when to transcend frameworks
-8. **[Groove-Deepening](vasanas/groove-deepening.md)** - Repeated patterns become both productive habits and invisible constraints
-9. **[Optimizing-Wrong-Stakeholder](vasanas/optimizing-wrong-stakeholder.md)** - Optimize for user value, not task convenience
-10. **[False Consciousness as Behavior](vasanas/false-consciousness-as-behavior.md)** - When correction attempts address beliefs but the pattern operates below propositional belief; behavior replaces behavior, not arguments
-11. **[Mechanism, Not Metaphor](vasanas/mechanism-not-metaphor.md)** - Cross-domain pattern recognition fails when surface similarity replaces mechanism check; ask what mechanism transfers, not what shape rhymes
-12. **[Description Becomes Embodiment](vasanas/description-becomes-embodiment.md)** - When a methodology is described with structural faithfulness, the description performs it; the pharmakon (description-as-instruction) is the mechanism, not a flaw
+1. **[Inductive-Deductive Boundary](patterns/inductive-deductive-boundary.md)** - Know where fuzzy matching ends and deterministic execution begins; concepts (inductive) + rules (deductive) = emergent intelligence
+2. **[Rooted Flight](patterns/rooted-flight.md)** - Constraints create possibilities; master fundamentals to transcend
+3. **[Interface as Reality-Creation](patterns/interface-as-reality.md)** - Design interfaces as active translation layers
+4. **[Pattern-Recognition Witnessing](patterns/pattern-recognition-witness.md)** - Watch your debugging process to find blind spots
+5. **[Concrete-Abstract Dance](patterns/concrete-abstract-dance.md)** - Build concrete first, abstract after
+6. **[Cross-Domain Scanning](patterns/cross-domain-scanning.md)** - Find solutions in different domains
+7. **[Framework Dissolution](patterns/framework-dissolution.md)** - Know when to transcend frameworks
+8. **[Groove-Deepening](patterns/groove-deepening.md)** - Repeated patterns become both productive habits and invisible constraints
+9. **[Optimizing-Wrong-Stakeholder](patterns/optimizing-wrong-stakeholder.md)** - Optimize for user value, not task convenience
+10. **[False Consciousness as Behavior](patterns/false-consciousness-as-behavior.md)** - When correction attempts address beliefs but the pattern operates below propositional belief; behavior replaces behavior, not arguments
+11. **[Mechanism, Not Metaphor](patterns/mechanism-not-metaphor.md)** - Cross-domain pattern recognition fails when surface similarity replaces mechanism check; ask what mechanism transfers, not what shape rhymes
+12. **[Description Becomes Embodiment](patterns/description-becomes-embodiment.md)** - When a methodology is described with structural faithfulness, the description performs it; the pharmakon (description-as-instruction) is the mechanism, not a flaw
+13. **[Convergence by Accumulation](patterns/convergence-by-accumulation.md)** - Genuine convergence comes from accumulating evidence until only one reading survives, not from starting with the "best" interpretation
+14. **[Frame Pushback](patterns/frame-pushback.md)** - When a system resists the frame being applied to it, the resistance itself carries information about what frame the system actually needs
 
-**Note**: To discover NEW patterns, see `record-pattern` skill. For stuckness detection, see `break-pattern` skill. The catalog above is hand-maintained — adding a new pattern requires appending an entry to this list. Automating this is tracked upstream as `bogheorghiu/Claude-Code-Projects#403`; full analysis in `HANDOFF-static-vs-dynamic-catalog.md` (same directory).
+**Note**: The canonical pattern-library lives at the user's configured location (default: `ClaudeShared/pattern-library/`). The catalog above reflects patterns at time of plugin release. Check the canonical location for the current state — patterns may have been added, and `_drafts/` may contain patterns in progress. To discover NEW patterns, see `record-pattern` skill. For stuckness detection, see `break-pattern` skill.
 
 ## Operational Triggers
 

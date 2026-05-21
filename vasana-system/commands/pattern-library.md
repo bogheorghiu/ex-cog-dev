@@ -17,13 +17,14 @@ Manage the pattern library — browse existing patterns, add new ones, or update
 ## Actions
 
 ### browse (default)
-List all patterns in `skills/pattern-library/vasanas/`.
+List all patterns in the canonical pattern-library `patterns/` directory (default: `ClaudeShared/pattern-library/patterns/`). The bundled `skills/pattern-library/patterns/` is seed data — falls back to it only if no canonical location is configured.
 
 For each pattern found, show:
 ```
 ## [Pattern Name]
 **Description:** [From file content]
-**Location:** skills/pattern-library/vasanas/[name].md
+**Location:** ~/ClaudeShared/pattern-library/patterns/[name].md
+  (or configured canonical location — see plugin CLAUDE.md; falls back to bundled `skills/pattern-library/patterns/[name].md` if no canonical location is set)
 ---
 ```
 
@@ -41,5 +42,5 @@ If no name: Ask the user to describe the interaction pattern, then suggest a nam
 ### update
 Update an existing pattern.
 
-If name provided: Read the pattern at `skills/pattern-library/vasanas/$ARGUMENTS.name.md` and discuss changes.
+If name provided: Read the pattern at `~/ClaudeShared/pattern-library/patterns/$ARGUMENTS.name.md` (the canonical library; falls back to bundled `skills/pattern-library/patterns/$ARGUMENTS.name.md` if no canonical location is set) and discuss changes.
 If no name: List patterns and ask which to update.
