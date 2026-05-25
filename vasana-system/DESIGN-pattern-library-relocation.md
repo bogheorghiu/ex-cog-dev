@@ -71,6 +71,12 @@ After the user has added/edited patterns locally:
   - Optionally opens a PR (gh CLI).
 - The point: closes the loop. User adds value locally → easy path to push that value back to the shared library.
 
-## On the bidirectional flow
+## VIKASA note
 
-Structurally, item 4 (two-way contribution flow) is [[convergence-by-accumulation]] applied to a plugin ecosystem: the plugin developer's source and the user's customizations converge by mutual contribution rather than by parallel maintenance.
+The user mentioned "VIKASA-type functionality" without elaborating. Interpretation in this context: "a two-way plugin-update ecosystem(-ish)" — i.e., upstream → user is the normal direction; user → upstream becomes a first-class path too, with tooling support. The ecosystem improves both ways simultaneously.
+
+Possible etymology: the Sanskrit word *vikāsa* / *vikasita* — "unfoldment, blossoming, development" — fits the bidirectional-development theme thematically.
+
+Structurally, this is [[convergence-by-accumulation]] applied to a plugin ecosystem: the plugin developer's source and the user's customizations converge by mutual contribution rather than by parallel maintenance.
+
+If a downstream consumer has a precise definition of VIKASA (or any equivalent project term), that definition should be hooked into the eventual install-hook + propose-upstream design.

@@ -2,11 +2,30 @@
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Optional
 from .models import MemoryEntry, CurrentTask, MemoryConfig, Relation
 from .claude_agent import ClaudeAgent
+
+
+# Schema version expected by this code. _load_config warns (but does NOT
+# mutate) when the on-disk config has an older version. See migrate_config
+# for the opt-in upgrade path.
+CURRENT_CONFIG_SCHEMA = "1.1"
+
+
+def _version_tuple(v: str) -> tuple[int, ...]:
+    """Parse a dotted version string into a tuple of ints for comparison.
+
+    Avoids the string-ordering trap where "1.9" > "1.10" alphabetically.
+    Returns (0,) for unparseable strings — older-than-anything fallback.
+    """
+    try:
+        return tuple(int(p) for p in v.split("."))
+    except (ValueError, AttributeError):
+        return (0,)
 
 
 class LocalFileBackend:
@@ -19,6 +38,13 @@ class LocalFileBackend:
         self.base_path = Path(base_path).expanduser()
         self._ensure_structure()
         self.config = self._load_config()
+
+        # Per-agent compaction failure flag. When True, auto-compaction
+        # is skipped for that agent (still allowed via manual compress()).
+        # Set by compress() on summarization failure; cleared on success.
+        # In-memory only — resets on server restart, providing a natural
+        # retry cadence per session without spamming on every write.
+        self._compaction_failed: dict[str, bool] = {}
 
     def _ensure_structure(self):
         """Create directory structure if it doesn't exist."""
@@ -56,11 +82,108 @@ class LocalFileBackend:
             )
 
     def _load_config(self) -> MemoryConfig:
-        """Load configuration from config.json."""
+        """Load configuration from config.json.
+
+        Passive migration policy: if the on-disk config's schema version
+        is older than CURRENT_CONFIG_SCHEMA, print a one-line warning to
+        stderr suggesting the migrate_config MCP tool. Never mutates user
+        config without explicit user action (call to migrate_config).
+        Respects users who set their own thresholds intentionally.
+        """
         config_path = self.base_path / "config.json"
-        if config_path.exists():
-            return MemoryConfig(**json.loads(config_path.read_text()))
-        return MemoryConfig()
+        if not config_path.exists():
+            # Fresh install — defaults from MemoryConfig() (current schema).
+            return MemoryConfig()
+
+        try:
+            raw = json.loads(config_path.read_text())
+        except json.JSONDecodeError as e:
+            # Don't crash MCP startup on a malformed config; fall back to
+            # defaults and warn loudly. User can fix the file and restart.
+            print(
+                f"rel-mem: {config_path} is malformed ({e}). "
+                f"Using package defaults for this session — fix the file and restart.",
+                file=sys.stderr,
+            )
+            return MemoryConfig()
+
+        on_disk_version = raw.get("version", "1.0")
+        # Warn only on UPGRADE (disk older than code). On downgrade — e.g.,
+        # someone rolls back to a previous package — the warning body would
+        # describe pre-fix defaults that no longer apply. Skip silently.
+        if _version_tuple(on_disk_version) < _version_tuple(CURRENT_CONFIG_SCHEMA):
+            print(
+                f"rel-mem: config schema is v{on_disk_version} "
+                f"(current is v{CURRENT_CONFIG_SCHEMA}). "
+                f"Pre-fix defaults (auto_summarize_at=10, episodic_max=10) "
+                f"trigger compaction every 10 entries — now fail-safe thanks "
+                f"to PR #425, but wastes a subprocess spawn per failure. To "
+                f"opt in to new defaults call the `migrate_config` MCP tool, "
+                f"or edit {config_path} directly. Continuing with your current "
+                f"values.",
+                file=sys.stderr,
+            )
+        return MemoryConfig(**raw)
+
+    def migrate_config(self) -> str:
+        """Opt-in migration of on-disk config to the current schema.
+
+        Idempotent. Only updates fields whose values are at the known-bad
+        pre-fix defaults (e.g., `auto_summarize_at == 10`). User-customized
+        values (anything other than 10) are preserved untouched. Always
+        bumps the schema version to CURRENT_CONFIG_SCHEMA after running.
+
+        Returns a human-readable summary of what changed (or didn't).
+        """
+        config_path = self.base_path / "config.json"
+        if not config_path.exists():
+            return "No config file on disk — nothing to migrate. Defaults are current."
+
+        try:
+            raw = json.loads(config_path.read_text())
+        except json.JSONDecodeError as e:
+            return f"Error: {config_path} is malformed and cannot be migrated: {e}"
+        on_disk_version = raw.get("version", "1.0")
+        changes: list[str] = []
+
+        # READ-only probe; do NOT mutate raw unless a migration actually
+        # applies. (Earlier version used setdefault here, which created an
+        # empty `memory_limits: {}` in raw even when nothing was being
+        # migrated — Pydantic's default_factory doesn't fire on explicit
+        # empty dicts, so the resulting MemoryConfig had no thresholds and
+        # the next access KeyError'd. Caught by bot review on PR #426.)
+        limits_view = raw.get("memory_limits", {})
+        # Both `auto_summarize_at` and `episodic_max` had pre-fix default 10
+        # (see git history for models.py prior to PR #425) and were raised
+        # together to 100. Migrating both keeps them in sync.
+        auto_at_stale = limits_view.get("auto_summarize_at") == 10
+        epi_max_stale = limits_view.get("episodic_max") == 10
+
+        if auto_at_stale or epi_max_stale:
+            limits = raw.setdefault("memory_limits", {})
+            if auto_at_stale:
+                limits["auto_summarize_at"] = 100
+                changes.append("memory_limits.auto_summarize_at: 10 -> 100")
+            if epi_max_stale:
+                limits["episodic_max"] = 100
+                changes.append("memory_limits.episodic_max: 10 -> 100")
+
+        # Always bump schema version on a migration call, even if no values
+        # changed (suppresses the load-time warning on the next start).
+        # Tuple comparison handles future "1.10" > "1.9" correctly.
+        if _version_tuple(on_disk_version) < _version_tuple(CURRENT_CONFIG_SCHEMA):
+            raw["version"] = CURRENT_CONFIG_SCHEMA
+            changes.append(f"version: {on_disk_version} -> {CURRENT_CONFIG_SCHEMA}")
+
+        if not changes:
+            return f"Config already at schema v{CURRENT_CONFIG_SCHEMA} with current defaults. Nothing to do."
+
+        config_path.write_text(json.dumps(raw, indent=2) + "\n")
+        # Update this Backend instance directly from the already-validated
+        # raw dict. Avoids a redundant file read + version-check that would
+        # only have re-validated what we just wrote.
+        self.config = MemoryConfig(**raw)
+        return "Config migrated:\n  - " + "\n  - ".join(changes)
 
     def _default_core_memories(self) -> str:
         """Default core memories template."""
@@ -176,14 +299,19 @@ Use the MCP tool `add_core_memory(category, content, justification)` to propose 
         # Update index
         self._update_index(agent, layer)
 
-        # Check if compression needed (auto-compress at threshold)
+        # Check if compression needed. Uses `>=` for liveness (recover natural
+        # cadence as soon as count reaches threshold), gated by a per-agent
+        # failure flag set by `compress()` so we don't subprocess-spawn-storm
+        # while compaction is broken. The flag clears on successful
+        # compaction OR on server restart (in-memory only); manual
+        # `compress(agent)` always retries regardless of the flag.
         if layer == "episodic":
             episodic_file = agent_dir / "episodic.jsonl"
             if episodic_file.exists():
                 count = sum(1 for _ in episodic_file.read_text().strip().split("\n") if _)
                 if count >= self.config.memory_limits["auto_summarize_at"]:
-                    # Auto-compress when threshold reached
-                    self.compress(agent)
+                    if not self._compaction_failed.get(agent, False):
+                        self.compress(agent)
 
         return entry.timestamp.isoformat()
 
@@ -424,22 +552,57 @@ Use the MCP tool `add_core_memory(category, content, justification)` to propose 
         # Convert entries to dicts for agent
         entries_data = [entry.model_dump(mode="json") for entry in entries]
 
+        # Hoisted above try/except: both branches write to compost.
+        compost_file = agent_dir / "compost.jsonl"
+        date_range = f"{entries[0].timestamp.isoformat()} to {entries[-1].timestamp.isoformat()}"
+
         try:
             summary = claude.summarize_memories(entries_data, agent)
         except Exception as e:
-            # Fallback to simple summary if agent fails
-            summary = f"Week of work: {len(entries)} tasks completed from {entries[0].timestamp.date()} to {entries[-1].timestamp.date()}"
-            print(f"Warning: Claude agent summarization failed, using fallback: {e}")
+            # CRITICAL: Do not wipe episodic on summarization failure.
+            #
+            # Previous behavior wrote a degenerate "Week of work: N tasks
+            # completed..." fallback summary AND cleared episodic. Combined
+            # with the broken `claude --headless` invocation in claude_agent,
+            # every threshold-triggered compaction silently destroyed N raw
+            # entries — months of memory loss across all agents before the
+            # 2026-05-25 incident. The fallback summary contained no content,
+            # only a count, so the raw data was unrecoverable.
+            #
+            # Preserve raw entries on failure. Log a marker to compost so the
+            # failure is auditable. Episodic may briefly exceed
+            # auto_summarize_at; next successful compaction will reduce it.
+            print(
+                f"Warning: rel-mem summarization failed for agent {agent!r}, "
+                f"episodic preserved ({len(entries)} entries): {e}"
+            )
+            failure_marker = MemoryEntry(
+                layer="compost",
+                agent=agent,
+                content=f"Compaction failed, raw entries preserved in episodic: {e}",
+                metadata={
+                    "original_entry_count": len(entries),
+                    "date_range": date_range,
+                    "summarized_by": "compaction_failure_marker",
+                    "destructive": False,
+                },
+            )
+            with open(compost_file, "a") as f:
+                f.write(failure_marker.to_jsonl() + "\n")
+            self._update_index(agent, "compost")
+            # Set the per-agent flag so memorize() doesn't retry every write.
+            # Manual compress() always retries (it bypasses memorize()'s gate).
+            self._compaction_failed[agent] = True
+            return f"Compaction failed; {len(entries)} episodic entries preserved. Reason: {e}"
 
-        # Move entries to compost
-        compost_file = agent_dir / "compost.jsonl"
+        # Successful summarization — move entries to compost and clear episodic
         compost_entry = MemoryEntry(
             layer="compost",
             agent=agent,
             content=summary,
             metadata={
                 "original_entry_count": len(entries),
-                "date_range": f"{entries[0].timestamp} to {entries[-1].timestamp}",
+                "date_range": date_range,
                 "summarized_by": "claude_agent",
             },
         )
@@ -447,8 +610,11 @@ Use the MCP tool `add_core_memory(category, content, justification)` to propose 
         with open(compost_file, "a") as f:
             f.write(compost_entry.to_jsonl() + "\n")
 
-        # Clear episodic file
+        # Clear episodic file (only on confirmed successful summarization)
         episodic_file.write_text("")
+
+        # Clear the per-agent failure flag — natural cadence resumes.
+        self._compaction_failed.pop(agent, None)
 
         self._update_index(agent, "episodic")
         self._update_index(agent, "compost")

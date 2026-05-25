@@ -59,10 +59,30 @@ Provide only the summary, no preamble. Make it concise and actionable."""
             )
 
             if result.returncode != 0:
-                return f"Error summarizing memories: {result.stderr}"
+                # CRITICAL: raise rather than returning an error string. The
+                # caller (backend.compress) wraps this in try/except expecting
+                # exceptions on failure. Returning an error string masquerades
+                # as a successful summary and downstream wipes the raw episodic
+                # entries — destroying N memories per failure. Incident
+                # 2026-05-25: months of accumulated entries lost this way
+                # because the harness no longer accepts `--headless`.
+                raise RuntimeError(
+                    f"Claude agent summarization failed (exit {result.returncode}): "
+                    f"{result.stderr.strip() or 'no stderr'}"
+                )
 
             # Extract summary from output
             summary = result.stdout.strip()
+
+            # Guard: exit code 0 + empty stdout is also a failure for our
+            # purposes — caller would treat "" as a successful summary and
+            # clear episodic with an empty-content compost entry, losing
+            # raw data with no recoverable summary. Same destructive class
+            # as the pre-fix `return "Error..."` path.
+            if not summary:
+                raise RuntimeError(
+                    "Claude agent exited 0 but produced no summary output"
+                )
 
             # Remove any markdown formatting if present
             if summary.startswith("```") and summary.endswith("```"):
@@ -88,6 +108,14 @@ Provide only the summary, no preamble. Make it concise and actionable."""
 
         Returns:
             Filtered and ranked list of memories
+
+        TODO: this method passes `--headless` to the `claude` CLI (same as
+        `summarize_memories` did before the 2026-05-25 fix). Modern Claude
+        Code doesn't accept `--headless` — exit code is non-zero and the
+        function silently falls back to text matching on every call. So
+        semantic search has been a degraded text search for some time.
+        Replace `--headless` with `--print` / `-p` as part of the same
+        followup PR that fixes summarization.
         """
         # Create temp file with memories
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
