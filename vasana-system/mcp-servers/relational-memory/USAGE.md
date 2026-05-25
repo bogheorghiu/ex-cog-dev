@@ -35,10 +35,9 @@ Add to your project's `.mcp.json`:
 The MCP tools are now available in Claude Code:
 
 ```bash
-claude --headless << 'EOF'
-# The memory tools are available!
-# memorize(), recall(), compress(), etc.
-EOF
+# Note: --headless is no longer a valid flag in modern Claude Code.
+# Use --print / -p instead.
+claude -p "Load my memories and continue working on my current task."
 ```
 
 ## Memory Tools Reference
@@ -55,7 +54,7 @@ EOF
 
 **Layers:**
 - **`recent`**: Current session context (cleared when you finish your task)
-- **`episodic`**: Session summaries (auto-compresses at 10 entries)
+- **`episodic`**: Session summaries (auto-compresses at 100 entries; raw entries preserved if summarization fails)
 - **`compost`**: Archived old memories (long-term storage)
 
 **Example:**
@@ -184,9 +183,9 @@ if task:
 
 **Compress episodic memories into summary.**
 
-Condenses 10+ episodic entries into 2-3 key sentences using a Claude agent, then moves originals to compost (archive).
+Condenses 100+ episodic entries into 2-3 key sentences using a Claude agent, then moves originals to compost (archive). If summarization fails, raw entries are preserved and a failure marker is written to compost instead.
 
-**Normally happens automatically** when episodic layer reaches 10 entries. Use this to manually trigger.
+**Normally happens automatically** when episodic layer reaches 100 entries. Use this to manually trigger (also retries if auto-compaction previously failed).
 
 **Example:**
 
@@ -236,6 +235,27 @@ Returns the full core-memories.md content (personality principles, learnings, an
 ```python
 core = get_core_memories()
 print(core)  # Full markdown document
+```
+
+---
+
+### `migrate_config()`
+
+**Upgrade `~/.claude-memory/config.json` to the current schema.**
+
+Idempotent: only updates fields still at the known-bad pre-fix defaults (e.g., `auto_summarize_at == 10`). User-customized values are left untouched. Always bumps the schema version so the load-time warning stops firing on the next restart.
+
+**When to call:** After seeing a startup warning like `rel-mem: config schema is v1.0 (current is v1.1)`.
+
+**Example:**
+
+```python
+migrate_config()
+# Returns: "Config migrated:\n  - memory_limits.auto_summarize_at: 10 -> 100\n  - version: 1.0 -> 1.1"
+
+# Calling again is safe — idempotent
+migrate_config()
+# Returns: "Config already at schema v1.1 with current defaults. Nothing to do."
 ```
 
 ---
@@ -309,7 +329,7 @@ for decision in important_decisions:
         metadata=decision["metadata"]
     )
 
-# System will auto-compress when you hit 10 episodic entries
+# System will auto-compress when you hit 100 episodic entries
 ```
 
 ### Workflow 4: Learning from Past Sessions
@@ -399,7 +419,7 @@ memorize(
 )
 ```
 
-**Compost:** Auto-generated from 10 episodic entries
+**Compost:** Auto-generated from 100 episodic entries
 ```
 "Month focused on core features: auth, payments, notifications—all deployed with 95% test coverage"
 ```
@@ -448,8 +468,8 @@ Edit `~/.claude-memory/config.json`:
 {
   "memory_limits": {
     "recent_max": 20,
-    "episodic_max": 10,
-    "auto_summarize_at": 10
+    "episodic_max": 100,
+    "auto_summarize_at": 100
   },
   "summarization": {
     "method": "claude_agent",
@@ -460,9 +480,13 @@ Edit `~/.claude-memory/config.json`:
 
 **Options:**
 - `recent_max`: Max recent memories before warning (default: 20)
-- `episodic_max`: Max episodic memories before auto-compression (default: 10)
-- `auto_summarize_at`: Trigger compression at N entries (default: 10)
+- `episodic_max`: Max episodic memories before auto-compression (default: 100)
+- `auto_summarize_at`: Trigger compression at N entries (default: 100)
 - `model`: Which Claude model for summarization - `"sonnet"` (balanced) or `"haiku"` (faster/cheaper)
+
+**Upgrading config:** If you see a startup warning about schema version mismatch,
+call the `migrate_config` MCP tool to apply safe defaults (your customizations are preserved).
+Only fields still at the old defaults are updated; user-set values are left untouched.
 
 ---
 

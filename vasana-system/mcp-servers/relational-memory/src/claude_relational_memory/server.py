@@ -180,7 +180,7 @@ async def list_tools() -> list[Tool]:
             name="compress",
             description=(
                 "Compress episodic memories into summary. "
-                "Condenses 10+ entries into 2-3 key sentences using Claude agent. "
+                "Condenses entries (default threshold: 100) into 2-3 key sentences using Claude agent. "
                 "Normally happens automatically when episodic layer reaches threshold."
             ),
             inputSchema={
@@ -192,6 +192,21 @@ async def list_tools() -> list[Tool]:
                     },
                 },
                 "required": ["agent_name"],
+            },
+        ),
+        Tool(
+            name="migrate_config",
+            description=(
+                "Opt-in upgrade of ~/.claude-memory/config.json to the current "
+                "schema. Idempotent: only changes fields still at the known-bad "
+                "pre-fix defaults (e.g., auto_summarize_at == 10). User-customized "
+                "values are preserved. Always bumps schema version so the load-time "
+                "warning stops firing. Returns a summary of what changed."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
             },
         ),
         # =====================================================================
@@ -513,6 +528,10 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
     elif name == "compress":
         result = memory_backend.compress(arguments["agent_name"])
+        return [TextContent(type="text", text=result)]
+
+    elif name == "migrate_config":
+        result = memory_backend.migrate_config()
         return [TextContent(type="text", text=result)]
 
     # =========================================================================

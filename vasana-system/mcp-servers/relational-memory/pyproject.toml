@@ -1,6 +1,6 @@
 [project]
 name = "claude-relational-memory"
-version = "1.0.0"
+version = "1.0.2"
 description = "Persistent multi-layered relational memory system for AI agents across Claude Code sessions"
 authors = [
     {name = "bogheorghiu", email = "bogheorghiu@users.noreply.github.com"},

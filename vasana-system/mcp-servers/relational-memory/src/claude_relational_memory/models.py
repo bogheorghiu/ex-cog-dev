@@ -99,7 +99,11 @@ class Relation(BaseModel):
 class MemoryConfig(BaseModel):
     """Configuration for memory system."""
 
-    version: str = "1.0"
+    # Schema version. Bumped when default values change in a way that
+    # affects existing on-disk configs. See _load_config in backend.py
+    # for the migration policy (passive warning + opt-in via migrate_config
+    # MCP tool — never auto-mutates user config).
+    version: str = "1.1"
     storage: dict = Field(
         default_factory=lambda: {
             "backend": "local",
@@ -111,8 +115,8 @@ class MemoryConfig(BaseModel):
     memory_limits: dict = Field(
         default_factory=lambda: {
             "recent_max": 20,
-            "episodic_max": 10,
-            "auto_summarize_at": 10,
+            "episodic_max": 100,
+            "auto_summarize_at": 100,
         }
     )
     summarization: dict = Field(

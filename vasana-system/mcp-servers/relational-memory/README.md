@@ -11,7 +11,7 @@ Persistent multi-layered memory system for AI agents working across Claude Code 
 ## Features
 
 - 🧠 **5 Memory Layers:** Recent, Current Task, Episodic, Compost, Core Memories
-- 🔄 **Auto-Summarization:** Episodic memories compress at 10 entries
+- 🔄 **Auto-Summarization:** Episodic memories compress at 100 entries (fails safe — episodic preserved if summarization fails)
 - 🌐 **Cross-Project:** Agents remember experiences from all projects
 - 🔑 **No API Keys:** Uses Claude Code agents for LLM operations
 - 💾 **Simple Storage:** JSONL files, human-readable, git-friendly
@@ -26,7 +26,7 @@ Current session context (cleared on session end)
 What the agent is actively working on right now
 
 ### Episodic Memory
-Last 10 session summaries (auto-summarizes when full)
+Up to 100 session entries (auto-summarizes when full; compaction failure preserves raw entries)
 
 ### Memory Compost
 Archive of old/summarized memories
@@ -102,7 +102,7 @@ update_current_task(
     status="in_progress"
 )
 
-# Compress episodic memories (manual trigger, auto at 10 entries)
+# Compress episodic memories (manual trigger, auto at 100 entries)
 compress(agent_name="tdd-implementer")
 ```
 
@@ -110,9 +110,10 @@ compress(agent_name="tdd-implementer")
 
 ```bash
 # Agent automatically loads memory on startup
-claude --headless << 'EOF'
-Load my memories and continue working on my current task.
-EOF
+# Note: --headless is no longer a valid flag in modern Claude Code.
+# Use --print / -p instead (summarization via ClaudeAgent is currently broken
+# until claude_agent.py is updated to drop --headless).
+claude -p "Load my memories and continue working on my current task."
 ```
 
 The MCP tools are available automatically:
@@ -122,7 +123,8 @@ The MCP tools are available automatically:
 - `get_current_task` - Get current task info
 - `add_core_memory` - Add permanent learning
 - `get_core_memories` - Read all core memories
-- `compress` - Compress episodic memories (auto at 10 entries)
+- `compress` - Compress episodic memories (auto at 100 entries; preserves raw data on failure)
+- `migrate_config` - Opt-in upgrade of config.json to current schema (preserves user-customized values)
 
 ### Entity Query Layer (kg-memory compatible)
 
@@ -282,8 +284,8 @@ Edit `~/.claude-memory/config.json`:
 {
   "memory_limits": {
     "recent_max": 20,
-    "episodic_max": 10,
-    "auto_summarize_at": 10
+    "episodic_max": 100,
+    "auto_summarize_at": 100
   },
   "summarization": {
     "method": "claude_agent",
@@ -291,6 +293,10 @@ Edit `~/.claude-memory/config.json`:
   }
 }
 ```
+
+**Upgrading config:** If you see a startup warning about schema version mismatch,
+call the `migrate_config` MCP tool to apply safe defaults (your customizations are preserved).
+Only fields still at the old defaults are updated; user-set values are left untouched.
 
 ## Development
 
