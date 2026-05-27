@@ -12,6 +12,11 @@ class ClaudeAgent:
 
     def __init__(self, model: str = "sonnet", headless: bool = True):
         self.model = model
+        # headless=True (default) appends `--print` to the claude CLI call,
+        # giving non-interactive subprocess-friendly behavior. headless=False
+        # currently appends no mode flag, which is untested with the
+        # subprocess-piped stdin pattern these methods use; no caller in
+        # this codebase constructs ClaudeAgent(headless=False) today.
         self.headless = headless
 
     def summarize_memories(self, memories: list[dict], agent_name: str) -> str:
@@ -44,14 +49,17 @@ Memory entries:
 
 Provide only the summary, no preamble. Make it concise and actionable."""
 
-            # Run Claude Code agent
+            # Run Claude Code agent. Modern claude CLI uses --print for
+            # non-interactive mode; --headless / --no-headless are gone and
+            # passing them now exits non-zero (see 2026-05-25 incident:
+            # months of episodic memory lost because every summarization
+            # silently failed). Caller (compress) handles the exception by
+            # preserving the raw episodic entries.
+            cmd = ["claude", "--model", self.model]
+            if self.headless:
+                cmd.append("--print")
             result = subprocess.run(
-                [
-                    "claude",
-                    "--model",
-                    self.model,
-                    "--headless" if self.headless else "--no-headless",
-                ],
+                cmd,
                 input=prompt,
                 capture_output=True,
                 text=True,
@@ -109,13 +117,6 @@ Provide only the summary, no preamble. Make it concise and actionable."""
         Returns:
             Filtered and ranked list of memories
 
-        TODO: this method passes `--headless` to the `claude` CLI (same as
-        `summarize_memories` did before the 2026-05-25 fix). Modern Claude
-        Code doesn't accept `--headless` — exit code is non-zero and the
-        function silently falls back to text matching on every call. So
-        semantic search has been a degraded text search for some time.
-        Replace `--headless` with `--print` / `-p` as part of the same
-        followup PR that fixes summarization.
         """
         # Create temp file with memories
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -134,13 +135,15 @@ Memories:
 
 Return ONLY a JSON array of indices, like: [3, 7, 1, 12, 5]"""
 
+            # Same --print rationale as summarize_memories above. Falling
+            # back to text matching on subprocess failure is acceptable
+            # here — semantic_search is a recall enhancement, not a data
+            # path; degraded search is annoying, not destructive.
+            cmd = ["claude", "--model", self.model]
+            if self.headless:
+                cmd.append("--print")
             result = subprocess.run(
-                [
-                    "claude",
-                    "--model",
-                    self.model,
-                    "--headless" if self.headless else "--no-headless",
-                ],
+                cmd,
                 input=prompt,
                 capture_output=True,
                 text=True,

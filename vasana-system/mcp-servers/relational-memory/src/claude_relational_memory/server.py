@@ -429,7 +429,24 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Handle tool calls."""
+    """Handle tool calls.
+
+    Thin wrapper around _dispatch_tool that injects the stale-schema
+    warning into the first tool response of the session when the config
+    schema is older than CURRENT_CONFIG_SCHEMA. stderr warnings from
+    MCP subprocesses don't reach the user/agent (they go to daemon logs
+    only); surfacing the warning as part of a tool response is the only
+    way the user actually sees the prompt to call migrate_config.
+    """
+    result = await _dispatch_tool(name, arguments)
+    warning = memory_backend.consume_stale_warning()
+    if warning and result and isinstance(result[0], TextContent):
+        result[0] = TextContent(type="text", text=warning + result[0].text)
+    return result
+
+
+async def _dispatch_tool(name: str, arguments: dict) -> list[TextContent]:
+    """Existing tool dispatcher, renamed so call_tool above can wrap it."""
 
     if name == "memorize":
         # Validate required fields

@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MemoryEntry(BaseModel):
@@ -98,6 +98,12 @@ class Relation(BaseModel):
 
 class MemoryConfig(BaseModel):
     """Configuration for memory system."""
+
+    # Forgive unknown fields: a hand-edited config.json with an extra key
+    # shouldn't crash MCP startup. Pydantic's default would raise
+    # ValidationError; we want graceful degradation since rel-mem is
+    # boot-critical for any session that has a vasana-system memory.
+    model_config = ConfigDict(extra="ignore")
 
     # Schema version. Bumped when default values change in a way that
     # affects existing on-disk configs. See _load_config in backend.py

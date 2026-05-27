@@ -1,7 +1,7 @@
 # Claude Relational Memory MCP Server
 
-> **Status: Work-in-Progress.** Core memorize/recall functionality works. Some features
-> (auto-summarization, pattern discovery) have incomplete implementations. API surface
+> **Status: Work-in-Progress.** Core memorize/recall functionality and auto-summarization
+> work. Some features (pattern discovery) have incomplete implementations. API surface
 > may change. Use for experimentation, not production workflows.
 
 > **Attribution:** Based on the autonomous development system by [@lizTheDeveloper](https://github.com/lizTheDeveloper) at [Multiverse School](https://multiverse.school)
@@ -110,9 +110,6 @@ compress(agent_name="tdd-implementer")
 
 ```bash
 # Agent automatically loads memory on startup
-# Note: --headless is no longer a valid flag in modern Claude Code.
-# Use --print / -p instead (summarization via ClaudeAgent is currently broken
-# until claude_agent.py is updated to drop --headless).
 claude -p "Load my memories and continue working on my current task."
 ```
 

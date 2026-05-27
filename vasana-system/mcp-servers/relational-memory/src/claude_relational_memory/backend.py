@@ -46,6 +46,36 @@ class LocalFileBackend:
         # retry cadence per session without spamming on every write.
         self._compaction_failed: dict[str, bool] = {}
 
+        # Stale-schema warning surfacing. PR #426 prints a warning to
+        # stderr when config schema is older than CURRENT_CONFIG_SCHEMA,
+        # but stderr from MCP subprocesses doesn't reach the Claude Code
+        # UI — it's captured to daemon logs the user never sees. This
+        # flag + consume_stale_warning() below makes the warning part of
+        # the first MCP tool response of the session, so the agent
+        # actually surfaces it. Cleared on success or after first emit.
+        self._stale_warning_pending: bool = (
+            _version_tuple(self.config.version)
+            < _version_tuple(CURRENT_CONFIG_SCHEMA)
+        )
+
+    def consume_stale_warning(self) -> str:
+        """Return the stale-schema warning ONCE per Backend instance.
+
+        Subsequent calls return ''. Cleared on successful migrate_config
+        too so a fresh post-migration session never warns. Called by the
+        server's call_tool wrapper to inject the warning into the first
+        tool response of the session.
+        """
+        if not self._stale_warning_pending:
+            return ""
+        self._stale_warning_pending = False
+        return (
+            f"\n\n⚠️  rel-mem: your config schema is v{self.config.version} "
+            f"(current v{CURRENT_CONFIG_SCHEMA}). Call the `migrate_config` "
+            f"MCP tool to apply new defaults — user-customized values are "
+            f"preserved.\n\n"
+        )
+
     def _ensure_structure(self):
         """Create directory structure if it doesn't exist."""
         self.base_path.mkdir(parents=True, exist_ok=True)
@@ -147,11 +177,11 @@ class LocalFileBackend:
         changes: list[str] = []
 
         # READ-only probe; do NOT mutate raw unless a migration actually
-        # applies. (Earlier version used setdefault here, which created an
+        # applies. Earlier version used setdefault here, which created an
         # empty `memory_limits: {}` in raw even when nothing was being
         # migrated — Pydantic's default_factory doesn't fire on explicit
         # empty dicts, so the resulting MemoryConfig had no thresholds and
-        # the next access KeyError'd. Caught by bot review on PR #426.)
+        # the next access KeyError'd.
         limits_view = raw.get("memory_limits", {})
         # Both `auto_summarize_at` and `episodic_max` had pre-fix default 10
         # (see git history for models.py prior to PR #425) and were raised
@@ -178,11 +208,28 @@ class LocalFileBackend:
         if not changes:
             return f"Config already at schema v{CURRENT_CONFIG_SCHEMA} with current defaults. Nothing to do."
 
-        config_path.write_text(json.dumps(raw, indent=2) + "\n")
+        # Atomic write via tmp+rename: an interrupt mid-write leaves the
+        # original config intact rather than truncated. Same disk so the
+        # rename is atomic.
+        tmp_path = config_path.with_suffix(config_path.suffix + ".tmp")
+        try:
+            tmp_path.write_text(json.dumps(raw, indent=2) + "\n")
+            os.replace(tmp_path, config_path)
+        except OSError as e:
+            # Disk full, permissions, locked file — surface a friendly
+            # error rather than letting an opaque exception escape to the
+            # MCP layer. Caller (server tool dispatch) returns the string
+            # to the agent.
+            tmp_path.unlink(missing_ok=True)
+            return f"Error writing config: {e}. No changes saved."
+
         # Update this Backend instance directly from the already-validated
         # raw dict. Avoids a redundant file read + version-check that would
         # only have re-validated what we just wrote.
         self.config = MemoryConfig(**raw)
+        # Schema is now current; suppress the pending stale warning so
+        # the first post-migration tool call doesn't still surface it.
+        self._stale_warning_pending = False
         return "Config migrated:\n  - " + "\n  - ".join(changes)
 
     def _default_core_memories(self) -> str:

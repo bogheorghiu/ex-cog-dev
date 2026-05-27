@@ -35,8 +35,6 @@ Add to your project's `.mcp.json`:
 The MCP tools are now available in Claude Code:
 
 ```bash
-# Note: --headless is no longer a valid flag in modern Claude Code.
-# Use --print / -p instead.
 claude -p "Load my memories and continue working on my current task."
 ```
 
