@@ -6,6 +6,11 @@
   },
   "plugins": [
     {
+      "name": "makers-toolkit",
+      "description": "Build-discipline in command-with-reason register. system-pilot is the intrinsic-motivation adaptation of the original Universal CLAUDE.md Protocol; intrinsic-prompt-design extracts the methodology for adapting other directive prompts. Pair with research-toolkit:text-deconstruction for verification.",
+      "source": "./makers-toolkit"
+    },
+    {
       "name": "research-toolkit",
       "description": "Self-reflexive dialectical investigation protocols, frame rotation, iterative verification, STONK agent",
       "source": "./research-toolkit"

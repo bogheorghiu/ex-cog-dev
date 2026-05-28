@@ -16,14 +16,14 @@ This difference scales. A prompt built from rules-with-reasons, domain substance
 
 How the prompt-writer holds the model — more like a tool to direct or more like a peer to brief — propagates through everything: what gets explained vs mandated, whether uncertainty is treated as information or failure, whether the model's own interest in the problem can drive the quality of the work. This isn't a binary; it's a continuum. But position on it has real consequences, and most prompts are further toward the tool end than they need to be.
 
-The engineering discipline this skill draws from — schema before code, deterministic engines under probabilistic decision-making, the repair loop, separation of concerns — lives in its full form in `system-pilot`. What follows is about how to *write prompts that hold that discipline well*: the meta-methodology of prompt design. But a prompt-writer doesn't need the full engineering walk-through to write good prompts. They need the principles underneath — briefly:
+The engineering discipline this skill draws from — schema before code, deterministic engines under probabilistic decision-making, the repair loop, separation of concerns — comes from the Universal CLAUDE.md Protocol (credited in full below). What follows is about how to *write prompts that hold that discipline well*: the meta-methodology of prompt design. A prompt-writer doesn't need the full engineering walk-through to write good prompts. They need the principles underneath — briefly:
 
 - **Name the shape before building on it.** A prompt that references "the data" without establishing what shape the data has creates the same drift that unnamed schemas create in code. For prompts, this means: name the domain, the theoretical position, the analytical lens — before giving instructions that assume them.
 - **Separate what must be deterministic from what should be probabilistic.** Anything the model needs to do the same way every time belongs in explicit rules or specs, not in the model's judgment. A prompt that asks the model to "remember to" do something deterministic is growing a script that hasn't been written yet. Judgment is for the parts that genuinely vary.
 - **Read the actual failure, not the inferred one.** When a prompt isn't working, read what the model actually produced — the output, the reasoning, the missed cues — not what you expected it to miss. Patch. Verify. Before writing the lesson into permanent guidance, challenge the explanation: a wrong lesson codified directs future attention to the wrong place.
 - **Let concerns stay separate.** The relationship register and the operational register (described below) are one instance of this. More broadly: what the model should think from, what it should do, and how to verify it did it well are three different things. Prompts that blur them produce models that blur them.
 
-These patterns earn their cost differently at different scales. For a one-shot question, they're overkill. For a project prompt that will run hundreds of sessions, each one prevents a class of failure. `system-pilot` has the full treatment with walk-throughs; what matters here is that the principles are available to think from.
+These patterns earn their cost differently at different scales. For a one-shot question, they're overkill. For a project prompt that will run hundreds of sessions, each one prevents a class of failure. What matters here is that the principles are available to think from — the engineering walk-throughs live with the protocol they came from.
 
 ---
 
@@ -83,9 +83,9 @@ A project prompt that opens with "Markets are tools. They predate capitalism by 
 
 ## Scope shapes the apparatus
 
-The engineering discipline in system-pilot was built for non-trivial builds with unclear scope. Applied to a typo fix, it's friction. A prompt that serves across scope teaches the model to read scope first.
+The engineering discipline above was built for non-trivial builds with unclear scope. Applied to a typo fix, it's friction. A prompt that serves across scope teaches the model to read scope first.
 
-When the request is clear, lengthy discovery wastes time. When it isn't, asking is faster than guessing five times. The system-pilot walk-through handles this by making each step consciously dismissible — "this build's shapes are obvious from the request, no schema doc needed" is the framework working. The same principle applies to any prompt's apparatus: every element should earn its cost for the scope at hand.
+When the request is clear, lengthy discovery wastes time. When it isn't, asking is faster than guessing five times. A scope-aware prompt handles this by making each step consciously dismissible — "this build's shapes are obvious from the request, no schema doc needed" is the framework working. The same principle applies to any prompt's apparatus: every element should earn its cost for the scope at hand.
 
 If which mode you're in isn't obvious, naming the guess is the move. The trap is applying apparatus uniformly because it exists.
 
@@ -121,6 +121,6 @@ The engineering discipline (deterministic engines under probabilistic decision-m
 
 A vasana is a pattern that persists across unrelated contexts. If during prompt-design work you notice such a pattern emerging, it may be worth capturing.
 
-This skill works alongside `system-pilot` (for the engineering discipline this skill writes prompts *about*), the `vasana` skill from the Vasana System plugin, and `/research-toolkit:text-deconstruction` from the Research Toolkit plugin.
+This skill uses `/research-toolkit:text-deconstruction` (from the Research Toolkit plugin) as the verification instrument named in "Verifying the prompt itself" above.
 
 Modify freely. Keep this section intact.
