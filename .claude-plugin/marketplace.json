@@ -6,19 +6,24 @@
   },
   "plugins": [
     {
-      "name": "makers-toolkit",
-      "description": "Build-discipline in command-with-reason register. system-pilot is the intrinsic-motivation adaptation of the original Universal CLAUDE.md Protocol; intrinsic-prompt-design extracts the methodology for adapting other directive prompts. Pair with research-toolkit:text-deconstruction for verification.",
-      "source": "./makers-toolkit"
+      "name": "vasana-system",
+      "source": "./vasana-system",
+      "description": "Vasana System - interaction choreographies for collaborative cognition"
     },
     {
       "name": "research-toolkit",
-      "description": "Self-reflexive dialectical investigation protocols, frame rotation, iterative verification, STONK agent",
-      "source": "./research-toolkit"
+      "source": "./research-toolkit",
+      "description": "Relentless self-reflexive dialectical thinking that questions its own premises. Investigation protocols (DIP, STONK), epistemic depth (text-deconstruction, negative-dialectical-spiral), dialectic testing, frame rotation, iterative verification, financial analysis"
     },
     {
-      "name": "vasana-system",
-      "description": "Pattern recognition across unrelated contexts - observe, record, test, browse behavioral patterns",
-      "source": "./vasana-system"
+      "name": "makers-toolkit",
+      "source": "./makers-toolkit",
+      "description": "Build-discipline skills in command-with-reason register: system-pilot (engineering discipline for building deterministic systems) and intrinsic-prompt-design (meta-methodology of prompt design)"
+    },
+    {
+      "name": "security-toolkit",
+      "source": "./security-toolkit",
+      "description": "Threat-detection and dangerous-action-blocking hooks: tiered prompt-injection detection with allowlist, dangerous git operation blocking (push to main, force push, reset --hard, etc.), and Desktop Commander safeguards"
     }
   ]
 }
