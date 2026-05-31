@@ -113,7 +113,7 @@ When challenged, the move is down — strip to what you actually know — not up
 
 ## Crediting the original
 
-The engineering discipline (deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns) comes from the *Universal CLAUDE.md Protocol*, published at <https://www.notion.so/Universal-CLAUDE-md-Protocol-354e8d6bd13781778843e799d3aca973#b598c21f51e949589367d479aca894bd>. The developmental mechanism (trust-backed-by-substance, productive gaps, interest-driven self-correction) was worked out through the creation of the Cowork Post-Capitalist QOL project prompt and documented in the intrinsic-motivation behavioral methodology.
+The engineering discipline (deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns) comes from the *Universal CLAUDE.md Protocol*. The developmental mechanism (trust-backed-by-substance, productive gaps, interest-driven self-correction) was documented in the intrinsic-motivation behavioral methodology.
 
 ---
 

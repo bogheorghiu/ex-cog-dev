@@ -22,7 +22,7 @@ A dance in which one party proposes a frame (often binary: "X or Y?") and the ot
 
 The pushback IS the work. Each refused frame opens the abstraction one level higher until the principle that supersedes the question becomes visible.
 
-**Origin:** Captured 2026-05-21 during work on a "self-improving meta-repo" scaffold (`~/dev/AI-dev-template-work`). User and AI exchange produced a north-star principle ([[convergence-by-accumulation]]) that neither party held whole at turn one. The process by which they arrived at it is this pattern; the principle they arrived at is the sibling vasana.
+**Origin:** Captured 2026-05-21 during work on a "self-improving meta-repo" scaffold. A human–AI exchange produced a north-star principle ([[convergence-by-accumulation]]) that neither party held whole at turn one. The process by which they arrived at it is this pattern; the principle they arrived at is the sibling vasana.
 
 ---
 
@@ -148,8 +148,6 @@ Before relying on this:
 - [[concrete-abstract-dance]] — within-mind sibling. `concrete-abstract-dance` operates *within* one party's thinking (build concrete → extract pattern → test against new concrete); `frame-pushback` operates *between* parties. Two parties doing concrete-abstract-dance against each other's framings is essentially frame-pushback.
 - [[framework-dissolution]] — adjacent. The principle that lands often *dissolves* the original framework; frame-pushback is one mechanism by which framework-dissolution happens between collaborators.
 - [[research-toolkit:dialectic-spiral]] — sibling skill (not pattern). `dialectic-spiral` is an *investigative* method (one-sided, deliberately staged for exploration); `frame-pushback` is an *emergent* dynamic between minds in real exchange. The skill operationalizes a structure; the vasana captures the dance.
-<!-- The ref below originates from the session that produced this pattern; it's personal-context, not load-bearing for new readers. Ignore if not applicable to your context. -->
-- [[cowork-material]] — *(personal context)* user mentioned related material from the COWORK project to bring in. Likely contains worked examples of frame-pushback in non-software contexts.
 
 ---
 

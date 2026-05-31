@@ -22,7 +22,7 @@ A structural property of self-improving artifacts: the **mature/final form equal
 
 Improvement happens through refinement of the same content, not through parallel maintenance. The artifact and the environment it's developed in *converge by construction*, not by release ceremony.
 
-**Origin:** Crystallized 2026-05-21 during work on `~/dev/AI-dev-template-work` (a self-improving meta-repo for structuring AI-coding-agent projects). User articulation: *"The final functional form of this self-improving meta-repo is the same as the reset form without having to do a reset, simply by accumulation and refinement. What differs is only the history."* The process by which the principle emerged is the sibling vasana [[frame-pushback]].
+**Origin:** Crystallized 2026-05-21 during work on a self-improving meta-repo for structuring AI-coding-agent projects. The articulated principle: the final functional form of such a self-improving repo is the same as its reset form without ever performing a reset — reached by accumulation and refinement, where what differs is only the history. The process by which the principle emerged is the sibling vasana [[frame-pushback]].
 
 ---
 
@@ -174,9 +174,6 @@ For meta-tools (templates, scaffolds, protocols, frameworks-of-thinking), the di
 - [[description-becomes-embodiment]] — adjacent. Where a description of a thing becomes the thing itself. Convergence-by-accumulation is the structural cousin: the dev environment becomes the deliverable.
 - [[framework-dissolution]] — adjacent. The framework "dev branch vs release branch" dissolves when convergence-by-accumulation is in place. Dissolution is the *result*; convergence is the *mechanism*.
 - [[mechanism-not-metaphor]] — adjacent. The pattern is a mechanism (the derivation script, the state-file reset, the gitignore discipline), not a metaphor. The metaphor of "convergence" describes; the mechanism delivers.
-<!-- The two refs below originate from the session that produced this pattern; they're personal-context forward pointers, not load-bearing for new readers. Ignore if not applicable to your context. -->
-- [[convergence-vasana-existing]] — *(personal context)* user mentioned "another convergence vasana we have." Once located, the relationship between that pattern and this one wants to be named. Likely candidates: they describe convergence at different scales (within a mind / between minds / between artifact-and-environment), and the family-resemblance is worth surfacing as a [[pattern-seed]].
-- [[cowork-material]] — *(personal context)* user mentioned material from COWORK project to integrate. Likely contains worked examples of convergence-by-accumulation in non-software domains (cooperative governance, shared infrastructure, etc.).
 
 ---
 

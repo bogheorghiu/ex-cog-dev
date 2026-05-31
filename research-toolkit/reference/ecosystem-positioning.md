@@ -1,8 +1,5 @@
 # Investigation Methodology Ecosystem: Positioning & Gaps
 
-> **Source:** Ecosystem map (March 2026), triaged from 45KB handoff document.
-> **Full document:** `docs/handoffs/research-toolkit-update/cc-investigation-ecosystem-handoff.tar.gz`
-
 ## Where Our Toolkit Fits Among Published Frameworks
 
 | Capability | DISARM | Bellingcat | Oxford Comp. Prop. | Chomsky | Our Toolkit |

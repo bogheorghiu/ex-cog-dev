@@ -292,7 +292,7 @@ These are recognizable. Course-correcting before the next loop is what the metho
 
 ## Crediting the original
 
-The original Universal CLAUDE.md Protocol / System Pilot framework this skill adapts from is published at <https://www.notion.so/Universal-CLAUDE-md-Protocol-354e8d6bd13781778843e799d3aca973#b598c21f51e949589367d479aca894bd>.
+This skill adapts the original Universal CLAUDE.md Protocol / System Pilot framework.
 
 The adaptation keeps the structural insight — deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns — and changes the register the insight is held in. It also adds: tier-by-stakes for skipping (scaffolding vs. guardrails), explicit ask-the-user hook, mode-reading for scope, multi-agent spec-driven layout as suggestion, verification of the lesson before codification, and explicit reason-applied-at-each-step framing for every walk-through gate.
 
