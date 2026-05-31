@@ -40,9 +40,3 @@ git push --force-with-lease origin <prior-good-sha>:release
 ```
 
 Then consumers either wait out the uvx cache TTL or run `uvx --refresh`.
-
-## Companion repo
-
-> **Note (2026-05):** This repo is now the source of truth and is pushed to directly. The previous mirroring relationship with `bogheorghiu/Claude-Code-Projects` is no longer active — do **not** mirror changes there unless explicitly asked.
-
-Historically, `bogheorghiu/Claude-Code-Projects` carried a copy of these plugins under `projects/ex-cog-dev/...` and was registered as the `external-cognition-dev` marketplace.
