@@ -47,7 +47,7 @@ Add to `.mcp.json`:
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/bogheorghiu/Claude-Code-Projects#subdirectory=projects/ex-cog-dev/vasana-system/mcp-servers/relational-memory",
+        "git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=vasana-system/mcp-servers/relational-memory",
         "relational-memory"
       ]
     }

@@ -35,6 +35,6 @@ Used by optional claude-relational-memory server.
 
 ## claude-relational-memory (Included as subcomponent)
 
-Memory system enabling cross-session learning. Used by opus-distillatus agent (now in budget-mastery plugin).
+Memory system enabling cross-session learning.
 
 Located in `mcp-servers/relational-memory/`. See `mcp-servers/relational-memory/THIRD-PARTY-LICENSES.md` for full attribution.

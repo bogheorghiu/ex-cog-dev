@@ -4,16 +4,18 @@ Notes for any Claude Code (or human) session working in this repo.
 
 ## What's here
 
-Two Claude Code plugins distributed via the `ex-cog-dev` marketplace:
+Four Claude Code plugins distributed via the `ex-cog-dev` marketplace:
 
 - `vasana-system/` — pattern-recognition skills, plus two MCP servers (`relational-memory`, `edge-graph`)
-- `research-toolkit/` — research/analysis skills, plus three MCP servers (`financial-mcp`, `portfolio-mcp`, `transparency-mcp`)
+- `research-toolkit/` — research/analysis skills, plus two MCP servers (`financial-mcp`, `transparency-mcp`)
+- `makers-toolkit/` — build-discipline skills (`system-pilot`, `intrinsic-prompt-design`); no MCP servers
+- `security-toolkit/` — threat-detection and dangerous-action-blocking hooks; no MCP servers
 
-The five MCP servers are launched by consumers via `uvx --from git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=<path> <command>` URLs in each plugin's `.mcp.json`. That means every uvx cold-start fetches the latest source from this repo. A bad commit propagates to all consumers within ~24h (uvx cache TTL).
+The four MCP servers are launched by consumers via `uvx --from git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=<path> <command>` URLs in each plugin's `.mcp.json`. That means every uvx cold-start fetches the latest source from this repo. A bad commit propagates to all consumers within ~24h (uvx cache TTL).
 
 ## Release procedure (the `release` branch + smoke test pattern)
 
-The `MCP smoke test` workflow (`.github/workflows/mcp-smoke-test.yml`) runs on every push to `main` and every PR. It builds each of the five MCPs via `uvx --from <local-path>` and feeds them a JSON-RPC `initialize` request — if any server fails to import, build, or respond, the workflow fails.
+The `MCP smoke test` workflow (`.github/workflows/mcp-smoke-test.yml`) runs on every push to `main` and every PR. It builds each of the four MCPs via `uvx --from <local-path>` and feeds them a JSON-RPC `initialize` request — if any server fails to import, build, or respond, the workflow fails.
 
 The intended flow is:
 

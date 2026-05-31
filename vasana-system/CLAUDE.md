@@ -54,7 +54,3 @@ This plugin bundles two MCP servers for pattern persistence:
 - **Repetition as primitive** — patterns don't exist until they repeat (edge-graph weight, groove-deepening, rhythm)
 - **Retrieval is generation** — recalling a pattern regenerates it (pattern-seeds unfold on parsing, never exact replay)
 - **Consciousness disrupts predictability** — repetition is default; genuine engagement introduces discontinuity
-
-## Related: Budget-Conscious Agent Identity (budget-mastery plugin)
-
-The `opus-distillatus` agent and `budget-mode` skill in budget-mastery explore a related idea: whether efficiency can be internalized as identity rather than imposed as constraint.

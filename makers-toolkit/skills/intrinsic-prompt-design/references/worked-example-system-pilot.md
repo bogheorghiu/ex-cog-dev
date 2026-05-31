@@ -1,6 +1,6 @@
 # Worked example: System Pilot, two registers
 
-The same content, held two ways. The original is the *Universal CLAUDE.md Protocol* (<https://www.notion.so/Universal-CLAUDE-md-Protocol-354e8d6bd13781778843e799d3aca973#b598c21f51e949589367d479aca894bd>). The adaptation is what this skill produces.
+The same content, held two ways. The original is the *Universal CLAUDE.md Protocol*. The adaptation is what this skill produces.
 
 This isn't "the better version." Both work for some teams. The point is to make the register-shift visible enough to learn from.
 

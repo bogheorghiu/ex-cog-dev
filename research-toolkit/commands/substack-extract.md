@@ -99,12 +99,12 @@ By detail level:
 
 After extraction completes, invoke self-improvement:
 
-1. **Spawn opus-distillatus agent** for meta-observation (background, non-blocking):
+1. **Spawn a background meta-observation agent** (non-blocking):
    ```
    Task(
      model="opus",
      run_in_background=true,
-     prompt="""CONSTRAINT: opus-distillatus mode. Maximum value, minimum waste.
+     prompt="""CONSTRAINT: maximum value, minimum waste.
 
    Analyze this substack extraction run:
    - Articles extracted: {count}
@@ -122,7 +122,7 @@ After extraction completes, invoke self-improvement:
    mcp__relational-memory__memorize(
        agent_name="substack-scraper",
        layer="episodic",
-       content="[learning from opus-distillatus]",
+       content="[learning from meta-observation]",
        metadata={"substack": url, "detail_level": N, "articles": count}
    )
    ```

@@ -1,6 +1,5 @@
 # Research Toolkit
 
-> Budget-mode, action-bias, opus-distillatus, and token-analyzer are in the **budget-mastery** plugin.
 > relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin.
 
 Research and cognition toolkit: investigation protocols, cognitive flexibility, iterative verification, and financial analysis.
