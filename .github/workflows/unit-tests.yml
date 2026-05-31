@@ -1,0 +1,62 @@
+name: Unit tests
+
+# Runs the repo's unit/functional test suites on every push to main and every
+# PR. Complements the MCP smoke test (which only checks that each server boots
+# and answers a JSON-RPC initialize). These suites exercise actual logic:
+#   - security-toolkit hooks (bash)
+#   - financial-mcp validation + cache (stdlib Python)
+#   - macro-monitor TIC parser (stdlib Python)
+#   - brainstorm session recorder (stdlib Python)
+#   - edge-graph + relational-memory backends (need mcp/pydantic, run via uvx)
+#
+# Each suite exits non-zero on failure, so a regression fails the job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Security-toolkit hook suites (bash)
+        run: |
+          set -euo pipefail
+          bash security-toolkit/hooks/block-dangerous-git.test.sh
+          bash security-toolkit/hooks/detect-prompt-injection.test.sh
+          bash security-toolkit/hooks/block-dc.test.sh
+
+      - name: Stdlib Python suites
+        run: |
+          set -euo pipefail
+          python3 research-toolkit/mcp-servers/financial-mcp/test_units.py
+          python3 research-toolkit/skills/macro-monitor/scripts/test_tic_parser.py
+          python3 research-toolkit/lib/test_brainstorm.py
+
+      - name: MCP backend functional tests (via uvx)
+        env:
+          EDGE_GRAPH_PATH: /tmp/edge-graph-ci-test
+          CLAUDE_MEMORY_PATH: /tmp/claude-memory-ci-test
+        run: |
+          set -euo pipefail
+          uvx --from vasana-system/mcp-servers/relational-memory \
+            python vasana-system/mcp-servers/relational-memory/test_basic.py
+          uvx --from vasana-system/mcp-servers/edge-graph \
+            python vasana-system/mcp-servers/edge-graph/test_basic.py
