@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Basic functional test of the edge-graph backend.
 
-Exercises EdgeBackend directly: recording edges, weight accumulation on
-repetition, traversal, strongest-edge ranking, and on-disk persistence.
+Exercises EdgeBackend directly: creating edges, traversal-weight tracking,
+heavy-edge ranking, verb pattern discovery, filtered queries, and on-disk
+persistence. Weight in this system emerges from traversal frequency, not
+from declaration.
 """
 
 from edge_graph.backend import EdgeBackend
@@ -29,50 +31,60 @@ def check(label: str, condition: bool) -> None:
 try:
     backend = EdgeBackend(str(test_dir))
 
-    # Test 1: record() creates a new edge with seeded weight/count.
-    print("\n1. Testing record() creates an edge...")
-    edge = backend.record(source="A", target="B", relation="leads_to")
-    check("returns an edge with weight 1.0", edge.weight == 1.0)
-    check("observation_count starts at 1", edge.observation_count == 1)
-    check("first_seen and last_seen are set", edge.first_seen is not None and edge.last_seen is not None)
+    # Test 1: create_edge() returns an id and stores a retrievable edge.
+    print("\n1. Testing create_edge() / get_edge()...")
+    edge_id = backend.create_edge(
+        from_node="concept-A", to_node="concept-B", verb="enables", agent="tester"
+    )
+    check("create_edge returns an edge id", isinstance(edge_id, str) and edge_id.startswith("edge-"))
+    edge = backend.get_edge(edge_id)
+    check("get_edge round-trips the edge", edge is not None)
+    check("from_node/to_node/verb persisted", edge.from_node == "concept-A" and edge.to_node == "concept-B" and edge.verb == "enables")
+    check("new edge starts at traversal_count 0", edge.traversal_count == 0)
 
-    # Test 2: repetition strengthens the same edge (weight = repetition count).
-    print("\n2. Testing weight accumulation on repetition...")
-    edge = backend.record(source="A", target="B", relation="leads_to")
-    check("weight accumulates to 2.0", edge.weight == 2.0)
-    check("observation_count increments to 2", edge.observation_count == 2)
+    # Test 2: traverse_edge() accrues weight (this is the core innovation).
+    print("\n2. Testing traverse_edge() weight tracking...")
+    for _ in range(4):
+        check("traverse_edge returns True for a real edge", backend.traverse_edge(edge_id) is True)
+    edge = backend.get_edge(edge_id)
+    check("traversal_count accrued to 4", edge.traversal_count == 4)
+    check("last_traversed is set after traversal", edge.last_traversed is not None)
+    check("traverse_edge returns False for unknown id", backend.traverse_edge("edge-does-not-exist") is False)
 
-    # Test 3: weight_delta is respected.
-    print("\n3. Testing custom weight_delta...")
-    edge = backend.record(source="A", target="B", relation="leads_to", weight_delta=3.0)
-    check("weight reflects the delta (5.0)", edge.weight == 5.0)
-    check("observation_count is now 3", edge.observation_count == 3)
+    # Test 3: find_heavy_edges() ranks by traversal weight, descending.
+    print("\n3. Testing find_heavy_edges()...")
+    backend.create_edge(from_node="X", to_node="Y", verb="enables", agent="tester")  # untraversed
+    heavy = backend.find_heavy_edges(limit=10)
+    check("both edges returned", len(heavy) == 2)
+    check("most-traversed edge ranks first", heavy[0].id == edge_id)
+    check("ranking is descending by weighted score", heavy[0].weighted_score() >= heavy[1].weighted_score())
+    check("min_weight filters out untraversed edges", len(backend.find_heavy_edges(min_weight=1)) == 1)
 
-    # Test 4: distinct (source, target, relation) tuples are separate edges.
-    print("\n4. Testing distinct edges stay separate...")
-    backend.record(source="B", target="C", relation="leads_to")
-    backend.record(source="A", target="B", relation="contradicts")
-    strongest = backend.strongest_edges()
-    check("three distinct edges recorded", len(strongest) == 3)
-    check("strongest edge is A->B leads_to (weight 5.0)", strongest[0]["weight"] == 5.0)
-    check("strongest_edges is sorted descending", strongest[0]["weight"] >= strongest[-1]["weight"])
+    # Test 4: discover_patterns() surfaces recurring verbs across agents.
+    print("\n4. Testing discover_patterns()...")
+    backend.create_edge(from_node="P", to_node="Q", verb="enables", agent="other-agent")
+    patterns = backend.discover_patterns(min_occurrences=3)
+    enables = next((p for p in patterns if p["verb"] == "enables"), None)
+    check("'enables' surfaces as a pattern (>=3 occurrences)", enables is not None)
+    check("pattern count reflects all 'enables' edges", enables and enables["count"] == 3)
+    check("cross_agent flagged (two distinct agents)", enables and enables["cross_agent"] is True)
 
-    # Test 5: traverse() follows edges above min_weight.
-    print("\n5. Testing traverse()...")
-    reachable = backend.traverse(start="A", min_weight=0.0)
-    targets = {r["edge"]["target"] for r in reachable}
-    check("traversal from A reaches B", "B" in targets)
-    check("traversal from A reaches C (via B)", "C" in targets)
-    filtered = backend.traverse(start="A", min_weight=2.0)
-    weak_kept = [r for r in filtered if r["edge"]["weight"] < 2.0]
-    check("min_weight filters out weak edges", len(weak_kept) == 0)
+    # Test 5: find_edges() filters by node.
+    print("\n5. Testing find_edges() filtering...")
+    from_a = backend.find_edges(from_node="concept-A")
+    check("filter by from_node returns only matching edges", len(from_a) == 1 and from_a[0]["to_node"] == "concept-B")
 
-    # Test 6: persistence — a fresh backend reloads the same edges from disk.
-    print("\n6. Testing persistence across instances...")
+    # Test 6: get_verbs() returns the unique verb set.
+    print("\n6. Testing get_verbs()...")
+    verbs = backend.get_verbs()
+    check("get_verbs returns the unique verbs", verbs == ["enables"])
+
+    # Test 7: persistence — a fresh backend reloads edges (and their weight).
+    print("\n7. Testing persistence across instances...")
     reloaded = EdgeBackend(str(test_dir))
-    reloaded_strongest = reloaded.strongest_edges()
-    check("reloaded backend sees all 3 edges", len(reloaded_strongest) == 3)
-    check("reloaded A->B leads_to retains weight 5.0", reloaded_strongest[0]["weight"] == 5.0)
+    reloaded_edge = reloaded.get_edge(edge_id)
+    check("reloaded backend finds the edge", reloaded_edge is not None)
+    check("reloaded edge retains traversal_count 4", reloaded_edge.traversal_count == 4)
 
     if failures == 0:
         print("\n✅ All tests passed!")
