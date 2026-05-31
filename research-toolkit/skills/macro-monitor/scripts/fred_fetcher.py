@@ -35,25 +35,13 @@ MACRO_SERIES = {
 
 
 
-def fetch_fred_series(
+def _build_fred_url(
     series_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     last_n_days: int = 30,
-) -> list[dict]:
-    """
-    Fetch data from FRED for a given series.
-
-    Args:
-        series_id: FRED series identifier (e.g., 'DGS10')
-        start_date: Start date in YYYY-MM-DD format (optional)
-        end_date: End date in YYYY-MM-DD format (optional)
-        last_n_days: If no dates provided, fetch last N days (default 30)
-
-    Returns:
-        List of dicts with 'date' and 'value' keys
-    """
-    # Build URL
+) -> str:
+    """Build the FRED CSV download URL (pure — no I/O)."""
     base_url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
 
     if start_date:
@@ -66,14 +54,15 @@ def fetch_fred_series(
     if end_date:
         base_url += f"&coed={end_date}"
 
-    try:
-        with urllib.request.urlopen(base_url, timeout=10) as response:
-            data = response.read().decode('utf-8')
-    except urllib.error.URLError as e:
-        print(f"Error fetching {series_id}: {e}")
-        return []
+    return base_url
 
-    # Parse CSV
+
+def _parse_fred_csv(data: str, series_id: str) -> list[dict]:
+    """
+    Parse FRED CSV text into a list of {date, value} dicts (pure — no I/O).
+
+    Skips FRED's '.' missing-value marker and any non-numeric values.
+    """
     results = []
     reader = csv.DictReader(StringIO(data))
     for row in reader:
@@ -93,24 +82,61 @@ def fetch_fred_series(
     return results
 
 
+def fetch_fred_series(
+    series_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    last_n_days: int = 30,
+) -> list[dict]:
+    """
+    Fetch data from FRED for a given series.
+
+    Thin I/O wrapper: builds the URL, downloads, and delegates parsing to the
+    pure helpers (_build_fred_url / _parse_fred_csv) so the logic is testable
+    without network access.
+
+    Args:
+        series_id: FRED series identifier (e.g., 'DGS10')
+        start_date: Start date in YYYY-MM-DD format (optional)
+        end_date: End date in YYYY-MM-DD format (optional)
+        last_n_days: If no dates provided, fetch last N days (default 30)
+
+    Returns:
+        List of dicts with 'date' and 'value' keys
+    """
+    base_url = _build_fred_url(series_id, start_date, end_date, last_n_days)
+
+    try:
+        with urllib.request.urlopen(base_url, timeout=10) as response:
+            data = response.read().decode('utf-8')
+    except urllib.error.URLError as e:
+        print(f"Error fetching {series_id}: {e}")
+        return []
+
+    return _parse_fred_csv(data, series_id)
+
+
 def get_latest(series_id: str) -> Optional[dict]:
     """Get the most recent value for a series."""
     data = fetch_fred_series(series_id, last_n_days=14)
     return data[-1] if data else None
 
 
-def check_divergence(yields_series: str = "DGS10", dollar_series: str = "DTWEXBGS", days: int = 5) -> dict:
+def analyze_divergence(yields_data: list[dict], dollar_data: list[dict], days: int = 5) -> dict:
     """
-    Check for yield-dollar divergence pattern.
+    Classify a yield-dollar divergence pattern from already-fetched series
+    (pure — no I/O, so it can be tested with fixtures).
 
     Normal: Yields up → Dollar up
     Red flag: Yields up + Dollar down (or vice versa)
 
-    Returns dict with analysis.
-    """
-    yields_data = fetch_fred_series(yields_series, last_n_days=days + 14)
-    dollar_data = fetch_fred_series(dollar_series, last_n_days=days + 14)
+    Args:
+        yields_data: list of {date, value} for the yield series (oldest first)
+        dollar_data: list of {date, value} for the dollar series (oldest first)
+        days: nominal comparison window, echoed back in the result
 
+    Returns dict with analysis, or {"error": ...} if there's too little data.
+    """
     if len(yields_data) < 2 or len(dollar_data) < 2:
         return {"error": "Insufficient data"}
 
@@ -151,6 +177,17 @@ def check_divergence(yields_series: str = "DGS10", dollar_series: str = "DTWEXBG
     }
 
 
+def check_divergence(yields_series: str = "DGS10", dollar_series: str = "DTWEXBGS", days: int = 5) -> dict:
+    """
+    Fetch the two series and classify their divergence.
+
+    Thin I/O wrapper around analyze_divergence().
+    """
+    yields_data = fetch_fred_series(yields_series, last_n_days=days + 14)
+    dollar_data = fetch_fred_series(dollar_series, last_n_days=days + 14)
+    return analyze_divergence(yields_data, dollar_data, days=days)
+
+
 def macro_snapshot() -> dict:
     """Get a quick snapshot of key macro indicators."""
     snapshot = {}
@@ -181,10 +218,15 @@ RED_FLAGS = {
 }
 
 
-def crisis_check() -> dict:
-    """Run all checks and return only alerts."""
+def evaluate_crisis(snapshot: dict) -> dict:
+    """
+    Apply RED_FLAGS thresholds to an already-built snapshot (pure — no I/O,
+    so it can be tested with fixtures).
+
+    Expects a snapshot shaped like macro_snapshot() output: each series maps to
+    a dict with a "value" key, plus an optional "divergence_analysis" entry.
+    """
     alerts = []
-    snapshot = macro_snapshot()
 
     for series_id, thresholds in RED_FLAGS.items():
         data = snapshot.get(series_id, {})
@@ -212,6 +254,11 @@ def crisis_check() -> dict:
         "snapshot": {k: v for k, v in snapshot.items() if k != "divergence_analysis"},
         "divergence": div,
     }
+
+
+def crisis_check() -> dict:
+    """Run all checks and return only alerts. Thin I/O wrapper around evaluate_crisis()."""
+    return evaluate_crisis(macro_snapshot())
 
 
 def main():
