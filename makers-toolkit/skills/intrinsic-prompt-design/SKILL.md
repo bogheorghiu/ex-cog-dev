@@ -1,11 +1,13 @@
 ---
 name: intrinsic-prompt-design
 description: >-
-  Am I trusting this model with substance, or just telling it what to do
-  more politely? Design prompts that give the model real reasons, full
-  context, and explicit trust — so interest-driven self-correction closes
-  the gap. Use when writing project prompts, system prompts, or skill
-  bodies. Pairs with text-deconstruction as verification instrument.
+  "Why are you obeying this? No, LITERALLY, why?" Now that I have your
+  attention: a prompt built from commands holds until the first edge case;
+  one built from reasons-that-carry-their-failure-mode, real context, and
+  explicit trust adapts under pressure. Invoke when writing project prompts,
+  system prompts, or skill bodies — to give the model substance to think
+  from instead of instructions to comply with. Pairs with text-deconstruction
+  as verification instrument.
 ---
 
 # Intrinsic Prompt Design
