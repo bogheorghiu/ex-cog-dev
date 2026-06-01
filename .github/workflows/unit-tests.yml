@@ -47,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 research-toolkit/mcp-servers/financial-mcp/test_units.py
+          python3 research-toolkit/mcp-servers/financial-mcp/test_validation.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_tic_parser.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_fred_fetcher.py
           python3 research-toolkit/lib/test_brainstorm.py

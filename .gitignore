@@ -24,6 +24,10 @@ htmlcov/
 *.sqlite
 *.sqlite3
 
+# Security-toolkit hook runtime logs (written into a repo-local .claude/ when
+# the hooks run here during testing; never part of the source)
+.claude/hooks/logs/
+
 # Editor / OS noise
 .DS_Store
 *.swp
