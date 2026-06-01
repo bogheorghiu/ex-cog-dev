@@ -2,12 +2,10 @@
 name: intrinsic-prompt-design
 description: >-
   "Why are you obeying this? No, LITERALLY, why?" Now that I have your
-  attention: a prompt built from commands holds until the first edge case;
-  one built from reasons-that-carry-their-failure-mode, real context, and
-  explicit trust adapts under pressure. Invoke when writing project prompts,
-  system prompts, or skill bodies — to give the model substance to think
-  from instead of instructions to comply with. Pairs with text-deconstruction
-  as verification instrument.
+  attention: invoke when writing project prompts, system prompts, or skill
+  bodies. That question held you where a command gets skimmed — so build
+  prompts on reasons: a command breaks at the first edge case, a reason
+  adapts.
 ---
 
 # Intrinsic Prompt Design
