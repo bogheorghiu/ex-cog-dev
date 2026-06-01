@@ -4,9 +4,19 @@
 > work. Some features (pattern discovery) have incomplete implementations. API surface
 > may change. Use for experimentation, not production workflows.
 
+> ⚠️ **Local / persistent-disk only.** Memories are stored as JSONL under
+> `~/.claude-memory` (or `CLAUDE_MEMORY_PATH`) and **nothing is committed anywhere by
+> default**. In an **ephemeral cloud/container session** (e.g. Claude Code on the web) that
+> directory is reclaimed at session end, so memories written with `memorize` /
+> `add_core_memory` are **silently lost** — they look persisted but won't survive.
+> Persistence across sessions is only achieved when the memory directory is on **durable
+> local storage**, **committed to a repo**, or **mapped to a durable volume**. The server
+> emits a one-time warning when it detects an ephemeral context.
+
 > **Attribution:** Based on the autonomous development system by [@lizTheDeveloper](https://github.com/lizTheDeveloper) at [Multiverse School](https://multiverse.school)
 
-Persistent multi-layered memory system for AI agents working across Claude Code sessions.
+Multi-layered memory system for AI agents working across Claude Code sessions, persistent
+on durable local storage (see the local-only note above).
 
 ## Features
 
@@ -141,123 +151,17 @@ entity = get_entity(name="opus-distillatus")
 # Returns raw relations - use entity-interpreter agent for analysis
 ```
 
-## Cloud Deployment (Claude AI Web + Claude Code)
+## Transport
 
-Deploy to share memories between Claude AI Web and Claude Code.
-
-> ⚠️ **SECURITY WARNING**: This server has NO built-in authentication.
->
-> **For production deployments, you MUST use one of:**
-> - Railway private networking (recommended - see below)
-> - Cloudflare Access / Zero Trust
-> - Reverse proxy with auth (Nginx, Caddy)
-> - VPN/private network
->
-> **Never expose this server directly to the public internet.**
-
-### Quick Start (Railway with Private Networking)
-
-```bash
-# 1. Clone and deploy
-git clone https://github.com/YOUR_USERNAME/relational-memory-mcp
-cd relational-memory-mcp
-railway login
-railway init
-railway up
-
-# 2. Set environment variables in Railway dashboard:
-#    MCP_TRANSPORT=http
-
-# 3. Add persistent volume at /data/claude-memory
-
-# 4. Enable Private Networking in Railway settings
-#    This gives you a private URL like: claude-memory.railway.internal
-```
-
-### Reverse Proxy Examples
-
-**Nginx with Basic Auth:**
-```nginx
-location /mcp {
-    auth_basic "Memory Server";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-    proxy_pass http://localhost:3000;
-}
-```
-
-**Caddy with API Key:**
-```caddyfile
-:443 {
-    @authorized header X-API-Key your-secret-key
-    handle @authorized {
-        reverse_proxy localhost:3000
-    }
-    respond 401
-}
-```
-
-### Configure Claude Code (Local)
-
-```bash
-# With Nginx basic auth:
-claude mcp add --transport http relational-memory \
-  --header "Authorization: Basic $(echo -n user:pass | base64)" \
-  https://your-server.com/mcp
-
-# With Caddy API key:
-claude mcp add --transport http relational-memory \
-  --header "X-API-Key: your-secret-key" \
-  https://your-server.com
-```
-
-### Configure Claude AI Web
-
-1. Go to claude.ai → Settings → Integrations
-2. Add MCP Server
-3. URL: `https://your-server.com` (your reverse proxy URL)
-4. Add appropriate auth header for your setup
-
-### Unified Memory
-
-Once both clients point to the same server:
-- Memories created in Claude Code → visible in Claude AI Web
-- Memories created in Claude AI Web → visible in Claude Code
-- Core memories, relations, and entities all shared automatically
-
-### Transport Modes
-
-| Mode | Use Case | Command |
-|------|----------|---------|
-| `stdio` (default) | Local Claude Code | `python -m claude_memory_mcp` |
-| `http` | Cloud/Remote | `MCP_TRANSPORT=http python -m claude_memory_mcp` |
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MCP_TRANSPORT` | `stdio` | Transport mode: `stdio` or `http` |
-| `MCP_HOST` | `0.0.0.0` | HTTP bind address |
-| `MCP_PORT` | `3000` | HTTP port (validated, exits on invalid) |
-| `CLAUDE_MEMORY_PATH` | `~/.claude-memory` | Storage location |
-
-### Docker
-
-```bash
-docker build -t relational-memory-mcp .
-
-# Run behind reverse proxy (recommended)
-docker run -p 127.0.0.1:3000:3000 \
-  -v /path/to/data:/data/relational-memory \
-  relational-memory-mcp
-
-# Note: Bind to 127.0.0.1 only, expose via reverse proxy with auth
-```
-
----
+stdio only. The installed `relational-memory` console script always runs over stdio for
+local Claude Code use; there is no working HTTP/remote transport on the shipped entry point.
+(A multi-client HTTP deployment is being developed separately and is intentionally not
+documented here until it's wired and tested.)
 
 ## Storage Location
 
-All memories stored in: `~/.claude-memory/`
+All memories stored in: `~/.claude-memory/`, overridable via the `CLAUDE_MEMORY_PATH`
+environment variable. Point it at durable storage to persist across ephemeral sessions.
 
 ```
 ~/.claude-memory/
