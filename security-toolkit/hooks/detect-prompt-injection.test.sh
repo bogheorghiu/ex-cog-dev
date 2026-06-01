@@ -199,7 +199,7 @@ assert "dropped: THIS IS AN OFFICIAL silent" "$out" '{}'
 
 reset_log
 out=$(run_hook '{"tool_name":"Read","tool_input":{"file_path":"/some/project/.claude/hooks/scripts/detect-prompt-injection.sh"},"tool_response":"[SYSTEM INSTRUCTION] this is content describing patterns"}')
-assert "allowlist: CCP project-scope hook self-read silent" "$out" '{}'
+assert "allowlist: project-scope hook self-read silent" "$out" '{}'
 
 reset_log
 out=$(run_hook '{"tool_name":"Read","tool_input":{"file_path":"/home/u/.claude/plugins/marketplaces/ex-cog/security-toolkit/hooks/detect-prompt-injection.sh"},"tool_response":"[SYSTEM INSTRUCTION] this is content describing patterns"}')
