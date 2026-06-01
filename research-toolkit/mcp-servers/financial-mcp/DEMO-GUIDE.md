@@ -1,8 +1,16 @@
 # Financial MCP Server - Demo Guide
 
-## Showcasing the Deployed MCP Server
+> ⚠️ **STATUS: aspirational — describes a remote (Railway / HTTP-SSE) deployment that is
+> NOT yet implemented.** The shipped server runs **locally over stdio only** (see
+> `financial_server.py` → `stdio_server`, and DEPLOYMENT_PLAN.md → *"Current Status: Local
+> stdio transport only"*). The `--transport sse` / `railway.app/sse` configuration snippets
+> below will **not** work until HTTP transport is built per DEPLOYMENT_PLAN.md. To run the
+> demo today, install the server locally over stdio (see the main README) and skip the
+> remote-deployment steps.
 
-This guide demonstrates how to showcase the Financial MCP Server working with Claude Code/Desktop after deployment.
+## Showcasing the MCP Server
+
+This guide demonstrates how to showcase the Financial MCP Server working with Claude Code/Desktop. The remote-deployment framing below is the *target* experience; until HTTP transport lands, run it locally over stdio.
 
 ## Approach: Claude Desktop Integration Demo
 
@@ -304,7 +312,7 @@ Walk through 3-4 scenarios above, showing:
 
 ### Closing (30 seconds)
 
-"The server is deployed via Docker on Railway, accessible remotely via HTTP/SSE transport. All code is on GitHub."
+"The server is designed to deploy via Docker on Railway, accessible remotely via HTTP/SSE transport (planned — see DEPLOYMENT_PLAN.md; it currently runs locally over stdio). All code is on GitHub."
 
 ---
 
@@ -323,7 +331,9 @@ Walk through 3-4 scenarios above, showing:
 ### Claude Code Configuration
 
 ```bash
-# Add deployed MCP server
+# ⚠️ Requires HTTP/SSE transport, which is NOT implemented yet (see
+# DEPLOYMENT_PLAN.md). For now, add the server locally over stdio instead
+# (uvx/pip — see the main README). The SSE form below is the future target:
 claude mcp add --transport sse financial-server https://your-app.railway.app/sse
 
 # Verify connection
@@ -335,7 +345,11 @@ claude "Get stock price for AAPL"
 
 ### Claude Desktop Configuration
 
-Edit `~/.claude/config.json` (macOS/Linux) or `%APPDATA%\Claude\config.json` (Windows):
+Edit `~/.claude/config.json` (macOS/Linux) or `%APPDATA%\Claude\config.json` (Windows).
+
+⚠️ The `sse` transport below is the **future target** and does not work yet (HTTP transport
+unimplemented — see DEPLOYMENT_PLAN.md). Today, configure a local stdio launch instead (the
+`uvx`/command form from the main README):
 
 ```json
 {
