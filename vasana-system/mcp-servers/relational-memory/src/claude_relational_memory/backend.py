@@ -15,6 +15,19 @@ from .claude_agent import ClaudeAgent
 # for the opt-in upgrade path.
 CURRENT_CONFIG_SCHEMA = "1.1"
 
+# Well-known signals that the current process is running in a throwaway
+# cloud/CI/container context, where the default ~/.claude-memory does not
+# survive past the session. Intentionally easy to extend; a missing marker
+# means a missed warning, never a false alarm on a durable local install.
+EPHEMERAL_ENV_MARKERS = (
+    "CI",
+    "CODESPACES",
+    "GITHUB_ACTIONS",
+    "CLAUDE_CODE_WEB",
+    "CLAUDE_CODE_REMOTE",
+    "CLAUDE_ENV_EPHEMERAL",
+)
+
 
 def _version_tuple(v: str) -> tuple[int, ...]:
     """Parse a dotted version string into a tuple of ints for comparison.
@@ -87,7 +100,7 @@ class LocalFileBackend:
             f"preserved.\n\n"
         )
 
-    def _storage_is_ephemeral(self) -> bool:
+    def _storage_is_ephemeral(self, env=None, container_present=None) -> bool:
         """Best-effort guess: will base_path be wiped at session end?
 
         Conservative on purpose — only flags storage we're fairly sure is
@@ -98,25 +111,18 @@ class LocalFileBackend:
         - Otherwise (the default ~/.claude-memory) flag well-known ephemeral
           contexts: cloud/CI env markers and the Docker/OCI container marker.
 
-        The signal set is intentionally easy to extend; missing a marker means
-        a missed warning, never a false alarm on a durable install.
+        ``env`` and ``container_present`` are injectable for testing; both
+        default to the real process environment / filesystem.
         """
-        if os.environ.get("CLAUDE_MEMORY_PATH"):
+        env = os.environ if env is None else env
+        if env.get("CLAUDE_MEMORY_PATH"):
             return False
-        ephemeral_env_markers = (
-            "CI",
-            "CODESPACES",
-            "GITHUB_ACTIONS",
-            "CLAUDE_CODE_WEB",
-            "CLAUDE_CODE_REMOTE",
-            "CLAUDE_ENV_EPHEMERAL",
-        )
-        if any(os.environ.get(m) for m in ephemeral_env_markers):
+        if any(env.get(m) for m in EPHEMERAL_ENV_MARKERS):
             return True
         # Container filesystem marker (Docker/OCI) implies a throwaway home.
-        if Path("/.dockerenv").exists():
-            return True
-        return False
+        if container_present is None:
+            container_present = Path("/.dockerenv").exists()
+        return bool(container_present)
 
     def consume_persistence_warning(self) -> str:
         """Return the ephemeral-storage warning ONCE per Backend instance.

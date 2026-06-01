@@ -63,6 +63,8 @@ jobs:
           set -euo pipefail
           uvx --from vasana-system/mcp-servers/relational-memory \
             python vasana-system/mcp-servers/relational-memory/test_basic.py
+          uvx --from vasana-system/mcp-servers/relational-memory \
+            python vasana-system/mcp-servers/relational-memory/test_persistence_warning.py
           uvx --from vasana-system/mcp-servers/edge-graph \
             python vasana-system/mcp-servers/edge-graph/test_basic.py
           uvx --from research-toolkit/mcp-servers/financial-mcp \
