@@ -40,7 +40,3 @@ git push --force-with-lease origin <prior-good-sha>:release
 ```
 
 Then consumers either wait out the uvx cache TTL or run `uvx --refresh`.
-
-## Companion repo
-
-`bogheorghiu/Claude-Code-Projects` carries a copy of these plugins under `projects/ex-cog-dev/...` and is registered as the `external-cognition-dev` marketplace. Changes that touch plugin code or MCP servers should be mirrored there.
