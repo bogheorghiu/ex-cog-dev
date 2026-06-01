@@ -1,0 +1,42 @@
+name: Version bump guard
+
+# Fails a PR when files under a plugin directory changed but that plugin's
+# .claude-plugin/plugin.json `version` did not increase. The plugin version is
+# what `claude plugin update` keys on, so a change shipped without a bump is
+# silently skipped by installs — the regression this guard prevents (handoff
+# Appendix C). Decision logic lives in .github/scripts/check_version_bump.py
+# and is unit-tested in the "Unit tests" workflow.
+#
+# Note: this guard is intentionally strict — any tracked change under a plugin
+# dir (including docs) requires a bump, because docs are part of the plugin's
+# shipped interface. Adjust PLUGIN_DIRS / add an opt-out in the script if that
+# proves too aggressive.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the merge-base of base...head is reachable.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check plugin version bumps
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_REF"
+          python3 .github/scripts/check_version_bump.py "origin/$BASE_REF" HEAD
