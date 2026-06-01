@@ -65,3 +65,5 @@ jobs:
             python vasana-system/mcp-servers/relational-memory/test_basic.py
           uvx --from vasana-system/mcp-servers/edge-graph \
             python vasana-system/mcp-servers/edge-graph/test_basic.py
+          uvx --from research-toolkit/mcp-servers/financial-mcp \
+            python research-toolkit/mcp-servers/financial-mcp/test_indicators.py
