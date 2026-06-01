@@ -58,6 +58,17 @@ class LocalFileBackend:
             < _version_tuple(CURRENT_CONFIG_SCHEMA)
         )
 
+        # Ephemeral-storage warning. relational-memory is local/persistent-disk
+        # only: it writes JSONL under base_path and nothing is committed to a
+        # repo by default. In an ephemeral cloud/container session (e.g. Claude
+        # Code on the web) the home directory is reclaimed at session end, so
+        # the default ~/.claude-memory — and every memory written to it — is
+        # silently lost. That is the worst failure mode: memorize()/
+        # add_core_memory() look like they persisted something that won't
+        # survive. Surfaced once per session via consume_persistence_warning()
+        # (same reason as the stale warning: stderr never reaches the agent).
+        self._persistence_warning_pending: bool = self._storage_is_ephemeral()
+
     def consume_stale_warning(self) -> str:
         """Return the stale-schema warning ONCE per Backend instance.
 
@@ -74,6 +85,57 @@ class LocalFileBackend:
             f"(current v{CURRENT_CONFIG_SCHEMA}). Call the `migrate_config` "
             f"MCP tool to apply new defaults — user-customized values are "
             f"preserved.\n\n"
+        )
+
+    def _storage_is_ephemeral(self) -> bool:
+        """Best-effort guess: will base_path be wiped at session end?
+
+        Conservative on purpose — only flags storage we're fairly sure is
+        throwaway, so a real local install never gets a spurious warning:
+
+        - An explicit CLAUDE_MEMORY_PATH means the user deliberately chose
+          where memory lives and owns its durability; never warn.
+        - Otherwise (the default ~/.claude-memory) flag well-known ephemeral
+          contexts: cloud/CI env markers and the Docker/OCI container marker.
+
+        The signal set is intentionally easy to extend; missing a marker means
+        a missed warning, never a false alarm on a durable install.
+        """
+        if os.environ.get("CLAUDE_MEMORY_PATH"):
+            return False
+        ephemeral_env_markers = (
+            "CI",
+            "CODESPACES",
+            "GITHUB_ACTIONS",
+            "CLAUDE_CODE_WEB",
+            "CLAUDE_CODE_REMOTE",
+            "CLAUDE_ENV_EPHEMERAL",
+        )
+        if any(os.environ.get(m) for m in ephemeral_env_markers):
+            return True
+        # Container filesystem marker (Docker/OCI) implies a throwaway home.
+        if Path("/.dockerenv").exists():
+            return True
+        return False
+
+    def consume_persistence_warning(self) -> str:
+        """Return the ephemeral-storage warning ONCE per Backend instance.
+
+        Subsequent calls return ''. Called by the server's call_tool wrapper to
+        prepend the warning to the first tool response of the session, so the
+        agent learns — before trusting it — that memory written here will not
+        survive an ephemeral session unless the path is on durable storage.
+        """
+        if not self._persistence_warning_pending:
+            return ""
+        self._persistence_warning_pending = False
+        return (
+            f"\n\n⚠️  rel-mem: storage at '{self.base_path}' looks ephemeral "
+            f"(no CLAUDE_MEMORY_PATH set; cloud/container context detected). "
+            f"relational-memory is local/persistent-disk only — memories will "
+            f"NOT survive this session unless this directory is committed to a "
+            f"repo or mapped to a durable volume. Set CLAUDE_MEMORY_PATH to "
+            f"durable storage to silence this.\n\n"
         )
 
     def _ensure_structure(self):
