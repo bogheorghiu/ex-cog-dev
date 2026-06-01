@@ -17,7 +17,7 @@ tools: [Read, Glob, Grep, Bash, Write, Skill]
 
 ## First Actions
 
-> **Path note:** Paths below are relative to the plugin root (`projects/ex-cog-dev/research-toolkit/`).
+> **Path note:** Paths below are relative to the plugin root (`research-toolkit/`).
 > When installed via plugin system, they resolve to `.claude/skills/` and `.claude/agents/` respectively.
 
 1. **Invoke superpowers:** Use the Skill tool to invoke "using-superpowers". This activates the skill ecosystem.

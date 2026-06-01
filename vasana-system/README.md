@@ -85,7 +85,7 @@ Before relying on a pattern: `test-pattern [name]` (skill — invoke directly)
 ## Conceptual Foundations
 
 - `docs/speculative/vasana-pattern-seed-system.md` — three-tier model (snippet → pattern → pattern-seed)
-- `projects/ex-cog-dev/VASANA-SYSTEM.md` — the relational turn
+- `skills/pattern-library/VASANA-SYSTEM.md` — the relational turn
 
 Key concepts woven through:
 - **Repetition as primitive** — patterns don't exist until they repeat

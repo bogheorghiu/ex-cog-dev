@@ -36,8 +36,8 @@ else
     # No-jq fallback: file_path stays empty, so the allowlist below is
     # effectively disabled and tool_output is the raw input JSON. This is
     # known-weak (the allowlist's intent is defeated and patterns can match
-    # JSON structure) — accepted because jq is a hard requirement for the
-    # CCP hooks ecosystem in practice. The proper fix is parse-by-tool-name
+    # JSON structure) — accepted because jq is a hard requirement for this
+    # hook ecosystem in practice. The proper fix is parse-by-tool-name
     # (handoff #3); without jq we degrade rather than fail closed.
     tool_name="unknown"
     file_path=""
@@ -49,7 +49,7 @@ fi
 # Path allowlist. Skip files that legitimately describe the patterns
 # (the hook itself wherever it lives, hook README, prompt-injection
 # awareness docs, security guides).
-# Two location patterns: CCP-style project-scope at
+# Two location patterns: project-scope at
 # .claude/hooks/scripts/ AND plugin-installed at
 # .../security-toolkit/hooks/ (resolved under ~/.claude/plugins/...).
 DEFAULT_ALLOWLIST_GLOB='*/.claude/hooks/scripts/detect-prompt-injection*:*/security-toolkit/hooks/detect-prompt-injection*:*/.claude/hooks/scripts/README.md:*/security-toolkit/README.md:*/docs/protocols/*:*/docs/guides/security.md:*PROMPT-INJECTION-AWARENESS*:*prompt-injection-awareness*'
