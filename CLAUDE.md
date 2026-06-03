@@ -35,7 +35,7 @@ Every PR to `main` (and every push to `main`) runs three CI gates:
 
 Green `main` is the pre-publish bar.
 
-**This repo (`ex-cog-dev`) is the development source; the public plugin lives in the separate `bogheorghiu/ex-cog` repo.** Publishing = syncing `ex-cog-dev` → `ex-cog`, and that promotion *is* the release gate. There is **no `release` branch** — it was redundant with the dev/public split (the `.mcp.json` URLs never pinned `@release`, so it was never load-bearing) and has been removed.
+**This repo (`ex-cog-dev`) is the development source; the public plugin lives in the separate `bogheorghiu/ex-cog` repo.** Publishing = syncing `ex-cog-dev` → `ex-cog`, and that promotion *is* the release gate. The flow has **no `release`-branch step**: that branch was redundant with the dev/public split and never load-bearing (the `.mcp.json` URLs never pinned `@release`), so it is being retired.
 
 For the dev repo's own `.mcp.json`, the `uvx --from` URLs point at `ex-cog-dev` HEAD of `main`, so a bad commit to `main` here reaches anyone testing against the dev repo within ~24h (uvx cache TTL) or on `uvx --refresh`. The public is insulated from that until the next dev→`ex-cog` sync.
 
