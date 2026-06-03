@@ -53,9 +53,6 @@ Add to `.mcp.json`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `EDGE_GRAPH_PATH` | `~/.edge-graph` | Storage directory |
-| `MCP_TRANSPORT` | `stdio` | Transport (`stdio` or `http`) |
-| `MCP_HOST` | `0.0.0.0` | HTTP host (if `MCP_TRANSPORT=http`) |
-| `MCP_PORT` | `3000` | HTTP port (if `MCP_TRANSPORT=http`) |
 
 ## MCP Tools
 
@@ -155,15 +152,12 @@ This is a simple JSONL-based implementation optimized for clarity over performan
 
 For production use with larger graphs, consider migrating to SQLite backend.
 
-## Security & Deployment
+## Transport
 
-**No authentication is implemented.** For production HTTP deployment:
-
-1. Deploy behind an authenticated reverse proxy (Railway private networking, Cloudflare Access, etc.)
-2. Use `MCP_TRANSPORT=stdio` for local-only access (default)
-3. Never expose HTTP transport directly to the internet
-
-See `docs/operational/mcp/deployment-playbook.md` for deployment patterns.
+stdio only. The installed `edge-graph` console script always runs over stdio for local
+Claude Code use; there is no working HTTP/remote transport on the shipped entry point. (HTTP
+serving scaffolding exists in the source but is not reachable via the console script, and is
+intentionally undocumented as a deployment option until it's wired and tested.)
 
 ## License
 

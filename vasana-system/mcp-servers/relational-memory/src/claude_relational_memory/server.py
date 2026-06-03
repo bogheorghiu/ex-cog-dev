@@ -26,7 +26,9 @@ async def list_tools() -> list[Tool]:
                 "Store a new memory (encode information). "
                 "Use 'recent' for current session context, "
                 "'episodic' for session summaries, "
-                "'compost' for archived memories."
+                "'compost' for archived memories. "
+                "Local/persistent-disk only: not durable in ephemeral cloud "
+                "sessions unless the memory dir is committed or on a durable volume."
             ),
             inputSchema={
                 "type": "object",
@@ -146,7 +148,10 @@ async def list_tools() -> list[Tool]:
             description=(
                 "Add a permanent core memory (personality principle, learning, or anti-pattern). "
                 "Core memories always load with every agent session. "
-                "Use sparingly for important patterns observed across 3+ sessions."
+                "Use sparingly for important patterns observed across 3+ sessions. "
+                "'Permanent' means on durable local storage only — in an ephemeral "
+                "cloud session this is lost at session end unless the memory dir is "
+                "committed to a repo or mapped to a durable volume."
             ),
             inputSchema={
                 "type": "object",
@@ -431,17 +436,23 @@ async def list_tools() -> list[Tool]:
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls.
 
-    Thin wrapper around _dispatch_tool that injects the stale-schema
-    warning into the first tool response of the session when the config
-    schema is older than CURRENT_CONFIG_SCHEMA. stderr warnings from
-    MCP subprocesses don't reach the user/agent (they go to daemon logs
-    only); surfacing the warning as part of a tool response is the only
-    way the user actually sees the prompt to call migrate_config.
+    Thin wrapper around _dispatch_tool that injects one-time, session-first
+    warnings into the tool response. stderr warnings from MCP subprocesses
+    don't reach the user/agent (they go to daemon logs only); surfacing them
+    as part of a tool response is the only way they're actually seen:
+    - stale-schema warning (config older than CURRENT_CONFIG_SCHEMA) → prompts
+      a migrate_config call.
+    - ephemeral-storage warning (memory dir looks throwaway) → warns that
+      memories won't persist past this session unless on durable storage.
     """
     result = await _dispatch_tool(name, arguments)
-    warning = memory_backend.consume_stale_warning()
-    if warning and result and isinstance(result[0], TextContent):
-        result[0] = TextContent(type="text", text=warning + result[0].text)
+    # Persistence warning first (more consequential), then stale-schema.
+    prefix = (
+        memory_backend.consume_persistence_warning()
+        + memory_backend.consume_stale_warning()
+    )
+    if prefix and result and isinstance(result[0], TextContent):
+        result[0] = TextContent(type="text", text=prefix + result[0].text)
     return result
 
 

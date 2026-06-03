@@ -55,6 +55,7 @@ jobs:
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
+          python3 .github/scripts/test_check_version_bump.py
 
       - name: MCP backend functional tests (via uvx)
         env:
@@ -64,6 +65,8 @@ jobs:
           set -euo pipefail
           uvx --from vasana-system/mcp-servers/relational-memory \
             python vasana-system/mcp-servers/relational-memory/test_basic.py
+          uvx --from vasana-system/mcp-servers/relational-memory \
+            python vasana-system/mcp-servers/relational-memory/test_persistence_warning.py
           uvx --from vasana-system/mcp-servers/edge-graph \
             python vasana-system/mcp-servers/edge-graph/test_basic.py
           uvx --from research-toolkit/mcp-servers/financial-mcp \
