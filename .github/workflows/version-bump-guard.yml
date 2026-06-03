@@ -9,12 +9,16 @@ name: Version bump guard
 #
 # Note: this guard is intentionally strict — any tracked change under a plugin
 # dir (including docs) requires a bump, because docs are part of the plugin's
-# shipped interface. Adjust PLUGIN_DIRS / add an opt-out in the script if that
-# proves too aggressive.
+# shipped interface. Genuine no-ops can opt out by putting "[skip-version-bump]"
+# in the PR title or applying the "skip-version-bump" label (the `labeled` /
+# `edited` event types below let that opt-out take effect without a new push).
 
 on:
   pull_request:
     branches: [main]
+    # Default (opened/synchronize/reopened) plus the events that let a title
+    # marker or label toggle the opt-out re-run the check immediately.
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
 
 permissions:
   contents: read
@@ -36,6 +40,8 @@ jobs:
       - name: Check plugin version bumps
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
           set -euo pipefail
           git fetch origin "$BASE_REF"

@@ -9,11 +9,12 @@ silently skipped by installs (the regression this guard prevents).
 Usage (CI):
     python3 .github/scripts/check_version_bump.py <base_ref> [<head_ref>]
 
-The decision logic (`evaluate`) is pure and unit-tested in
+The decision logic (`evaluate`, `skip_requested`) is pure and unit-tested in
 `test_check_version_bump.py`; the git plumbing is a thin wrapper around it.
 """
 
 import json
+import os
 import subprocess
 import sys
 
@@ -26,6 +27,12 @@ PLUGIN_DIRS = {
     "makers-toolkit": "makers-toolkit/",
     "security-toolkit": "security-toolkit/",
 }
+
+# Deliberate opt-out for genuine no-ops: a PR may skip the guard by putting this
+# marker in its title or applying this label. The CI workflow forwards the PR
+# title (PR_TITLE) and labels as a JSON array (PR_LABELS).
+SKIP_MARKER = "[skip-version-bump]"
+SKIP_LABEL = "skip-version-bump"
 
 
 def version_tuple(v):
@@ -76,6 +83,26 @@ def evaluate(changed_files, base_versions, head_versions, plugin_dirs=PLUGIN_DIR
     return failures
 
 
+def skip_requested(title, labels, marker=SKIP_MARKER, label_name=SKIP_LABEL):
+    """True if the PR opted out via the title marker or the skip label.
+
+    Both comparisons are case-insensitive; labels are trimmed. Tolerant of
+    None / empty inputs (treated as "no opt-out").
+    """
+    if marker.lower() in (title or "").lower():
+        return True
+    return any((lbl or "").strip().lower() == label_name.lower() for lbl in (labels or []))
+
+
+def _pr_labels_from_env():
+    """Parse PR_LABELS (a JSON array of label names) from the environment."""
+    try:
+        parsed = json.loads(os.environ.get("PR_LABELS", "[]"))
+    except json.JSONDecodeError:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
 def _read_version(ref, prefix):
     """Read a plugin's manifest version at a git ref; None if absent/unparseable."""
     path = f"{prefix}.claude-plugin/plugin.json"
@@ -113,8 +140,15 @@ def main(argv):
     changed = _changed_files(base_ref, head_ref)
     base_versions = {n: _read_version(base_ref, p) for n, p in PLUGIN_DIRS.items()}
     head_versions = {n: _read_version(head_ref, p) for n, p in PLUGIN_DIRS.items()}
-
     failures = evaluate(changed, base_versions, head_versions)
+
+    # Opt-out short-circuit. Still report what WOULD have failed, for transparency.
+    if skip_requested(os.environ.get("PR_TITLE", ""), _pr_labels_from_env()):
+        print(f"⏭️  Version-bump guard skipped via opt-out ({SKIP_MARKER} / {SKIP_LABEL} label).")
+        for f in failures:
+            print(f"   (would otherwise flag) {f}")
+        return 0
+
     if failures:
         print("❌ Version-bump guard FAILED:")
         for f in failures:
@@ -122,6 +156,8 @@ def main(argv):
         print(
             "\nAny change to a plugin's files must bump that plugin's "
             ".claude-plugin/plugin.json version, so `claude plugin update` picks it up."
+            f"\nGenuine no-op? Add '{SKIP_MARKER}' to the PR title or the "
+            f"'{SKIP_LABEL}' label to bypass."
         )
         return 1
     print("✅ Version-bump guard passed.")

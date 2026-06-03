@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from check_version_bump import evaluate, version_tuple  # noqa: E402
+from check_version_bump import evaluate, version_tuple, skip_requested  # noqa: E402
 
 DIRS = {"alpha": "alpha/", "beta": "beta/"}
 failures = []
@@ -106,6 +106,18 @@ def test_prefix_not_substring_matched():
     check("no failures (alphabet/ is not under alpha/)", out == [])
 
 
+def test_skip_requested():
+    print("\n11. skip_requested() opt-out via title marker or label")
+    check("title marker -> skip", skip_requested("fix typo [skip-version-bump]", []) is True)
+    check("title marker case-insensitive", skip_requested("X [SKIP-VERSION-BUMP]", []) is True)
+    check("label -> skip", skip_requested("plain title", ["skip-version-bump"]) is True)
+    check("label case/space-insensitive", skip_requested("t", ["  Skip-Version-Bump "]) is True)
+    check("unrelated label -> no skip", skip_requested("t", ["bug", "enhancement"]) is False)
+    check("no marker/label -> no skip", skip_requested("ordinary title", []) is False)
+    check("None inputs tolerated", skip_requested(None, None) is False)
+    check("marker only matched bracketed, not bare word", skip_requested("version bump done", []) is False)
+
+
 if __name__ == "__main__":
     print("Testing version-bump guard logic (Appendix C)...")
     test_version_tuple()
@@ -118,6 +130,7 @@ if __name__ == "__main__":
     test_new_plugin_passes()
     test_multiple_plugins_independent()
     test_prefix_not_substring_matched()
+    test_skip_requested()
     if failures:
         print(f"\n❌ {len(failures)} check(s) failed: {failures}")
         raise SystemExit(1)
