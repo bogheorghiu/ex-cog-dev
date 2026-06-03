@@ -54,6 +54,7 @@ jobs:
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
+          python3 .github/scripts/test_check_version_bump.py
 
       - name: MCP backend functional tests (via uvx)
         env:
