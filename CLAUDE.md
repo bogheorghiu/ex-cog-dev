@@ -13,30 +13,30 @@ Four Claude Code plugins distributed via the `ex-cog-dev` marketplace:
 
 The four MCP servers are launched by consumers via `uvx --from git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=<path> <command>` URLs in each plugin's `.mcp.json`. That means every uvx cold-start fetches the latest source from this repo. A bad commit propagates to all consumers within ~24h (uvx cache TTL).
 
-## Release procedure (the `release` branch + smoke test pattern)
+## Version bumping (REQUIRED)
 
-The `MCP smoke test` workflow (`.github/workflows/mcp-smoke-test.yml`) runs on every push to `main` and every PR. It builds each of the four MCPs via `uvx --from <local-path>` and feeds them a JSON-RPC `initialize` request — if any server fails to import, build, or respond, the workflow fails.
+When you change **any** file under a plugin directory (`vasana-system/`, `research-toolkit/`, `makers-toolkit/`, `security-toolkit/`), you **must** bump that plugin's `.claude-plugin/plugin.json` `version` in the same change, before committing. That version is what `claude plugin update` keys on — a change shipped without a bump is silently skipped by installs (this has regressed before).
 
-The intended flow is:
+- Patch (`x.y.Z+1`) for fixes/docs, minor (`x.Y+1.0`) for new features — your judgment.
+- Genuine no-op (e.g. a typo in an unshipped note)? Bypass with `[skip-version-bump]` in the PR title or the `skip-version-bump` label.
+- Self-check before pushing — the same guard CI runs on every PR:
+  ```bash
+  python3 .github/scripts/check_version_bump.py origin/main HEAD
+  ```
+  Enforced by `.github/workflows/version-bump-guard.yml`; logic + tests in `.github/scripts/`.
 
-1. **Develop on a feature branch.** Open a PR to `main`. Smoke test runs on the PR.
-2. **Merge to `main`.** Smoke test runs again on the merge commit.
-3. **Once smoke test passes on `main`,** fast-forward `release` to that commit:
-   ```bash
-   git fetch origin
-   # First time only (creates the branch):
-   git push origin origin/main:refs/heads/release
-   # Subsequent updates (fast-forward):
-   git push origin origin/main:release
-   ```
-4. **Consumers** pick up the new code on next uvx cache refresh (~24h) or when they run `uvx --refresh`.
+## Release / publish
 
-> ⚠️ **The plugin `.mcp.json` URLs do not currently include `@release`.** They point at HEAD of `main`, so the `release` branch is a safety net you can opt into later by adding `@release` to each URL (in a follow-up PR). Until then, smoke test still acts as a pre-merge guard, but `release` itself isn't load-bearing.
+Every PR to `main` (and every push to `main`) runs three CI gates:
 
-### To roll back a bad release
+- **MCP smoke test** (`.github/workflows/mcp-smoke-test.yml`) — builds each of the four MCPs via `uvx --from <local-path>` and sends a JSON-RPC `initialize`; fails if any server can't import, build, or respond.
+- **Unit tests** (`.github/workflows/unit-tests.yml`) — the per-plugin test suites.
+- **Version-bump guard** (`.github/workflows/version-bump-guard.yml`) — see *Version bumping* above.
 
-```bash
-git push --force-with-lease origin <prior-good-sha>:release
-```
+Green `main` is the pre-publish bar.
 
-Then consumers either wait out the uvx cache TTL or run `uvx --refresh`.
+**This repo (`ex-cog-dev`) is the development source; the public plugin lives in the separate `bogheorghiu/ex-cog` repo.** Publishing = syncing `ex-cog-dev` → `ex-cog`, and that promotion *is* the release gate. There is **no `release` branch** — it was redundant with the dev/public split (the `.mcp.json` URLs never pinned `@release`, so it was never load-bearing) and has been removed.
+
+For the dev repo's own `.mcp.json`, the `uvx --from` URLs point at `ex-cog-dev` HEAD of `main`, so a bad commit to `main` here reaches anyone testing against the dev repo within ~24h (uvx cache TTL) or on `uvx --refresh`. The public is insulated from that until the next dev→`ex-cog` sync.
+
+> Reconsidering this? Collapsing the two repos into one — with the public installing directly and a `release` branch + `@release`-pinned URLs as the stability mechanism — is tracked in issue #38. Until that's decided, dev→`ex-cog` is the publish step.
