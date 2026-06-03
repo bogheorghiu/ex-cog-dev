@@ -7,6 +7,7 @@ name: Unit tests
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)
 #   - brainstorm session recorder (stdlib Python)
+#   - vasana-system skill-structure linter (frontmatter YAML + conventions, via uv)
 #   - edge-graph + relational-memory backends (need mcp/pydantic, run via uvx)
 #
 # Each suite exits non-zero on failure, so a regression fails the job.
@@ -56,6 +57,14 @@ jobs:
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
           python3 .github/scripts/test_check_version_bump.py
+
+      - name: Skill-structure linter (vasana-system)
+        run: |
+          set -euo pipefail
+          # Run with PyYAML so the full parser catches every frontmatter YAML
+          # error — including the unquoted `key: ... : ...` variant the stdlib
+          # fallback in the linter can't. See vasana-system/skills/test_skill_structure.py.
+          uv run --no-project --with pyyaml python vasana-system/skills/test_skill_structure.py
 
       - name: MCP backend functional tests (via uvx)
         env:

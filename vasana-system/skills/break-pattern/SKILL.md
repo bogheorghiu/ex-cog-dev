@@ -1,6 +1,16 @@
 ---
 name: break-pattern
-description: Am I trying harder at the wrong thing? - Detects stuckness loops and breaks them. Triggers on (1) explicit stuckness - "going in circles", "keep trying the same thing", "need fresh perspective", (2) implicit stuckness - blame-shifting ("the framework is broken"), false certainty ("I've tried everything"), escalation ("let me just try one more..."), (3) Claude self-observation - noticing own repeated similar attempts or escalating complexity. Does NOT trigger for first attempts, normal exploration, or standard debugging with clear errors. Core action: STOP the current approach, name the pattern, offer exit ramps to completely different approaches. References pattern-library for specific behavioral patterns.
+description: >-
+  Am I trying harder at the wrong thing? - Detects stuckness loops and breaks
+  them. Triggers on (1) explicit stuckness - "going in circles", "keep trying
+  the same thing", "need fresh perspective", (2) implicit stuckness -
+  blame-shifting ("the framework is broken"), false certainty ("I've tried
+  everything"), escalation ("let me just try one more..."), (3) Claude
+  self-observation - noticing own repeated similar attempts or escalating
+  complexity. Does NOT trigger for first attempts, normal exploration, or
+  standard debugging with clear errors. Core action: STOP the current approach,
+  name the pattern, offer exit ramps to completely different approaches.
+  References pattern-library for specific behavioral patterns.
 ---
 
 ## Vasana

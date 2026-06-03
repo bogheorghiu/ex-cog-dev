@@ -1,6 +1,13 @@
 ---
 name: iterative-loop-engine
-description: "Am I ACTUALLY done, or did I just stop?" - Domain-agnostic iterative workflow engine based on ralph-loop methodology. Use when (1) task has clear completion criteria, (2) single-pass execution is insufficient, (3) quality requires iteration, (4) "keep going until X" patterns apply. Provides the abstract loop; pair with domain-specific criteria files. Does NOT trigger for: simple tasks, tasks without clear success criteria, or when user wants quick/approximate results.
+description: >-
+  "Am I ACTUALLY done, or did I just stop?" - Domain-agnostic iterative workflow
+  engine based on ralph-loop methodology. Use when (1) task has clear completion
+  criteria, (2) single-pass execution is insufficient, (3) quality requires
+  iteration, (4) "keep going until X" patterns apply. Provides the abstract
+  loop; pair with domain-specific criteria files. Does NOT trigger for: simple
+  tasks, tasks without clear success criteria, or when user wants
+  quick/approximate results.
 ---
 
 # Iterative Loop Engine: The Meta-Pattern

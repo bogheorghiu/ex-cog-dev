@@ -1,6 +1,12 @@
 ---
 name: temporal-shaping
-description: "What shape does this process need over time?" - Use when designing any time-based process, workflow, or interaction. The pattern that connects envelope design to cognitive choreography. Use when (1) designing learning progressions, (2) planning project phases, (3) structuring conversations or presentations, (4) understanding why something feels "off" in its pacing, (5) cross-domain problems involving time and intensity.
+description: >-
+  "What shape does this process need over time?" - Use when designing any
+  time-based process, workflow, or interaction. The pattern that connects
+  envelope design to cognitive choreography. Use when (1) designing learning
+  progressions, (2) planning project phases, (3) structuring conversations or
+  presentations, (4) understanding why something feels "off" in its pacing, (5)
+  cross-domain problems involving time and intensity.
 ---
 
 # Temporal Shaping

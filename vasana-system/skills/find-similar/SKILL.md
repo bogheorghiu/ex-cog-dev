@@ -1,6 +1,11 @@
 ---
 name: find-similar
-description: "Where else does this pattern appear?" - Cross-domain similarity search for observed patterns. Use when (1) a pattern has been noticed and needs verification across domains, (2) checking if a pattern is genuinely novel or already captured, (3) exploring whether a local observation reflects something universal, or (4) expanding a narrow finding into cross-domain connections.
+description: >-
+  "Where else does this pattern appear?" - Cross-domain similarity search for
+  observed patterns. Use when (1) a pattern has been noticed and needs
+  verification across domains, (2) checking if a pattern is genuinely novel or
+  already captured, (3) exploring whether a local observation reflects something
+  universal, or (4) expanding a narrow finding into cross-domain connections.
 ---
 
 # Find Similar
