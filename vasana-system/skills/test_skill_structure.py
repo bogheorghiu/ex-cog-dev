@@ -14,19 +14,13 @@ instead of shipping broken:
   - description present and within Anthropic's 1024-char limit
   - a self-replication section, per CLAUDE.md's Self-Replication Principle
 
-Two deltas from the research-toolkit original, because vasana-system's skills
-genuinely differ (verified against the shipped tree, not assumed):
-
-  - Self-replication heading: research-toolkit uses exactly one `## Vasana`.
-    vasana-system ships the same section under two heading variants — `## Vasana`
-    and `## Vasana Propagation` — and the teaching skill `record-pattern` legibly
-    repeats it. So the invariant here is "at least one" of either variant.
-  - `pattern-library` ships a 1127-char description (> 1024). That's a real
-    latent bug, but a different one from #41's invalid-YAML scope, and trimming
-    it changes what the model reads to fire that skill — an editorial call, not a
-    mechanical reformat. It is quarantined as a known exception (warned, not
-    failed) so the bound stays hard for every other and future skill, pending a
-    separate owner decision.
+One delta from the research-toolkit original: counting the self-replication
+heading. The canonical section is `## Vasana` (exactly one per skill, per the
+CLAUDE.md Self-Replication Principle and the `vasana` entry skill). Two
+vasana-system-specific wrinkles are handled: the teaching skill `record-pattern`
+embeds the section inside ```markdown``` templates, so fenced code is stripped
+before counting; and the older `## Vasana Propagation` variant is deprecated, so
+it's rejected outright to keep it from creeping back in.
 
 YAML validity prefers a real parse via PyYAML when importable, and ALWAYS also
 runs a stdlib check for the one footgun the house seed-question style invites: a
@@ -47,16 +41,17 @@ DESC_MAX = 1024
 # stub description without coupling the test to the current house verbosity.
 DESC_MIN = 40
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-# A self-replication heading: `## Vasana` or `## Vasana Propagation` (CLAUDE.md
-# Self-Replication Principle). Anchored so `## Testing This Vasana`,
+# The canonical self-replication heading, anchored so `## Testing This Vasana`,
 # `## Behavioral Patterns (Vasanas)`, etc. do not count.
-SELFREP_RE = re.compile(r"^##\s+Vasana(?:\s+Propagation)?\s*$", re.M)
+SELFREP_RE = re.compile(r"^##\s+Vasana\s*$", re.M)
+# The deprecated variant — rejected so it can't return.
+DEPRECATED_SELFREP_RE = re.compile(r"^##\s+Vasana\s+Propagation\s*$", re.M)
+# Fenced code blocks, stripped before counting headings so a skill that *shows*
+# the section as a ```markdown``` template (record-pattern) isn't miscounted.
+FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 # A bare quoted scalar with trailing non-comment text — invalid YAML, and one of
 # the shapes the seed-question descriptions regressed into.
 QUOTED_WITH_TRAILING = re.compile(r'^([A-Za-z_][\w-]*):[ \t]*(["\']).*?\2(.+)$', re.M)
-# Pre-existing description overflow (> DESC_MAX), out of #41's invalid-YAML scope.
-# Quarantined so the upper bound stays hard for every other/future skill.
-KNOWN_OVERLONG = {"pattern-library"}
 
 _SKILLS_DIR = Path(__file__).resolve().parent
 
@@ -168,16 +163,12 @@ for path in skill_files:
 
     check(f"name matches directory ('{name}' == '{slug}')", name == slug)
     check(f"name is kebab-case and <= {NAME_MAX} chars", bool(NAME_RE.match(name)) and len(name) <= NAME_MAX)
-    check(f"description length {len(desc)} >= {DESC_MIN}", len(desc) >= DESC_MIN)
-    if slug in KNOWN_OVERLONG and len(desc) > DESC_MAX:
-        print(f"   ⚠ KNOWN: description length {len(desc)} > {DESC_MAX} — pre-existing "
-              f"pattern-library overflow, out of #41 scope; bound stays hard elsewhere.")
-    else:
-        check(f"description length {len(desc)} <= {DESC_MAX}", len(desc) <= DESC_MAX)
-    # CLAUDE.md Self-Replication Principle: every skill carries the self-replication
-    # section (shipped as `## Vasana` or `## Vasana Propagation`).
-    selfrep = len(SELFREP_RE.findall(text))
-    check("has a self-replication section ('## Vasana' / '## Vasana Propagation')", selfrep >= 1)
+    check(f"description length {len(desc)} within [{DESC_MIN}, {DESC_MAX}]", DESC_MIN <= len(desc) <= DESC_MAX)
+    # CLAUDE.md Self-Replication Principle: exactly one `## Vasana` section, counted
+    # outside fenced code so record-pattern's template examples don't inflate it.
+    body = FENCE_RE.sub("", text)
+    check("exactly one '## Vasana' section", len(SELFREP_RE.findall(body)) == 1)
+    check("no deprecated '## Vasana Propagation' heading", len(DEPRECATED_SELFREP_RE.findall(body)) == 0)
 
 
 if failures == 0:

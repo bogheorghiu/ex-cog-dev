@@ -1,6 +1,19 @@
 ---
 name: pattern-library
-description: What patterns keep showing up across unrelated contexts? - Browse and apply universal behavioral patterns (vasanas) that persist across domains. Patterns are neutral observations about how behavior self-organizes - groove-deepening is also mastery, framework-dissolution can be premature. Use when (1) architecture feels forced or over-engineered despite following best practices, (2) debugging repeatedly reveals you're looking at the wrong layer or making incorrect assumptions, (3) standard patterns (MVC, CRUD, REST) don't map cleanly to the problem domain, (4) user explicitly requests "fresh perspective", "creative approach", or "think differently about this", (5) you notice habitual design choices constraining possibilities, (6) you observe yourself making repeated similar failed attempts (self-observation), (7) problem spans multiple domains or standard approaches repeatedly fail. Provides frameworks for concrete-to-abstract iteration, interface design as reality-creation, cross-domain analogies, and meta-debugging. Each pattern includes code examples, recognition signals, and integration with other patterns.
+description: >-
+  What patterns keep showing up across unrelated contexts? - Browse and apply
+  universal behavioral patterns (vasanas) that persist across domains. Patterns
+  are neutral observations, not anti-patterns. Use when (1) architecture feels
+  forced or over-engineered despite following best practices, (2) debugging
+  repeatedly reveals you're looking at the wrong layer or making incorrect
+  assumptions, (3) standard patterns (MVC, CRUD, REST) don't map cleanly to the
+  problem domain, (4) user explicitly requests "fresh perspective", "creative
+  approach", or "think differently about this", (5) you notice habitual design
+  choices constraining possibilities, (6) you observe yourself making repeated
+  similar failed attempts (self-observation), (7) problem spans multiple domains
+  or standard approaches repeatedly fail. Provides frameworks for
+  concrete-to-abstract iteration, interface design, cross-domain analogies, and
+  meta-debugging.
 ---
 
 ## Vasana
