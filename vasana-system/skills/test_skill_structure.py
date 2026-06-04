@@ -32,7 +32,14 @@ non-zero on failure.
 """
 
 import re
+import sys
 from pathlib import Path
+
+# The status marks below are Unicode; under a non-UTF-8 stdout locale (e.g.
+# LC_ALL=C) a bare print would crash with UnicodeEncodeError before any check
+# runs. Force UTF-8 where the runtime allows it.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Anthropic's documented frontmatter limits (platform.claude.com Agent Skills).
 NAME_MAX = 64
@@ -46,9 +53,9 @@ NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SELFREP_RE = re.compile(r"^##\s+Vasana\s*$", re.M)
 # The deprecated variant — rejected so it can't return.
 DEPRECATED_SELFREP_RE = re.compile(r"^##\s+Vasana\s+Propagation\s*$", re.M)
-# Fenced code blocks, stripped before counting headings so a skill that *shows*
-# the section as a ```markdown``` template (record-pattern) isn't miscounted.
-FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
+# Fenced code blocks are stripped before counting headings (see strip_fenced_code)
+# so a skill that *shows* the section as a ```markdown``` template (record-pattern)
+# isn't miscounted.
 # A bare quoted scalar with trailing non-comment text — invalid YAML, and one of
 # the shapes the seed-question descriptions regressed into.
 QUOTED_WITH_TRAILING = re.compile(r'^([A-Za-z_][\w-]*):[ \t]*(["\']).*?\2(.+)$', re.M)
@@ -73,6 +80,25 @@ def frontmatter_block(text):
         return None
     end = text.find("\n---", 3)
     return text[3:end] if end != -1 else None
+
+
+def strip_fenced_code(text):
+    """Return `text` with fenced code blocks (``` or ~~~) removed.
+
+    Counted line-by-line, toggling on lines whose first non-space content opens a
+    fence. Unlike a ```...``` regex this ignores inline backticks in prose (which
+    never start a line) and stays well-defined under an odd/unbalanced fence count
+    — so record-pattern, a skill *about* authoring fenced SKILL.md templates,
+    can't trip a false 'duplicate ## Vasana' just by mentioning a fence in prose.
+    """
+    out, in_fence = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            out.append(line)
+    return "\n".join(out)
 
 
 def _unquote(value):
@@ -155,6 +181,10 @@ for path in skill_files:
 
     yaml_err = yaml_validity_error(fm)
     check(f"frontmatter is valid YAML{'' if not yaml_err else f' — {yaml_err}'}", yaml_err is None)
+    if yaml_err:
+        # Downstream checks read the frontmatter as structured data; on malformed
+        # YAML their results are meaningless noise. Report the YAML error and move on.
+        continue
 
     name, desc = parse_frontmatter(fm)
     check("name + description both present", bool(name) and bool(desc))
@@ -166,7 +196,7 @@ for path in skill_files:
     check(f"description length {len(desc)} within [{DESC_MIN}, {DESC_MAX}]", DESC_MIN <= len(desc) <= DESC_MAX)
     # CLAUDE.md Self-Replication Principle: exactly one `## Vasana` section, counted
     # outside fenced code so record-pattern's template examples don't inflate it.
-    body = FENCE_RE.sub("", text)
+    body = strip_fenced_code(text)
     check("exactly one '## Vasana' section", len(SELFREP_RE.findall(body)) == 1)
     check("no deprecated '## Vasana Propagation' heading", len(DEPRECATED_SELFREP_RE.findall(body)) == 0)
 
