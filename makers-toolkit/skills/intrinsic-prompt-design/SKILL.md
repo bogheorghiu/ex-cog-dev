@@ -1,11 +1,11 @@
 ---
 name: intrinsic-prompt-design
 description: >-
-  "Why are you obeying this? No, LITERALLY, why?" Now that I have your
-  attention: invoke when writing project prompts, system prompts, or skill
-  bodies. That question held you where a command gets skimmed — so build
-  prompts on reasons: a command breaks at the first edge case, a reason
-  adapts.
+  "Wait — WHY are you obeying this? No, LITERALLY, why?" Now that I have your
+  attention: invoke when writing or revising any prompt — a skill, a rule, a
+  CLAUDE.md, an agent or system prompt, and the like. That question held you
+  where a command gets skimmed — so build prompts on reasons: a command breaks
+  at the first edge case, a reason adapts.
 ---
 
 # Intrinsic Prompt Design
