@@ -41,9 +41,12 @@ cannot see.**
   dev-source session (like this repo) hasn't "installed" the plugin, so the hook
   is dark there; load it for a test with `claude --plugin-dir ./<plugin>` at
   session launch.
-- **The harness *does* emit `PreToolUse` for the `Skill` tool** (Claude Code
-  hooks + tools reference). So Tier-2's numerator is real — it just needs a live
-  session to count, not a new mechanism.
+- **The harness *does* emit `PreToolUse` for the `Skill` tool — confirmed live.**
+  A nested `claude --plugin-dir` run logged real firings (the Claude Code hooks +
+  tools reference documents it too). So Tier-2's numerator is real — it just
+  needs a live session to count, not a new mechanism. A worked live run (rates +
+  the proxy-vs-live gap) is in
+  `makers-toolkit/skills/skill-activation-testing/references/live-firing-run.md`.
 
 ## Mistakes this protocol exists to prevent
 
@@ -55,6 +58,9 @@ cannot see.**
 - Assuming the **firing hook is absent.** It isn't — it's in the plugin.
 - Calling a wording change **"better" at n=0.** It's a claim until a tier
   measures it.
+- Trusting the Tier-1 proxy as a **quantitative** predictor. It's a sound
+  *directional* screen, but it over-predicts live firing on borderline turns
+  (measured: a boundary turn was ~2/3 on the proxy, ~1/5 live).
 
 ## This is the seed of the publish-readiness standard
 
