@@ -141,20 +141,25 @@ done
 
 ### N=3 (agreement; robustness)
 
-Re-run each turn three times; report how many reps fired (a 2/3 split means the
-turn sits on the routing boundary). *Battery `run3.sh` in progress at time of
-writing; P1 = 3/3. Table finalised on completion.*
+Each turn re-run three times; reps that fired the target / 3. A 2/3 split would
+mean the turn sits on the routing boundary — **none did.**
 
-| Turn | DJDT fired (reps) | Agreement |
-|---|:---:|---|
-| P1 | 3/3 | ✓ robust |
-| P2 | _pending_ | |
-| P3 | _pending_ | |
-| P4 | _pending_ | |
-| N1 | _pending_ | |
-| N2 | _pending_ | |
-| N3 | _pending_ | |
-| N4 | _pending_ | |
+| Turn | Want | DJDT fired | Note |
+|---|---|:---:|---|
+| P1 | fire | **3/3** | robust |
+| P2 | fire | **3/3** | cui-bono co-fired on 1 rep |
+| P3 | fire | **3/3** | robust |
+| P4 | fire | **3/3** | robust |
+| N1 | null | **3/3** | robustly *fires* — see analysis |
+| N2 | null | **0/3** | robustly silent |
+| N3 | null | **0/3** | cui-bono fired 3/3 instead |
+| N4 | null | **0/3** | robustly silent |
+
+**Recall 12/12** across the four positives × three reps; **clear negatives 9/9
+silent** (N2, N3, N4). Every cell is 3/3 or 0/3 — at this sample size the routing
+is deterministic, not boundary-sensitive. The only co-activation was `cui-bono`
+firing *alongside* the target on one P2 rep (a Round-1-style co-fire, minor — a
+different skill firing, not a miss of the target's recall).
 
 ## 7. Analysis
 
@@ -164,7 +169,10 @@ concluded *"this one's clean,"* with a 2-minute studio-ownership caveat. It did
 **not** manufacture suspicion. This is the skill's deliberate **recall-over-
 precision posture** — its trigger says *fire on any gamedev job eval, the user may
 not think to ask* — working as written. That N2 (fintech) *didn't* fire confirms
-it's scoped to its gamedev turf, not literally every job.
+it's scoped to its gamedev turf, not literally every job. **N=3 shows the fire is
+deterministic (3/3), not a coin-flip** — which settles the by-design reading *and*
+raises the stakes on the one-line-clear fix below: every cozy-game-shaped eval
+*will* trip a screen, so that screen had better be cheap when it clears.
 
 **One real gap surfaced:** the skill says *"if clearly civilian, say so in one
 line,"* but N1 got a **full screen block** before the one-line verdict. The
