@@ -16,8 +16,10 @@ free.) Cognition can be held in common or walled off the same way, and that figh
 isn't settled.
 
 This repo doesn't settle it. It's small, and the real work is happening in more
-places than this one. But here's a handful of tools built the other way — in the
-open, free to install, yours to run.
+places than this one. But here's a handful of tools built the other way: they hand
+you the means, not the answer — something to drive, not an oracle to trust — and
+some turn on the machinery itself, asking who owns it, who benefits, and what's being
+left unsaid. Free to install, local, yours to change.
 
 [Install](#install) · [research-toolkit](#research-toolkit) · [vasana-system](#vasana-system) · [makers-toolkit](#makers-toolkit) · [security-toolkit](#security-toolkit)
 
