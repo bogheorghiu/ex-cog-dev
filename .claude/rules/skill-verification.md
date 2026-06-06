@@ -45,8 +45,8 @@ cannot see.**
   A nested `claude --plugin-dir` run logged real firings (the Claude Code hooks +
   tools reference documents it too). So Tier-2's numerator is real — it just
   needs a live session to count, not a new mechanism. A worked live run (rates +
-  the proxy-vs-live gap) is in
-  `makers-toolkit/skills/skill-activation-testing/references/live-firing-run.md`.
+  the proxy-vs-live gap) is recorded in issue #53 (kept there rather than shipped
+  — the specific run results are dev-facing).
 
 ## Mistakes this protocol exists to prevent
 
