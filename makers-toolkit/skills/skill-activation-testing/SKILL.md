@@ -56,15 +56,25 @@ See `references/router-judge-template.md` for the parameterized prompt; `referen
 
 ### Tier 2 — Live harness test (the real claim)
 
-The only tier that can measure firing under genuine attention scarcity — a full context, many competing skills, a real task in flight.
+The only tier that can measure firing under genuine attention scarcity. Tier 1 *forces* a router to read every description; Tier 2 lets the live model skim, ignore, and choose — the actual condition a description ships into.
 
-1. **Install the plugin, enable the firing counter, and confirm it logs.** The instrument is `vasana-system/hooks/count-skill-firings.sh` (PreToolUse, matcher `Skill`); it appends one JSONL line — `{timestamp, session_id, skill, cwd}` — per `Skill` invocation to `~/.claude/logs/skill-firings.log`. Before trusting it, invoke any skill once and check the log grew. This is not ceremony: the hook's test suite proves the *script* handles a synthetic `Skill` envelope, but only a live session proves the *harness* emits a PreToolUse event for the `Skill` tool — the one assumption the whole tier rests on. Until you've seen the log grow from a real invocation, Tier 2's numerator is hypothetical.
+**Design the run (per skill).** Build a turn set with a known denominator:
+- **Clear positives** (lexical cue present) — they fire reliably; they prove the pipeline, not the wording.
+- **Oblique positives** — the skill's *symptom*, no lexical cue. Where a description earns its keep.
+- **Over-fire traps** — adjacent-but-wrong turns (a sibling skill's job); false-fires here are the precision cost.
+- **Off-topic negatives** — should fire nothing.
+- Make every turn **self-contained.** If it needs input the skill would first ask for ("deconstruct this essay" with no essay), the model asks for the input instead of firing and you've measured nothing.
+- **Repeat each turn N times (≥5).** Live firing is **stochastic** — a single run is not a rate.
 
-2. **A/B across many realistic, busy turns** where the skill *should* fire — different sessions per arm, the variable-under-test swapped between them, everything else held. Count firings per arm from the log.
+**Run it.** Load the plugin so its skills *and* the `count-skill-firings.sh` hook are active, then issue the turns:
+- **Confirm the instrument once:** invoke any skill and check the log grew. The harness *does* emit `PreToolUse` for `Skill` (confirmed live, not only per docs) — but confirm your own wiring. The hook appends `{timestamp, session_id, skill, cwd}` per `Skill` call to `~/.claude/logs/skill-firings.log` (override with `SKILL_FIRINGS_LOG`).
+- **Dev recipe (no install needed):** `SKILL_FIRINGS_LOG=… claude -p "<turn>" --plugin-dir ./<plugin> --allowedTools Skill` — `--plugin-dir` loads the plugin *and its hooks*; `--allowedTools Skill` lets the skill fire but keeps it from spiralling into a full sub-analysis. Loop N times; tally the log. Even a nested headless call counts — it's a real session, the actual model auto-firing.
+- **Installed path (consumer/cloud):** the same hook ships in the plugin's `hooks/hooks.json` and activates on install; a cloud session installs plugins declared in the repo's committed `.claude/settings.json`.
+- **Running locally where the plugin may already be installed:** diff the installed copy (`~/.claude/plugins/cache/<plugin>`) against your repo checkout — identical ⇒ use the install; differs ⇒ ask the operator (update the install / use the older install *[only with a stated reason]* / fall back to `--plugin-dir`). Don't silently test a stale install.
 
-3. **Numerator = the log; denominator = your run design** (the turns you constructed to be should-have-fired). The hook cannot see the turns where a skill should have fired and didn't — that denominator exists only in your design. Report the rate as numerator-over-denominator, not as a bare count (discipline #5).
+**Score it.** Numerator = the log; denominator = your run design (the should-have-fired turns — it exists nowhere else). Report firings/N per turn, never a bare count (discipline #5).
 
-**Cost and validity:** slow, high-variance, needs a real install and arm-switching across sessions — and that cost is the reason Tier 1 exists. But Tier 2 is the *only* tier that answers the attention question. When the headline claim is about attention, Tier 1 cannot retire the question and Tier 2 is the work.
+**Cost and validity:** slow, high-variance, needs an install or `--plugin-dir` and many runs — that cost is why Tier 1 exists as the cheap screen. But Tier 2 sees the gap Tier 1 can't: in practice **clear positives fire reliably live, while borderline turns under-fire well below the proxy's prediction** (the proxy must read; the live model skims). That gap *is* the attention effect.
 
 ---
 
