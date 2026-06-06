@@ -1,27 +1,32 @@
 # ex-cog — means of cognition
 
-AI doesn't think *for* you — at its best it thinks *with* you. You hand it a
-half-formed question, a messy document, a thing you can't quite see the shape of,
-and it hands back something you can work with: turned over, talked back to, built
-on. The name for that is *externalized cognition* — thinking taken out of one head
-and made into something more than one person can hold. It was never really a solo
-act anyway; the lone thinker sealed in one skull was always a fiction. AI just makes
-that obvious.
+AI doesn't think *for* you. At its best, it thinks *with* you. You hand it a
+half-formed question, a mess of a document, a thing you can't quite see the shape
+of — and it hands back something you can work with. That's *externalized cognition*:
+thinking pulled out of one head and made into something more than one head can hold.
+It was never really a solo act anyway. The lone mind sealed in its own skull was
+always a fiction; AI just makes that plain.
 
-How the capability gets delivered is the open question. The most common way people
-reach information is already changing its default — from a list of sources you pick
-through to an interface that simply answers, with the searching done out of sight.
-That's externalized cognition at scale, but centralized: a few firms own the
-machinery and decide what counts as an answer. (Enclosure is the old move — common
-land fenced into private property, the public left renting what it once used freely.)
-A means of cognition can be held in common or walled off the same way, and it isn't
-settled yet which.
+But the same capability can be handed to you or taken from you. Watch where search is
+going: from a list of sources you pick through to a single answer, generated out of
+sight, that you're meant to trust. That's externalized cognition at scale — and
+enclosed. A few firms own the machinery and decide which answer you see. (Enclosure
+is an old move: fence the commons, then rent people back what they used to use for
+free.) Cognition can be held in common or walled off the same way, and that fight
+isn't settled.
 
-This repo doesn't decide that — it's a small thing, and the real work is happening
-in more places than this one. What's here is a handful of tools made in that spirit,
-free to install and use.
+This repo doesn't settle it. It's small, and the real work is happening in more
+places than this one. But here's a handful of tools built the other way — in the
+open, free to install, yours to run.
+
+[Install](#install) · [research-toolkit](#research-toolkit) · [vasana-system](#vasana-system) · [makers-toolkit](#makers-toolkit) · [security-toolkit](#security-toolkit)
 
 ## Install
+
+**Claude Cowork** — add the marketplace `bogheorghiu/ex-cog-dev` via Customize →
+Browse plugins, then install the plugins you want.
+
+**Claude Code**
 
 ```
 /plugin marketplace add bogheorghiu/ex-cog-dev
@@ -37,83 +42,79 @@ free to install and use.
 
 ## Plugins
 
-### research-toolkit `3.2.2`
+### research-toolkit
 
-Tools for investigating — verifying claims, tracing power, and stress-testing your
-own conclusions before you trust them.
+`v3.2.2` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
+before you trust it.
 
-- **Power-mapping & investigation.** `cui-bono` maps who gains and who loses from an
-  action, with six domain lenses (weapons, labor, environment, governance, supply
-  chains, geopolitics). `deep-investigation-protocol` runs staged source sweeps for
-  cases where the marketing and the operational reality diverge.
-  `manufactured-consensus-detection` traces whether sources agree independently or
-  just echo a single origin; `source-omission-analysis` reads what sources leave out.
-- **Stress-testing.** `dialectic-spiral` builds the strongest version of the opposite
-  of your conclusion and tests it against the evidence (at least four rounds).
-  `text-deconstruction` close-reads a text to find where it undermines itself on its
-  own terms. `frame-rotation` re-expresses a problem through other languages'
-  grammars to break English-default framing. `iterative-verification` keeps looping
-  until evidence thresholds actually pass — not when you feel finished.
-- **Source acquisition.** `youtube-research` and `substack-research` pull practitioner
-  knowledge and independent journalism (Substack via a browser scraper that needs a
-  one-time login); `video-transcript-extraction` gets transcripts from captions or
-  local Whisper.
-- **Live data (two MCP servers).** `financial-mcp` returns stock prices, fundamentals,
-  history, and technical indicators (RSI, MACD, Bollinger) from Yahoo Finance.
-  `transparency-mcp` pulls US Congress bills, members, and votes (GovTrack), World
-  Bank indicators, and nonprofit 990 filings (ProPublica). Free public sources, no
-  API keys. `macro-monitor` is a checklist over that data for watching macro-stress
-  signals.
+- **Map power.** `cui-bono` asks who gains and who loses, through six lenses —
+  weapons, labor, environment, governance, supply chains, geopolitics.
+  `deep-investigation-protocol` runs staged source sweeps for when the marketing and
+  the reality diverge. `manufactured-consensus-detection` asks whether your sources
+  agree on their own or just echo one origin. `source-omission-analysis` reads the
+  silences — what no one is saying.
+- **Break your own case.** `dialectic-spiral` builds the strongest opposite of your
+  conclusion and runs it at the evidence, four rounds minimum. `text-deconstruction`
+  finds where a text contradicts itself on its own terms. `frame-rotation` rephrases
+  the problem through another language's grammar to knock you out of English
+  defaults. `iterative-verification` stops when the evidence clears the bar, not when
+  you're tired.
+- **Pull the sources.** `youtube-research` and `substack-research` mine practitioner
+  know-how and independent reporting (Substack through a browser scraper, one-time
+  login). `video-transcript-extraction` grabs transcripts from captions or local
+  Whisper.
+- **Live data, no keys.** `financial-mcp` returns prices, fundamentals, history, and
+  indicators — RSI, MACD, Bollinger — straight from Yahoo Finance. `transparency-mcp`
+  pulls Congress bills, members, and votes (GovTrack), World Bank indicators, and
+  nonprofit 990s (ProPublica). `macro-monitor` watches that data for stress signals.
 
-### vasana-system `2.5.2`
+### vasana-system
 
-Notice when the same behavioral pattern turns up in places that have nothing to do
-with each other, write it down, and test whether it actually holds.
+`v2.5.2` · Catch the same behavior surfacing in places that have nothing to do with
+each other. Write it down. Test whether it's real.
 
-- **The working loop.** `vasana` flags a candidate pattern mid-work; `record-pattern`
-  captures it with structure; `find-similar` checks whether it recurs elsewhere or was
-  a one-off; `test-pattern` checks whether a recorded pattern fires and changes
-  anything; `pattern-library` browses the collection. Other skills (`break-pattern`,
-  `check-assumptions`) apply the same noticing to your own work as you go.
-- **Two MCP servers — and an honest account of them.** `relational-memory` is a
-  cross-session memory store that works: it saves facts, task state, and core
-  principles to local disk in layered storage, recalls them by search, and
-  auto-summarizes old entries as they pile up. `edge-graph` records relations as
-  weighted edges that get heavier each time you traverse them, so what recurs becomes
-  visible. Both can surface relation-types or verbs that repeat three or more times.
-  What they do *not* yet do is the larger thing they're designed toward — interpreting
-  those recurrences into higher-order patterns, or consolidating vocabulary as it
-  emerges. That part is still a sketch; today they are a memory system that works well
-  in practice, not the pattern-discovery engine the design imagines. Storage is local
-  disk only — memories don't survive ephemeral cloud sessions.
+- **The loop.** `vasana` flags a candidate mid-work. `record-pattern` captures it with
+  structure. `find-similar` checks whether it recurs or was a fluke. `test-pattern`
+  checks whether a saved pattern actually fires and changes anything. `pattern-library`
+  browses the collection. `break-pattern` and `check-assumptions` turn the same
+  scrutiny back on your own work.
+- **Two MCP servers, told straight.** `relational-memory` works: it saves facts, task
+  state, and core principles to disk in layered storage, recalls them by search, and
+  summarizes old entries as they pile up. `edge-graph` records relations as weighted
+  edges that grow heavier each time you cross them, so what recurs rises to the top.
+  Both can flag a relation-type or verb that repeats three times or more. What neither
+  does *yet* is the bigger ambition — reading those recurrences into higher-order
+  patterns, or letting shared vocabulary consolidate on its own. That part is still a
+  sketch. Today they're a memory system that works in practice, not the pattern engine
+  the design imagines. Storage is local disk; nothing survives an ephemeral cloud
+  session.
 
-### makers-toolkit `0.8.1`
+### makers-toolkit
 
-Discipline for building things with AI — methodology, not machinery. Nothing to
-configure; the skills just hold a standard.
+`v0.8.1` · Discipline for building with AI. Methodology, not machinery — nothing to
+configure, just skills that hold a line.
 
-- `system-pilot` — a six-step build discipline: define what "done" means, separate
-  spec from orchestration from tools, verify integrations early, think schema-first,
-  and run repair loops that only write down *verified* lessons. Each rule carries the
-  failure mode it prevents.
-- `intrinsic-prompt-design` — how to write prompts that survive edge cases: give the
-  model the reason behind each rule, not just the rule.
-- `skill-activation-testing` — a two-tier way to find out whether a skill's
-  description actually makes it fire: a quick blind-router proxy, and a live
-  firing-counter hook (which ships and works) for the real test.
+- `system-pilot` — six steps: define what "done" means, split spec from orchestration
+  from tools, test the seams early, design the schema first, and run repair loops that
+  record only *verified* lessons. Every rule carries the failure it prevents. Adapted
+  from the *Universal CLAUDE.md Protocol*.
+- `intrinsic-prompt-design` — write prompts that survive edge cases by giving the
+  model the reason behind a rule, not just the rule.
+- `skill-activation-testing` — find out whether a skill's description actually makes it
+  fire: a fast blind-router proxy, plus a live firing-counter hook (it ships and
+  works) for the real measurement.
 
-### security-toolkit `0.2.2`
+### security-toolkit
 
-Guardrails that run as hooks — automatic, not advice you have to remember.
+`v0.2.2` · Guardrails that run as hooks. Automatic, not advice you have to remember.
 
-- **Flags likely prompt-injection** in any tool output, MCP results included — tiered
-  (a loud warning for blatant patterns, a silent log for weaker ones) with a path
-  allowlist. It detects and records; it doesn't block.
-- **Blocks dangerous git operations** before they run: push to `main`/`master`, force
-  push, `reset --hard`, `--no-verify`, `branch -D`, `clean -fd`, `rm -rf`, and PR
-  self-merges.
-- **Blocks Desktop Commander's** process-spawning and config-setting tools, which
-  sidestep Claude Code's own permission boundaries.
+- **Catches prompt-injection** in any tool output, MCP results included — loud warning
+  for the blatant stuff, quiet log for the rest, with a path allowlist. It flags and
+  records; it doesn't block.
+- **Blocks dangerous git** before it runs: push to `main`/`master`, force push,
+  `reset --hard`, `--no-verify`, `branch -D`, `clean -fd`, `rm -rf`, PR self-merges.
+- **Blocks Desktop Commander's** process-spawning and config-setting tools, the ones
+  that slip past Claude Code's permission boundaries.
 
 ## Architecture
 
