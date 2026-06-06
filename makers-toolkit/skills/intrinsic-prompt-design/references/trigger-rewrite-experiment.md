@@ -2,7 +2,7 @@
 
 This records the A/B on the `intrinsic-prompt-design` description (v0.6.0 →
 candidate): what it tested, the results, the bonus finding, and — per the method
-this repo now ships (`makers-toolkit/skills/skill-activation-experiments`, the
+this repo now ships (`makers-toolkit/skills/skill-activation-testing`, the
 two-tier activation-test skill) — what it *cannot* tell us.
 
 ## The question
