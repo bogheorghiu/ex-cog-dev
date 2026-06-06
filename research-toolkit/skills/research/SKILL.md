@@ -26,7 +26,7 @@ Central entry point for any research question. Routes to the right skill(s) base
 Consult `reference/topic-based-escalation.md` for the full escalation table. Quick decision tree:
 
 - "Is X trustworthy/safe?" → **DIP** (deep-investigation-protocol)
-- "Should I invest in / support X?" → **stonk** agent (cui-bono + financial data)
+- "Should I invest in / support X?" → **cui-bono + financial-mcp** (a dedicated **stonk** agent to orchestrate these is in design — issue #61)
 - "Who benefits from X?" → **cui-bono** skill (power analysis)
 - "What's happening with X?" (geopolitical/military) → **DIP** + **cui-bono** lenses
 - "Learn X from YouTube" → **youtube-research**
@@ -42,7 +42,7 @@ The escalation table lives in `reference/topic-based-escalation.md` so ALL skill
 Key escalation triggers:
 - Topic shifts from practitioner → safety/trust/power → invoke DIP or cui-bono
 - Single-source contrarian claim → invoke dialectic-spiral (full) + iterative-verification
-- Cross-domain question → route sequentially (DIP first for trust, then cui-bono for power, stonk agent if financial dimension)
+- Cross-domain question → route sequentially (DIP first for trust, then cui-bono for power, cui-bono + financial-mcp if financial dimension — a dedicated stonk agent is in design, issue #61)
 
 ## Budget Mode
 
@@ -65,7 +65,7 @@ Key escalation triggers:
 
 This skill is pure natural language routing — no platform-specific tools required. In Claude Code, use the Skill tool to invoke routed skills. In other platforms, load the routed skill's content directly.
 
-For heavy skills (DIP, cui-bono), Claude Code users benefit from spawning a background agent. For investment analysis, the stonk agent handles composition automatically. In other platforms, load cui-bono content directly as system prompt.
+For heavy skills (DIP, cui-bono), Claude Code users benefit from spawning a background agent. For investment analysis, use cui-bono with the financial-mcp tools directly — a dedicated stonk agent to compose them automatically is in design (issue #61). In other platforms, load cui-bono content directly as system prompt.
 
 ## Vasana
 

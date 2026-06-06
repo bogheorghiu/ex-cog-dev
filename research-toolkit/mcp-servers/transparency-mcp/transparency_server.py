@@ -1,6 +1,6 @@
 """Transparency MCP Server — GovTrack, World Bank, ProPublica Nonprofit Explorer.
 
-Three public-interest data sources for power-structure analysis (STONK).
+Three public-interest data sources for power-structure analysis (cui-bono).
 All APIs are free, no keys required.
 
 Data sources:

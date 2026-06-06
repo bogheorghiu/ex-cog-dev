@@ -253,7 +253,7 @@ Auto-activates if budget-mode skill is active in session.
 
 ## Cross-References
 
-- **stonk** agent — composes this skill with financial MCP tools for investment analysis
+- **stonk** agent (in design — issue #61) — would compose this skill with financial-mcp tools for investment analysis; until it ships, use cui-bono + financial-mcp directly
 - **dialectic-spiral** — standalone generative dialectic for contradiction analysis + second antithesis
 - **negative-dialectical-spiral** agent — holds contradictions open instead of resolving; maps conceptual remainder
 - **text-deconstruction** — finds where institutional documents undermine themselves on their own terms

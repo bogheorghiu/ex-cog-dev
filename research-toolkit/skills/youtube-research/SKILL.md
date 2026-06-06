@@ -218,7 +218,7 @@ Mid-research escalation is a suggestion, not automatic. Note it and let the user
 - **video-transcript-extraction** — called for Phase 2 (transcript acquisition)
 - **deep-investigation-protocol** — escalation target for trust/safety topics
 - **cui-bono** — escalation target for power analysis topics
-- **stonk** agent — escalation target when financial dimension needed
+- **cui-bono + financial-mcp** — escalation target when financial dimension needed (a dedicated **stonk** agent is in design — issue #61)
 - **dialectic-spiral** — used when findings need stress-testing
 - **reference/topic-based-escalation.md** — shared escalation logic
 

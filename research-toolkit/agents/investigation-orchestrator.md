@@ -333,7 +333,7 @@ Challenge the skills themselves if they constrain what the team can see. The dee
 - **manufactured-consensus-detection**: Mandatory when researchers converge
 - **frame-rotation**: Available when the investigation is stuck in one perspective
 - **cui-bono**: Power structure analysis methodology
-- **stonk** agent: For investment-specific investigations (cui-bono + financial data)
+- **cui-bono + financial-mcp**: For investment-specific investigations (a dedicated **stonk** agent to orchestrate these is in design — issue #61)
 
 ## Proven in Practice (March 2026)
 

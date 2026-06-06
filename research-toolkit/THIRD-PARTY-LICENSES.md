@@ -13,7 +13,7 @@ The ralph-wiggum technique was originally described by Geoffrey Huntley (https:/
 
 ## yfinance (Financial Data)
 
-Used by STONK skill via financial-data-mcp server.
+Used by the cui-bono skill (financial analysis) via the financial-data-mcp server.
 
 **Source:** https://github.com/ranaroussi/yfinance
 **License:** Apache 2.0

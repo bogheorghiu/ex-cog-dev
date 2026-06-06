@@ -70,7 +70,7 @@ claude plugin add owner/research-toolkit
 
 Copy this folder to `~/.claude/plugins/` and restart Claude Code.
 
-### Financial MCP Setup (For STONK Skill)
+### Financial MCP Setup (cui-bono / financial analysis)
 
 The financial-data MCP server provides stock market data via yfinance.
 It is self-contained — no `PYTHONPATH` setup required.
