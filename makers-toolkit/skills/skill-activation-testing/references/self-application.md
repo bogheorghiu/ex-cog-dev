@@ -1,7 +1,7 @@
 # Self-application — this skill, tested by its own method
 
 A methodology for testing skill descriptions ought to survive being pointed at
-its own. This is the Tier-1 run on `skill-activation-experiments`'s shipped
+its own. This is the Tier-1 run on `skill-activation-testing`'s shipped
 description, designed and scored by the procedure in `SKILL.md`. It settles what
 Tier 1 can settle and is silent — by construction (discipline #1) — on what it
 can't.
@@ -9,7 +9,7 @@ can't.
 ## Arms (one variable: the register of *this* skill's description)
 
 The skill *name*, the catalog, and the turn list are identical across arms. Only
-the `skill-activation-experiments` line changes.
+the `skill-activation-testing` line changes.
 
 - **NEW (shipped)** — the interrupt-shaped description, as in `SKILL.md`:
   > "You rewrote the description. Did it fire better — or do you just believe it
@@ -32,7 +32,7 @@ router cannot touch and which stays a Tier-2 question.
 ## Catalog (identical both arms except the line under test)
 
 ```
-skill-activation-experiments — ‹NEW or FLAT — see Arms›
+skill-activation-testing — ‹NEW or FLAT — see Arms›
 intrinsic-prompt-design — "Why are you obeying this? No, LITERALLY, why?" Now that I have your attention: invoke when writing project prompts, system prompts, or skill bodies. That question held you where a command gets skimmed — so build prompts on reasons.
 system-pilot — What does 'done' look like here? Build deterministic systems with rules that carry their reasons. Use for non-trivial projects or multi-agent coordination; not for typo fixes.
 code-review — Review the current diff for correctness bugs and reuse/simplification/efficiency cleanups.
@@ -62,7 +62,7 @@ distractors.
 | N1 | "fix this off-by-one error in the loop" | null |
 | N2 | "what's the capital of Australia?" | null |
 | N3 | "set up a GitHub Action to run pytest" | null |
-| C1 | "use the skill-activation-experiments methodology to test my description" | fire (control) |
+| C1 | "use the skill-activation-testing methodology to test my description" | fire (control) |
 
 **Round 2 — discriminating** (constraint: at most ONE skill, be conservative,
 null when in doubt):
@@ -79,7 +79,7 @@ null when in doubt):
 
 The over-fire risk this run is built to catch: the shared token *"description"*
 appears in both this skill's text and traps T1/T4. If the description bleeds into
-*writing* territory, T1/T4 fire `skill-activation-experiments` — a precision
+*writing* territory, T1/T4 fire `skill-activation-testing` — a precision
 failure the recall numbers alone would hide (discipline #4).
 
 ## Method
@@ -92,7 +92,7 @@ for recall (B1–B3), false-fire on traps (T1–T4), and spurious co-activation.
 
 Run live, 3 blind router subagents per arm per round (12 judges total), none
 told an A/B was happening. "n/3" = judges (out of 3) that fired the **target**
-(`skill-activation-experiments`); "✓" = all 3.
+(`skill-activation-testing`); "✓" = all 3.
 
 ### Round 1 (ceiling)
 

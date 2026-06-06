@@ -1,5 +1,5 @@
 ---
-name: skill-activation-experiments
+name: skill-activation-testing
 description: >-
   "You rewrote the description. Did it fire better — or do you just believe it
   did?" That belief is n=0 until you test it: invoke when validating a skill or
@@ -8,7 +8,7 @@ description: >-
   what it can't see.
 ---
 
-# Skill Activation Experiments
+# Skill Activation Testing
 
 A description rewrite makes a claim: *this fires better than what it replaced.* Until the claim is tested it sits at n=0, and n=0 claims get argued, not settled — two people with opposite intuitions and no instrument between them. This skill is the instrument. It pairs with `intrinsic-prompt-design`: that skill tells you how to *write* the description; this one tells you how to *find out whether the change did anything*.
 
