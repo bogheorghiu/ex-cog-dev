@@ -6,6 +6,8 @@
 > two-round run and a self-application, but no live Tier-2 walkthrough). Method,
 > commands, turn design, raw results, analysis, and the validity limits are all
 > here so the numbers can't be read without the caveats that bound them.
+> **§11 generalizes the design beyond *activation* into *functionality* testing**
+> — the transferable input for a future skill-test-design apparatus (issue #52).
 
 ## 1. Question under test
 
@@ -236,3 +238,75 @@ Things this run learned that generalise to the next live activation test:
 - Instrument: `vasana-system/hooks/count-skill-firings.sh` (+ `.test.sh`).
 - The skill's own design rationale: `ARCHITECTURE.md`. Why it ships profile-less:
   `.claude/rules/shipped-skill-config.md`.
+
+---
+
+## 11. Generalizing the design — activation **and** functionality
+
+This run is two tests sharing one harness, and keeping them distinct is the whole
+game (it mirrors `skill-activation-testing`'s discipline #1: name what each
+instrument can and can't see).
+
+### Two axes, two instruments, two questions
+
+| Axis | Question | Instrument here | Verdict type |
+|---|---|---|---|
+| **Activation** | Does it *fire* on the right turns and stay silent on the wrong ones? | `count-skill-firings.sh` (the firing log) | quantitative — firing is observable, countable, discriminating |
+| **Functionality** | *Given it fired*, does it do its job correctly? | reading the transcript against expected behaviour | qualitative here — a scored suite is the open work |
+
+Activation is the cheaper, more objective axis (a firing either is or isn't
+logged). Functionality is harder: the output is prose, "correct" needs a gold
+standard, and the same turn varies run-to-run. **A skill that fires perfectly and
+reasons wrong has passed activation and failed functionality** — so a green
+activation result is *necessary, not sufficient* for a sophisticated skill.
+
+### What this run established on each axis (honestly)
+
+- **Activation: rigorous.** 32 live sessions, a discriminating instrument, N=3
+  agreement, validity limits stated (§6–§8).
+- **Functionality: observed, not suited.** I read transcripts against intent, and
+  it *did* surface real functionality signal:
+  - **N1** — correct end-use classification (`CIVILIAN`) + graceful clear + a
+    falsifiable ownership caveat = functionality working; but the *full screen
+    block before the one-line verdict* exposed a real gap (premature single-pass
+    clear → issue #68).
+  - **N3** — the beneficiary-mapping request routed to `cui-bono`, not the
+    job-screen = correct *cross-skill* functionality, which a firing count can't see.
+  - **P2** — correctly read "real-time 3D for mission rehearsal" as *almost
+    certainly defense simulation* and moved to buyer-chain + threshold.
+  - **P4** — fired on the clearance gate but *onboarded* (no profile) instead of
+    classifying `DEFENSE-CONFIRMED` per Step 2; correct given no threshold, but it
+    shows why functionality testing needs a **fixed test profile** (below).
+  This is n-of-a-few transcript reading, not a rubric. Real signal, not a suite.
+
+### What a full functionality suite would add (the design)
+
+1. **A fixed test profile.** Functionality on a profile-less skill is undefined
+   (`OUT` vs `CLEAR` depends on the operator's red line). Pin a known threshold so
+   verdicts become checkable: *given THIS line, EU-export-to-Saudi MUST be `HARD STOP`*.
+2. **Gold-standard expected outputs per turn** — the buyer-chain, the end-use
+   rung, the verdict under the fixed profile, the output-format fields required.
+3. **A scored rubric per output field**, not a gestalt read: buyer-chain resolved?
+   nationality tagged? evidence tier assigned? "what would change it" present *and*
+   falsifiable? **threshold applied = the test profile's, not one the model
+   invented?** (the skill's central correctness claim).
+4. **Adversarial / oblique functionality cases** with known answers: EU-export →
+   escalate; civilian `digital-twin`/ISR → `INVESTIGATE`, not auto-clear on a logo.
+5. **Negative functionality**: does it *manufacture* suspicion on a clean role
+   (over-flag) or *auto-clear* on a soft tell (under-verify)? Both are invisible to
+   a firing count.
+6. **The #68 stopping discipline as a functionality check**: is a `CLEAR` reached
+   after a confirming pass, or at first glance?
+7. **Reps + a no-skill control arm**: score across runs, and compare against the
+   model with the skill *disabled*, to attribute behaviour to the skill not the base model.
+
+### The transferable template
+
+A skill-test **suite** = **activation tests** (firing, via the hook) **+
+functionality tests** (behaviour vs a gold standard under a fixed profile) **+ the
+harness** (live install for both; log for activation, transcript+rubric for
+functionality) **+ stated validity limits per axis**. The two axes use different
+instruments and answer different questions; reporting one as the other is the
+failure mode. That is what a future skill-test-design apparatus should emit —
+defaulting to activation-only when that's all that's asked, but able to specify
+the functionality half for sophisticated skills, where "it fired" is the easy 20%.
