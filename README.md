@@ -1,24 +1,31 @@
 # ex-cog — means of cognition
 
-AI doesn't make people obsolete. It makes obsolete the idea that thinking happens
-alone, inside one skull — the Cartesian fiction. Cognition was always relational;
-AI just makes that legible, by *externalizing* it: taking thought out of one head
-and turning it into something visible, inspectable, that others can build on.
+AI doesn't make people obsolete. At its best it doesn't think *for* you — it thinks
+*with* you: it takes thought out of one head and turns it into something you can see,
+question, and build on. The name for that is *externalized cognition*, and it quietly
+retires an old assumption — that thinking happens alone, inside one skull, the
+Cartesian fiction. It never did; cognition was always relational. AI just makes it
+legible.
 
 That — externalized cognition — is the real capability, and most of the industry
 points it at small, disposable tasks. Used differently, it's the difference between
 *consuming* whatever you're handed and *producing* the alternatives — which, like
-cognition itself, was never solo work. Against infrastructure at this scale, lone
-effort is a hobby; what has weight is people building in common, in the open.
+cognition itself, was never solo work. On its own, lone effort stays a hobby; at this
+scale, what carries weight is people building in common, in the open.
 
 The stakes aren't hypothetical. The most common way people reach information is
 already shifting its default — from a list of sources you navigate to an interface
 that answers for you, with agents doing the searching in the background. That's
-externalized cognition too, arriving at scale — but enclosed: you get the output,
-someone else keeps the means. The means of cognition can be held in common or fenced
-off. These plugins are a piece of the first — an open foundation for building the
-alternative on: for normal users, not just power users; cloud models where you need
-them, local ones where local is good enough. The window is open now, not later.
+externalized cognition too, arriving at scale — but centralized, and from there
+enclosed: a few firms own the means and pass you the output. (Enclosure is the old
+move — common land fenced into private property, the public left renting what it once
+used freely.) A means of cognition can be held in common, or walled off the same
+way — and which way it goes isn't settled yet.
+
+These plugins don't build that — it's a far bigger job, and the serious parts are
+underway elsewhere. What's here is smaller and more ordinary: a handful of tools made
+in that spirit — for normal users as much as power users, on cloud models or local
+ones where local is good enough. Useful on their own, and modest about what they are.
 
 A marketplace of plugins for Claude Code: investigation, verification, pattern
 recognition, build discipline, and guardrails.
