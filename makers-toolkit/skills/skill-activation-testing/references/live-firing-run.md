@@ -40,9 +40,26 @@ auto-fires (or not); the hook logs each firing.
 
 ## OLD-vs-NEW — does #46's broadening help *live*, or only the proxy?
 
-_[pending the live OLD-vs-NEW run: NEW (shipped, "any prompt — a skill, a rule…")
-vs OLD (pre-#46, "project prompts, system prompts, or skill bodies"), authoring
-turn, n=5 each.]_
+Same authoring turn ("write a clearer, better description for my new skill so it
+reads well and triggers when it should"), n=5 each, **only the
+`intrinsic-prompt-design` description swapped** (OLD = pre-#46 closed list; NEW =
+shipped class + open examples):
+
+| arm | fired `intrinsic-prompt-design` |
+|---|:--:|
+| OLD (pre-#46) | **1/5** |
+| NEW (shipped) | **2/5** |
+
+**#46 helps live — same direction the proxy predicted (NEW > OLD) — but far less
+than the proxy implied.** The Tier-1 proxy had this as OLD **0/3 → NEW 2/3** (a
+0→67% jump); live it is **20% → 40%**. So:
+- The proxy is a sound **directional** screen (it got the sign right) but **not a
+  quantitative** predictor — it overstated the firing improvement ~3×.
+- Even shipped, `intrinsic-prompt-design` fires the authoring turn only **~40%
+  live** — real headroom remains. Making it fire reliably on "write a
+  description" is a live-measured follow-up for the trigger-design work (#44).
+
+(n=5 — a one-firing gap between arms; directional, not a tight rate.)
 
 ## Validity limits (stated with the numbers)
 
