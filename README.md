@@ -7,15 +7,18 @@ and turning it into something visible, inspectable, that others can build on.
 
 That — externalized cognition — is the real capability, and most of the industry
 points it at small, disposable tasks. Used differently, it's the difference between
-*consuming* whatever you're handed and *producing* your own alternatives.
+*consuming* whatever you're handed and *producing* the alternatives — which, like
+cognition itself, was never solo work. Against infrastructure at this scale, lone
+effort is a hobby; what has weight is people building in common, in the open.
 
 The stakes aren't hypothetical. The most common way people reach information is
 already shifting its default — from a list of sources you navigate to an interface
 that answers for you, with agents doing the searching in the background. That's
 externalized cognition too, arriving at scale — but enclosed: you get the output,
 someone else keeps the means. The means of cognition can be held in common or fenced
-off. These plugins are built for the first, and the window to build that way is open
-now, not later.
+off. These plugins are a piece of the first — an open foundation for building the
+alternative on: for normal users, not just power users; cloud models where you need
+them, local ones where local is good enough. The window is open now, not later.
 
 A marketplace of plugins for Claude Code: investigation, verification, pattern
 recognition, build discipline, and guardrails.
