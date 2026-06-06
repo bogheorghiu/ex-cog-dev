@@ -64,9 +64,10 @@ before you trust it.
   login). `video-transcript-extraction` grabs transcripts from captions or local
   Whisper.
 - **Live data, no keys.** `financial-mcp` returns prices, fundamentals, history, and
-  indicators — RSI, MACD, Bollinger — straight from Yahoo Finance. `transparency-mcp`
-  pulls Congress bills, members, and votes (GovTrack), World Bank indicators, and
-  nonprofit 990s (ProPublica). `macro-monitor` watches that data for stress signals.
+  indicators — RSI, MACD, Bollinger — from Yahoo Finance. `macro-monitor` watches that
+  data for macro-stress signals. `transparency-mcp` puts public power on the record:
+  Congress bills, members, and votes (GovTrack), World Bank indicators, and nonprofit
+  990s (ProPublica).
 
 ### vasana-system
 
