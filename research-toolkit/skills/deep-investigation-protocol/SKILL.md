@@ -585,7 +585,7 @@ Use relational-memory MCP to `memorize` insights (agent_name: "deep-investigatio
 
 See `reference/topic-based-escalation.md` for the full routing table and escalation logic.
 
-**Quick rule:** DIP for trust/safety investigations (information asymmetry). cui-bono for power/ethics (multi-polar analysis). stonk agent for investment (cui-bono + financial data). Both DIP and cui-bono for geopolitical. Both use dialectic-spiral and evidence tiers — that overlap is intentional.
+**Quick rule:** DIP for trust/safety investigations (information asymmetry). cui-bono for power/ethics (multi-polar analysis). cui-bono + financial-mcp for investment (a dedicated stonk agent to orchestrate these is in design — issue #61). Both DIP and cui-bono for geopolitical. Both use dialectic-spiral and evidence tiers — that overlap is intentional.
 
 ## Budget Mode
 
@@ -598,7 +598,7 @@ Auto-activates if budget-mode skill is active in session.
 - **negative-dialectical-spiral** agent — holds contradictions open; maps what resolution loses
 - **text-deconstruction** — Derridean close reading for institutional documents in Stage 1
 - **cui-bono** — power structure analysis; see table above for routing
-- **stonk** agent — cui-bono + financial MCP tools for investment analysis
+- **stonk** agent (in design — issue #61) — would compose cui-bono + financial-mcp tools for investment analysis; until it ships, use cui-bono + financial-mcp directly
 - **adversarial-critic** agent — runs the dialectic spiral against investigation findings
 - **youtube-research** — video source acquisition for investigations
 - **substack-research** — written source acquisition for investigations

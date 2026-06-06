@@ -137,7 +137,7 @@ When spawning multiple blind workers on the same topic:
 
 This is the research equivalent of jury selection — different vantage points produce different signal.
 
-See `SOURCE_DIVERSITY_FRAMEWORK.md` (in STONK skill) for the full source taxonomy with 6 categories, outlet-level strengths/weaknesses, and think tank funding maps.
+See `SOURCE_DIVERSITY_FRAMEWORK.md` (in the cui-bono skill) for the full source taxonomy with 6 categories, outlet-level strengths/weaknesses, and think tank funding maps.
 
 ### Why Blindness Matters
 
@@ -253,8 +253,8 @@ See `layers/improvement-notes.md` for detailed analysis.
 
 - **iterative-loop-engine** - Provides loop structure and criteria files
 - **deep-investigation-protocol** - Provides evidence flow tracing and bias detection
-- **STONK** (if available) - Provides power structure analysis for complex topics
-- **STONK/SOURCE_DIVERSITY_FRAMEWORK.md** - Source taxonomy for multi-perspective worker assignment and dialectic source category checking
+- **cui-bono** (if available) - Provides power structure analysis for complex topics
+- **cui-bono/SOURCE_DIVERSITY_FRAMEWORK.md** - Source taxonomy for multi-perspective worker assignment and dialectic source category checking
 - **frame-rotation** - Can help escape stuck thinking patterns
 
 ---

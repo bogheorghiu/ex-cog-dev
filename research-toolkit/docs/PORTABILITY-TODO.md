@@ -4,6 +4,12 @@
 **Context:** STONK refactored from monolithic skill into cui-bono (skill) + stonk (agent).
 The agent uses `skills:` frontmatter composition which is CC-specific.
 
+> **Status (not yet built):** `cui-bono` ships, but the `stonk` agent was never created —
+> no agent file exists. Whether it's needed at all (vs. `cui-bono` + `financial-mcp` invoked
+> directly) and its best architecture are being decided in
+> [issue #61](https://github.com/bogheorghiu/ex-cog-dev/issues/61) before anything is built.
+> The portability notes below are forward-looking until that lands.
+
 ---
 
 ## The Problem

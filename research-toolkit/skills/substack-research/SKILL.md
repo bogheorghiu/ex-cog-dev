@@ -177,7 +177,7 @@ Substack content is often contrarian by nature (independent journalists). Apply 
 - **youtube-research** — for practitioner perspective on same topics
 - **deep-investigation-protocol** — escalation target for trust/safety topics
 - **cui-bono** — escalation target for power analysis topics
-- **stonk** agent — escalation target when financial dimension needed
+- **cui-bono + financial-mcp** — escalation target when financial dimension needed (a dedicated **stonk** agent is in design — issue #61)
 - **dialectic-spiral** — stress-testing findings from single-source Substacks
 - **reference/topic-based-escalation.md** — shared escalation logic
 
