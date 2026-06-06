@@ -28,6 +28,7 @@ Consult `reference/topic-based-escalation.md` for the full escalation table. Qui
 - "Is X trustworthy/safe?" → **DIP** (deep-investigation-protocol)
 - "Should I invest in / support X?" → **cui-bono + financial-mcp** (a dedicated **stonk** agent to orchestrate these is in design — issue #61)
 - "Who benefits from X?" → **cui-bono** skill (power analysis)
+- "Should I take this dev job / is this studio defense-linked?" — or any dev job/employer evaluation → **dev-job-defense-ties** (runs cui-bono, classifies the buyer against your saved profile)
 - "What's happening with X?" (geopolitical/military) → **DIP** + **cui-bono** lenses
 - "Learn X from YouTube" → **youtube-research**
 - "Analyze this Substack" → **substack-research**

@@ -1,6 +1,13 @@
 ---
 name: manufactured-consensus-detection
-description: "Are these sources agreeing independently, or echoing the same origin?" - When multiple sources converge on the same claim in similar language, test whether this is genuine independent agreement or coordinated messaging from a single origin. Use when (1) multiple independent sources say the same thing in similar language, (2) convergence warning fires during verification, (3) evaluating media campaigns or narrative coordination, (4) investigating PR/comms strategy behind claims.
+description: >-
+  "Are these sources agreeing independently, or echoing the same origin?" -
+  When multiple sources converge on the same claim in similar language, test
+  whether this is genuine independent agreement or coordinated messaging from
+  a single origin. Use when (1) multiple independent sources say the same
+  thing in similar language, (2) convergence warning fires during
+  verification, (3) evaluating media campaigns or narrative coordination, (4)
+  investigating PR/comms strategy behind claims.
 ---
 
 # Manufactured Consensus Detection
