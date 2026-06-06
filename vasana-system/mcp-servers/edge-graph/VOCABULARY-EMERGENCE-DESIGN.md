@@ -3,6 +3,13 @@
 > **STATUS: CRITICAL DESIGN DECISION NEEDED**
 > This determines whether edge-graph becomes useful or remains write-only.
 
+> **Status update (2026-06-06) — carried forward, now tracked in issues.**
+> This document is a **living design artifact, not obsolete.** It was co-written with an earlier Claude; the design it sketches is now being actively picked up, and its open questions (Q1–Q5) and principles below remain live input. **Nothing here is superseded or to be deleted** until the design is implemented. Tracked in:
+> - **#49** — semantic edge consolidation (the *graph layer*). Carries forward: "Post-Creation Consolidation" → **link / merge / gestalt-collapse** modes; the "NEW encompassing term" → **gestalt** (with the caveat that a faithful synonym may not exist, so collapse isn't the default); "lineage … as edges themselves" → **relations-as-edges / recognition as a relation *between relations***; and "the edge-graph vocabulary problem IS the vasana consolidation problem" → the thesis that **edge-graph is the deterministic substrate of the Vasana system**.
+> - **#51** — `find-similar` as the graph-agnostic skill that **answers this doc's open `find_similar(new_edge.verb, …)  # How?`**.
+>
+> When the design is implemented, the resolved intent will be folded back here (and/or into the relational-memory docs) rather than replacing what's below.
+
 ## Core Philosophy (from user)
 
 ```
