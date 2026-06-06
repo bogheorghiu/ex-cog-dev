@@ -74,7 +74,7 @@ The only tier that can measure firing under genuine attention scarcity. Tier 1 *
 
 **Score it.** Numerator = the log; denominator = your run design (the should-have-fired turns — it exists nowhere else). Report firings/N per turn, never a bare count (discipline #5).
 
-**Cost and validity:** slow, high-variance, needs an install or `--plugin-dir` and many runs — that cost is why Tier 1 exists as the cheap screen. But Tier 2 sees the gap Tier 1 can't: in practice **clear positives fire reliably live, while borderline turns under-fire well below the proxy's prediction** (the proxy must read; the live model skims). That gap *is* the attention effect. A worked live run is in `references/live-firing-run.md`.
+**Cost and validity:** slow, high-variance, needs an install or `--plugin-dir` and many runs — that cost is why Tier 1 exists as the cheap screen. But Tier 2 sees the gap Tier 1 can't: in practice **clear positives fire reliably live, while borderline turns under-fire well below the proxy's prediction** (the proxy must read; the live model skims). That gap *is* the attention effect.
 
 ---
 
