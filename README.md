@@ -26,9 +26,9 @@ spirit, for anyone to use.
 /plugin install security-toolkit@ex-cog-dev
 ```
 
-> The public marketplace `bogheorghiu/ex-cog` is private for now. `ex-cog-dev` is
-> where development happens and, for the moment, the place to install from — the
-> `-dev` stays in the name so anyone who already added the marketplace keeps working.
+> `bogheorghiu/ex-cog` is private for now, so `ex-cog-dev` is where development
+> happens and, for the moment, the place to install from. The `-dev` stays in the
+> name so anyone who already added the marketplace keeps working.
 
 ## Plugins
 
