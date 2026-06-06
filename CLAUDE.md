@@ -40,3 +40,7 @@ Green `main` is the pre-publish bar.
 For the dev repo's own `.mcp.json`, the `uvx --from` URLs point at `ex-cog-dev` HEAD of `main`, so a bad commit to `main` here reaches anyone testing against the dev repo within ~24h (uvx cache TTL) or on `uvx --refresh`. The public is insulated from that until the next dev→`ex-cog` sync.
 
 > Reconsidering this? Collapsing the two repos into one — with the public installing directly and a `release` branch + `@release`-pinned URLs as the stability mechanism — is tracked in issue #38. Until that's decided, dev→`ex-cog` is the publish step.
+
+## Development rules (`.claude/rules/`)
+
+Files in `.claude/rules/` are development guidance for working in this repo, loaded by Claude Code itself (a path-scoped rule — one with `paths:` frontmatter — loads its body only when you open a matching file). They are **not** shipped with any plugin: a marketplace plugin carries skills, MCPs, agents, and hooks, never `CLAUDE.md` or rules. So a rule can encode a development convention freely without affecting what consumers install.
