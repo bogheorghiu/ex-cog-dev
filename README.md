@@ -109,7 +109,10 @@ configure, just skills that hold a line.
 
 ### security-toolkit
 
-`v0.2.2` · Guardrails that run as hooks. Automatic, not advice you have to remember.
+`v0.2.2` · A basic draft, not a security product — plain bash hooks that pattern-match
+on commands and tool output. No external tools, no sandbox; anything that doesn't match
+a pattern sails through. Useful friction against obvious mistakes, not something to rely
+on for real security.
 
 - **Catches prompt-injection** in any tool output, MCP results included — loud warning
   for the blatant stuff, quiet log for the rest, with a path allowlist. It flags and
