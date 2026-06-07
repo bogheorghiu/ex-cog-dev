@@ -1,6 +1,12 @@
 ---
 name: source-omission-analysis
-description: "What is everyone NOT saying about this?" - After any multi-source research sweep, analyze what each perspective is SILENT about. Omissions reveal structural position more reliably than statements. Use when (1) after completing multi-source research, (2) comparing coverage across ideological positions, (3) a claim appears in some sources but not others, (4) evaluating media bias or narrative framing.
+description: >-
+  "What is everyone NOT saying about this?" - After any multi-source research
+  sweep, analyze what each perspective is SILENT about. Omissions reveal
+  structural position more reliably than statements. Use when (1) after
+  completing multi-source research, (2) comparing coverage across ideological
+  positions, (3) a claim appears in some sources but not others, (4)
+  evaluating media bias or narrative framing.
 ---
 
 # Source Omission Analysis

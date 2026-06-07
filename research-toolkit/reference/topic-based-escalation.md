@@ -22,6 +22,7 @@
 | Tutorial/how-to/practitioner | None | 0 | Practitioner knowledge, verify by doing |
 | Contrarian single-source claim | dialectic-spiral (full) + iterative-verification | 4+ rounds | High risk of manufactured dissent |
 | Multi-domain (trust + investment) | DIP first > cui-bono + financial-mcp | 4+ rounds each | Establish reliability, then ethical positioning |
+| Job / studio defense-screening | dev-job-defense-ties (runs cui-bono first) | 1-2 passes | Buyer-chain to end user + operator red-line classification |
 
 ## Rules
 

@@ -6,6 +6,8 @@ name: Unit tests
 #   - security-toolkit hooks (bash)
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)
+#   - research-toolkit skill-structure linter (stdlib Python)
+#   - dev-job-defense-ties config engine + screen-efficiency proxy (stdlib Python)
 #   - brainstorm session recorder (stdlib Python)
 #   - vasana-system skill-structure linter (frontmatter YAML + conventions, via uv)
 #   - edge-graph + relational-memory backends (need mcp/pydantic, run via uvx)
@@ -52,6 +54,9 @@ jobs:
           python3 research-toolkit/mcp-servers/financial-mcp/test_validation.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_tic_parser.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_fred_fetcher.py
+          python3 research-toolkit/skills/test_skill_structure.py
+          python3 research-toolkit/skills/dev-job-defense-ties/scripts/test_config.py
+          python3 research-toolkit/skills/dev-job-defense-ties/test_screen_efficiency.py
           python3 research-toolkit/lib/test_brainstorm.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py

@@ -261,6 +261,7 @@ Auto-activates if budget-mode skill is active in session.
 - **adversarial-critic** agent — runs the dialectic spiral against investigation findings
 - **manufactured-consensus-detection** — test whether source agreement is genuine or manufactured
 - **source-omission-analysis** — map what each perspective is silent about
+- **dev-job-defense-ties** — labor-market instantiation: consumes this skill's buyer-chain to screen a tech/creative job for military end-use and apply an operator red line
 
 ---
 
