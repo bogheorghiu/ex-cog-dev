@@ -79,12 +79,14 @@ inflation. Win them; the rest self-sorts.
   scannability + keyword signal-to-noise (~2–3 sentences), not a limit.
 - **Delimiters for plain-text surfaces.** The GitHub "About" field renders no
   markdown — delimit with name-first + periods, not bold (which vanishes there).
-- **Match register to surface / audience tier.** Keep the connoisseur register on
-  discovery surfaces (aggregators, repo) where the narrow true audience self-selects.
-  A larger *latent* audience (already uses Claude, can't find/install plugins) needs
-  a *separate*, plain-language onramp — a different artifact, not the same blurb
-  diluted. (The lower-barrier path to them is a standalone skill, not "a
-  marketplace.")
+- **Match register to surface / audience tier.** Two tiers: the **active audience**
+  (narrow — already aware they want this and seeking it; characteristically
+  *discerning*, hence the rigor-first register) and the **latent audience** (larger —
+  already uses Claude, but doesn't know this exists / can't find or install plugins).
+  Keep the rigor-first register on discovery surfaces (aggregators, repo) where the
+  active audience self-selects; the latent audience needs a *separate*, plain-language
+  onramp — a different artifact, not the same blurb diluted. (The lower-barrier path
+  to the latent audience is a standalone skill, not "a marketplace.")
 
 ## When it's working
 
