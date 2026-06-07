@@ -1,8 +1,8 @@
 {
   "name": "research-toolkit",
-  "description": "Relentless self-reflexive dialectical thinking that questions its own premises. Investigation protocols (DIP, cui-bono), epistemic depth (text-deconstruction, negative-dialectical-spiral), dialectic testing, frame rotation, iterative verification, video/substack extraction. Includes financial-mcp, transparency-mcp.",
+  "description": "Research & investigation skills for thinking-with-AI — investigation protocols (deep-investigation, cui-bono / \"follow the money\"), text & source deconstruction, frame rotation, and iterative verification that escalates to a recursive adversarial dialectic (generate a claim's exact opposite and test it). The skepticism is symmetric — turned on the consensus, the contrarian take, the model's own bias, and its own conclusions; it assumes no villain in advance (POSIWID: judge a method by what it does, not what it claims). Includes a transparency MCP.",
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "3.2.3"
+  "version": "3.2.4"
 }
