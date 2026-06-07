@@ -21,6 +21,7 @@ Research and cognition toolkit: investigation protocols, cognitive flexibility, 
 | **macro-monitor** | Geopolitical/macro financial checklist — monitors Treasury flows, dollar-yield divergence, central bank gold behavior, yield curve |
 | **manufactured-consensus-detection** | Test whether source agreement is genuine independent corroboration or coordinated messaging from a single origin |
 | **source-omission-analysis** | Map what sources are NOT saying — omissions reveal structural position more reliably than statements |
+| **dev-job-defense-ties** | Screen a dev job/studio/employer for hidden military or defense ties — runs cui-bono for the buyer-chain, then classifies by end-use and buyer-nationality against *your* red line. Ships profile-less (builds + remembers your threshold on first run, or always-run/never-ask); mechanism, domain pack, and profile are decoupled and swappable |
 
 ### Commands
 

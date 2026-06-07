@@ -30,7 +30,7 @@ When you change **any** file under a plugin directory (`vasana-system/`, `resear
 Every PR to `main` (and every push to `main`) runs three CI gates:
 
 - **MCP smoke test** (`.github/workflows/mcp-smoke-test.yml`) — builds each of the four MCPs via `uvx --from <local-path>` and sends a JSON-RPC `initialize`; fails if any server can't import, build, or respond.
-- **Unit tests** (`.github/workflows/unit-tests.yml`) — the per-plugin test suites.
+- **Unit tests** (`.github/workflows/unit-tests.yml`) — the per-plugin test suites. Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are intentionally duplicated per-plugin rather than shared across plugins; keep such twin copies logic-identical and cross-note them — CI runs each.
 - **Version-bump guard** (`.github/workflows/version-bump-guard.yml`) — see *Version bumping* above.
 
 Green `main` is the pre-publish bar.
