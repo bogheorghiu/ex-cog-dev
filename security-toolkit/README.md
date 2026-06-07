@@ -4,6 +4,10 @@ Threat-detection and dangerous-action-blocking hooks for Claude Code.
 
 All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required.
 
+## What this is — and isn't
+
+These hooks are **guardrails against accidents and foot-guns**, not an adversarial security boundary. They catch the common dangerous *mistake* — an autonomous `rm -rf`, a push to `main`, a `--no-verify` — and surface suspicious tool output; they do **not** contain a determined or adversarial actor. `block-dangerous-git.sh` in particular documents its own bypasses inline (wrapper-execs like `bash -c` / `eval` / `xargs`, dangerous commands chained after a non-`cd` segment, base64/hex obfuscation, quoted-space paths, bare subshells, long-form flags). Treat them as defense-in-depth that lowers the odds of a costly slip — not a sandbox, and not a policy to rely on against malice.
+
 ## Hooks
 
 | Hook | Event | Matcher | What it does |

@@ -5,9 +5,12 @@ This script launches a visible browser window for the user to log in manually.
 After successful login, the browser state (cookies, localStorage) is saved
 to a file for reuse in headless scraping sessions.
 
-No credentials are stored - only the session state.
+No password is stored — only the session state. That state contains live
+session cookies (credential-equivalent), so it is saved with owner-only (0600)
+permissions and belongs in a gitignored directory.
 """
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -59,6 +62,14 @@ def capture_auth(substack_url: str, state_path: str, timeout_ms: int = 300000) -
 
             # Save the authenticated state
             context.storage_state(path=state_path)
+            # The state file holds live session cookies (credential-equivalent),
+            # so restrict it to owner read/write — don't leave it world-readable
+            # on a shared machine. Best-effort: skip silently where chmod is a
+            # no-op (e.g. some Windows filesystems).
+            try:
+                os.chmod(state_path, 0o600)
+            except OSError:
+                pass
             print(f"💾 Auth state saved to: {state_path}")
 
             browser.close()
