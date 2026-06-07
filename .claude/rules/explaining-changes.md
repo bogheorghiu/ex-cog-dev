@@ -16,12 +16,15 @@ A bare issue number, a branch name, or a coined label ("the saturation pattern",
 "the N1 case") is a pointer into context the reader no longer has loaded. Lead
 with the plain-language thing; let the handle ride along in support.
 
-- Not: *"#68 blocks marking #40 ready until the Tier-2 reconcile lands."*
+- Not: *"Issue #68 blocks PR #40 until the Tier-2 reconcile lands."*
 - But: *"The change that adds the job-screening skill is waiting on one thing — a
   rule about when a result counts as settled. (Pull request #40; rule tracked in
-  #68.)"*
+  issue #68.)"*
 
 The number is still there to click; it just isn't carrying the meaning alone.
+(The citation *form* — always `issue #N` or `PR #N`, never a bare `#N` — is its
+own rule, `github-references`; this one is the larger point that the number
+shouldn't carry the meaning by itself.)
 
 ## Spend only the jargon that earns its place
 

@@ -87,7 +87,7 @@ Load and run **cui-bono** on the target. From its beneficiary and ownership mapp
 - **End user** — who operates the deliverable in the field?
 - **Beneficiary** — whose capability increases because this exists? (cui-bono's native output — start here.)
 
-If cui-bono cannot name a customer, that absence is itself a signal — stealth/cleared work hides customers. Carry the chain forward.
+If cui-bono cannot name a customer, that's **absence of evidence, not evidence of stealth**. Absence *is* a signal — but a signal to **look harder**, not a verdict: cleared/stealth work hides its customer, yet general-purpose tooling (an engine, a library) simply has no single one. Tag it **UNVERIFIED**, tell the operator what's unresolved, and carry the chain to the specific product the job actually works on — never let absence settle into "defense" or "clear" on its own.
 
 ## Step 1 — 60-second lexicon scan
 
@@ -117,6 +117,8 @@ End-use is one axis; buyer-nationality is the other — they carry different wei
 ## Apply the threshold
 
 Load the operator's threshold from their profile. **If there is none, you onboarded above** — never invent one. The threshold is *theirs*: state which line you applied in the output, and apply it faithfully. **Do not substitute your own.** A different operator draws the line elsewhere — deriving a different line is a first-class use of this skill, via cui-bono's Framework Clarification + dialectic-spiral.
+
+**Don't over-resolve.** Match the verdict to the evidence: an unresolved or thinly-sourced buyer-chain is UNVERIFIED → INVESTIGATE, not rounded up to a hard stop or down to clear. State the **residual uncertainty** — what's still unknown and what would resolve it — rather than presenting the call as cleaner than it is. This borrows `iterative-verification`'s rule (*no confirmation = UNVERIFIED, not DISCONFIRMED; escalate only on specific counter-evidence*) and cui-bono's graduated, trade-off-stating posture, applied to the buyer-chain.
 
 ## Output format
 
@@ -152,6 +154,7 @@ These illustrate the mechanism under an *example* profile (yours may differ).
 | **deep-investigation-protocol** | Escalate here when the buyer is genuinely hidden (stealth/cleared work) and a 5-minute verify isn't enough. |
 | **manufactured-consensus-detection** | When "trusted by industry leaders" / press is the only evidence of a customer, test whether that consensus is real before treating a logo as a buyer. |
 | **source-omission-analysis** | What the careers page *omits* (named customers, end-use, who operates the deliverable) is the signal — apply omission analysis to the job ad itself. |
+| **iterative-verification** | When the buyer-chain comes up empty or thin: the evidence-honesty discipline — *no confirmation = UNVERIFIED, not DISCONFIRMED* — and iterate before concluding rather than letting a verdict outrun the evidence. |
 
 **Workflow position:** invoke when an employment/engagement decision is attached to a tech or creative role. Load profile → run cui-bono (Step 0) → classify (Steps 1–4) → output against the operator's threshold. Escalate to DIP only when the buyer stays hidden after Step 4.
 
