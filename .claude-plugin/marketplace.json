@@ -8,17 +8,17 @@
     {
       "name": "vasana-system",
       "source": "./vasana-system",
-      "description": "Vasana System - interaction choreographies for collaborative cognition"
+      "description": "A vasana is a pattern that recurs across unrelated domains — the \"this has the same structure as that totally different thing\" realization. Vasana System captures them, tests each for real shared mechanism (not surface resemblance), and resurfaces them when the shape recurs elsewhere — so insight compounds. Memory for forms, not just facts. (Usage-weighted knowledge-graph layer: experimental.)"
     },
     {
       "name": "research-toolkit",
       "source": "./research-toolkit",
-      "description": "Relentless self-reflexive dialectical thinking that questions its own premises. Investigation protocols (DIP, cui-bono), epistemic depth (text-deconstruction, negative-dialectical-spiral), dialectic testing, frame rotation, iterative verification, video/substack extraction. Includes financial-mcp, transparency-mcp."
+      "description": "Research & investigation skills for thinking-with-AI — investigation protocols (deep-investigation, cui-bono / \"follow the money\"), text & source deconstruction, frame rotation, and iterative verification that escalates to a recursive adversarial dialectic (generate a claim's exact opposite and test it). The skepticism is symmetric — turned on the consensus, the contrarian take, the model's own bias, and its own conclusions; it assumes no villain in advance (POSIWID: judge a method by what it does, not what it claims). Includes a transparency MCP."
     },
     {
       "name": "makers-toolkit",
       "source": "./makers-toolkit",
-      "description": "Build-discipline skills in command-with-reason register: system-pilot (engineering discipline for building deterministic systems) and intrinsic-prompt-design (meta-methodology of prompt design)"
+      "description": "Build-discipline & prompt-design skills: system-pilot (engineering discipline for deterministic systems), intrinsic-prompt-design (meta-methodology of prompt design), and skill-activation-testing (a two-tier A/B for whether a description actually fires)."
     },
     {
       "name": "security-toolkit",

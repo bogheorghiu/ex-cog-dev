@@ -1,8 +1,8 @@
 {
   "name": "vasana-system",
-  "description": "Vasana System — pattern recognition across unrelated contexts. Observe, record, test, and browse behavioral patterns. Includes relational-memory and edge-graph MCPs for pattern persistence.",
+  "description": "A vasana is a pattern that recurs across unrelated domains — the \"this has the same structure as that totally different thing\" realization. Vasana System captures them, tests each for real shared mechanism (not surface resemblance), and resurfaces them when the shape recurs elsewhere — so insight compounds. Memory for forms, not just facts. (Usage-weighted knowledge-graph layer: experimental.)",
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "2.5.2"
+  "version": "2.5.3"
 }
