@@ -1,4 +1,4 @@
-# ex-cog — means of cognition
+# ex-cog — externalized cognition
 
 AI doesn't think *for* you. At its best, it thinks *with* you. You hand it a
 half-formed question, a mess of a document, a thing you can't quite see the shape
