@@ -156,5 +156,5 @@ scripts/
 
 - **Only for personal use** with your own paid subscription
 - Respects rate limiting (2.5s between requests by default)
-- No credentials stored (uses session cookies from manual login)
+- Session state (cookies from your manual login) is stored locally with owner-only (0600) permissions in a gitignored dir — treat it as credential-equivalent, don't share it
 - No redistribution of extracted content
