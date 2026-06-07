@@ -164,6 +164,7 @@ This skill ships **profile-less** on purpose: the politics (the red line) and th
 
 - **The lexicon and name-list go stale and over-fire.** Primes get acquired and renamed; broad terms (`targeting`, `autonomy`) catch civilian work too — the `test_screen_efficiency.py` corpus exists to keep precision honest as the pack changes. A keyword match is a prompt to verify, never a verdict.
 - **The buyer-nationality axis is a political map.** Whose military counts as a hard stop is the operator's call, surfaced as their threshold — don't present the map as the territory, and don't substitute your own line for theirs.
+- **The default name-list has a Western vantage.** It's detailed for US/Israel/EU primes and thin on non-Western ones (China, Russia, Gulf, Turkey, South Korea, India) — the English-OSINT asymmetry `cui-bono` itself flags. A non-Western defense employer can pass unflagged, so a "no match" is *unverified*, not clear; extend the pack for your context. (Audited with `cui-bono`; fuller balancing is tracked separately.)
 - **Strictness manufactures false positives.** A consumer-game studio with one defense-adjacent contractor on its client list is not thereby a defense job. Run the chain to the *specific deliverable the role bills to* before classifying.
 
 If the framework is producing a verdict the evidence doesn't support — in either direction — say so and override it.

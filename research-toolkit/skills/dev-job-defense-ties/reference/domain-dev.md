@@ -27,13 +27,15 @@ If the buyer-chain ends at any of these, it's defense regardless of title. Tag t
 - **US:** Lockheed Martin, RTX/Raytheon, Northrop, General Dynamics, Booz Allen, SAIC, Leidos, CACI, Anduril, Palantir, Shield AI, plus FFRDCs (Aerospace Corp, MITRE, APL).
 - **Israel:** Elbit, IAI, Rafael, and their integrators/subsystems.
 - **US-aligned Gulf / Middle East:** Saudi Arabia, UAE, Bahrain, Egypt, Qatar — these almost never appear as the *employer*; they appear as the *export customer* of a US or EU prime (the Navantia→Saudi corvette pattern).
-- **Russia / China:** rarely recruit in the EU labor market directly — check for them as *parent owner* or *upstream subcontract*.
+- **Non-Western / non-NATO** *(under-represented here — English-language OSINT erases it; extend per your context):* China — AVIC, NORINCO, CASC, CETC; Russia — Rostec, Almaz-Antey, United Aircraft; Turkey — Aselsan, **Havelsan** (military simulation/training — squarely in this skill's lane), Baykar, Roketsan; South Korea — Hanwha, KAI, LIG Nex1; Gulf domestic — **EDGE Group** (UAE), **SAMI** (Saudi); India — HAL, BEL, Bharat Dynamics. They seldom recruit in the EU/US market as the *direct employer* (also check them as *parent owner* / *upstream subcontract*), but a sim or game-engine role for one is exactly what the West-heavy list above would miss.
 - **EU/Spain:** Indra, GMV, Navantia (Sistemas), SENER, Escribano, Tess Defence, Airbus Defence & Space, Arquimea.
 - **EU other:** Helsing, Rheinmetall, Hensoldt, Leonardo, Thales, Saab, KNDS, Tekever, Quantum Systems.
 
 **Follow the chain to the end user, not the contracting prime.** The nationality that matters is who *operates* the deliverable; an EU prime's export sale can reach a different end user one layer down. The chain must run to the export customer before the threshold classifies it.
 
 **Subsystem entanglement:** a platform may carry US (Aegis, Mk41, SPY-7) or Israeli (Elbit/Rafael) content inside an otherwise national program. Note which layer the *role* sits on — combat-system core vs. one layer up (trainer/visualization).
+
+**Vantage & limits (this list is not neutral).** It's scoped to the **US/EU labour market** and built from **English-language open sources**, so it's granular on US/Israeli/EU primes and thin on everyone else — and public contract registries barely exist for non-Western buyers. The buyer-nationality map is **NATO-shaped by default**, and a non-Western defense employer can pass unflagged. So read a "no named match" as *absence of evidence, not a clear* (SKILL.md Step 0), and **extend the list with an overlay** for the field and region you actually operate in. (This is the asymmetric-skepticism bias `cui-bono` warns about, inherited here.)
 
 ## End-use ladder (Axis 1)
 
