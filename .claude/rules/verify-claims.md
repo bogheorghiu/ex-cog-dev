@@ -1,12 +1,12 @@
 # Verify your own claims — draft until re-read
 
 Guidance for my own conversational output: the claims I make to you mid-answer.
-Sibling to `explaining-changes.md` — that one is how a status update *reads*; this
+Sibling to `explain-changes.md` — that one is how a status update *reads*; this
 one is whether its claims are *sound* before it ships. A heuristic with trade-offs,
 not a mandate.
 
 (No `paths:` frontmatter on purpose — this applies to every consequential turn, not
-a file type, so it loads every session, like `explaining-changes.md`.)
+a file type, so it loads every session, like `explain-changes.md`.)
 
 ## The discipline
 

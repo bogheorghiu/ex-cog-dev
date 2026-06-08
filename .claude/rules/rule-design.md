@@ -39,6 +39,17 @@ The same heuristics govern rules:
   can path-scope to several file types without splitting into multiple rules — that
   isn't bundling, it's one job that shows up in more than one place.
 
+## Naming
+
+Name a rule with an **imperative action verb** where the name names an action —
+`verify-claims`, not `verifying-claims` or `claims-verification`. A rule is itself a
+command, so a command-shaped name fits it (the same command-shaped-beats-label-shaped
+logic the repo applies to skill descriptions) — and it doesn't undercut
+`intrinsic-prompt-design`, because Rule 1 (state the why) keeps the command reasoned,
+not bare. A **topic-noun** name stays fine where there's no single action
+(`skill-design`, `github-references`, `mcp-interface-contract`): the convention is
+*imperative over gerund/infinitive*, not *verb over noun*.
+
 ## When it's working
 
 Each rule has one job and loads exactly when it's relevant; rules reference each
