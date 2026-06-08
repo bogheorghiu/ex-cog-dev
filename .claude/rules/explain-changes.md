@@ -1,4 +1,4 @@
-# Explaining your work — write for someone who's been away
+# Explain your work — write for someone who's been away
 
 Guidance for how you *report* in chat: status updates, findings, proposals. Not
 about code or docs — those can lean on the repo's own vocabulary. This is about
