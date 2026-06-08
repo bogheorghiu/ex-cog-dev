@@ -46,7 +46,7 @@ Browse plugins, then install the plugins you want.
 
 ### research-toolkit
 
-`v3.2.2` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
+`v3.3.2` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
 before you trust it.
 
 - **Map power.** `cui-bono` asks who gains and who loses, through six lenses —
@@ -54,7 +54,10 @@ before you trust it.
   `deep-investigation-protocol` runs staged source sweeps for when the marketing and
   the reality diverge. `manufactured-consensus-detection` asks whether your sources
   agree on their own or just echo one origin. `source-omission-analysis` reads the
-  silences — what no one is saying.
+  silences — what no one is saying. `dev-job-defense-ties` runs that same
+  buyer-chain logic on a job offer — screen a studio or employer for hidden
+  military or defense ties against a red line you set (kept on your machine,
+  never committed).
 - **Break your own case.** `dialectic-spiral` builds the strongest opposite of your
   conclusion and runs it at the evidence, four rounds minimum. `text-deconstruction`
   finds where a text contradicts itself on its own terms. `frame-rotation` rephrases
@@ -73,7 +76,7 @@ before you trust it.
 
 ### vasana-system
 
-`v2.5.2` · Catch the same behavior surfacing in places that have nothing to do with
+`v2.5.3` · Catch the same behavior surfacing in places that have nothing to do with
 each other. Write it down. Test whether it's real.
 
 - **The loop.** `vasana` flags a candidate mid-work. `record-pattern` captures it with
@@ -94,7 +97,7 @@ each other. Write it down. Test whether it's real.
 
 ### makers-toolkit
 
-`v0.8.1` · Discipline for building with AI. Methodology, not machinery — nothing to
+`v0.8.2` · Discipline for building with AI. Methodology, not machinery — nothing to
 configure, just skills that hold a line.
 
 - `system-pilot` — six steps: define what "done" means, split spec from orchestration
@@ -109,7 +112,7 @@ configure, just skills that hold a line.
 
 ### security-toolkit
 
-`v0.2.2` · A basic draft, not a security product — plain bash hooks that pattern-match
+`v0.2.3` · A basic draft, not a security product — plain bash hooks that pattern-match
 on commands and tool output. No external tools, no sandbox; anything that doesn't match
 a pattern sails through. Useful friction against obvious mistakes, not something to rely
 on for real security.
