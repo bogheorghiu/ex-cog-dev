@@ -1,0 +1,7 @@
+# .claude/settings.json deliberately diverges per branch:
+#   main          -> security-toolkit + makers-toolkit  (lean; loaded every session)
+#   cloud-plugins -> all four plugins                    (firing-test substrate; #67 / #72)
+# Keep THIS branch's version during the main->cloud-plugins auto-sync, so the sync
+# never conflicts on it. The divergence is intentional, not a merge to resolve.
+# (Requires the sync workflow to set: git config merge.ours.driver true)
+/.claude/settings.json merge=ours
