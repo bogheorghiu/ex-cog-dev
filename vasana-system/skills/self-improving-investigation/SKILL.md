@@ -245,6 +245,8 @@ Investigation is complete when:
 3. **Orchestrator intervention logging** - Should formally track prompt mutations
 4. **Quantitative gaps** - Some claims rely on qualitative reports
 
+See `layers/improvement-notes.md` for detailed analysis.
+
 ---
 
 ## Integration Points
