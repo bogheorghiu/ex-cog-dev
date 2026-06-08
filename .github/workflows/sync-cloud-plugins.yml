@@ -1,0 +1,55 @@
+name: Sync cloud-plugins with main
+
+# The `cloud-plugins` branch is `main` plus a single committed file:
+# `.claude/settings.json`, which auto-enables this repo's own plugins in Claude
+# Code cloud sessions (see issue #67). Its whole value is being "main + that one
+# file" — so a cloud dogfood session tests *current* source. If it goes stale it
+# tests old code, which defeats the point. This job keeps it current automatically.
+#
+# Trigger: every update to `main`. A merged PR lands a commit on `main`, and that
+# merge *is* a push to `main`, so this fires on PR merge — which is exactly when
+# `cloud-plugins` needs refreshing. We use `push` rather than
+# `pull_request: { types: [closed] }` on purpose: `push` also covers any other way
+# `main` could move (a hotfix, a manual fast-forward), so `cloud-plugins` can never
+# silently drift behind `main`.
+#
+# The merge is conflict-free by construction: `main` never touches
+# `.claude/settings.json`, and `cloud-plugins` only adds it — disjoint changes. If
+# a conflict ever does arise (someone edited that file on `main`), the job fails
+# loudly instead of pushing a broken merge, so you find out and reconcile by hand.
+
+on:
+  push:
+    branches: [main]
+
+# Only a write to the repo is needed (to push the updated cloud-plugins branch).
+permissions:
+  contents: write
+
+# Serialize runs so two PRs merging close together can't race on the push.
+concurrency:
+  group: sync-cloud-plugins
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out cloud-plugins (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: cloud-plugins
+          fetch-depth: 0
+
+      - name: Merge main into cloud-plugins
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge --no-edit origin/main; then
+            git push origin HEAD:cloud-plugins
+          else
+            echo "::error::Merge conflict syncing main into cloud-plugins. The only intended delta is .claude/settings.json; if main now modifies that file, reconcile cloud-plugins by hand." >&2
+            git merge --abort
+            exit 1
+          fi
