@@ -2,6 +2,21 @@
 
 Notes for any Claude Code (or human) session working in this repo.
 
+## Rule 1 — State the why (the repo's governing rule)
+
+Every decision or instruction — yours or mine — states its rationale. Write
+explanation-first: a choice with no "why" is incomplete, because a decision without
+its reasoning can't be evaluated, reproduced, or safely revised later. The rationale
+is part of the deliverable, not decoration.
+
+This is the **governing** rule the rest of the repo presupposes — the `.claude/rules/`
+conventions and the plugins' own command-shaped instructions all assume it. It's also
+what keeps "command-shaped" compatible with `intrinsic-prompt-design` (give the model
+real reasons, don't just order it more politely): a directive that leads with its why
+is a *reasoned* command, not bare obedience. And forcing the justification next to the
+claim makes hedge-vs-reasoning and claim-vs-evidence mismatches visible before they
+ship — the discipline `.claude/rules/verify-claims.md` builds on.
+
 ## What's here
 
 Four Claude Code plugins distributed via the `ex-cog-dev` marketplace:
