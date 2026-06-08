@@ -240,17 +240,7 @@ When detected: **Discount source entirely**. Seek instead:
 - Professional defection patterns (see `references/brand-bias-correction.md`)
 
 **Source Omission Analysis:**
-After the multi-bubble sweep, map what each source type is SILENT about:
-
-| Source Type | Tends to Omit |
-|-------------|--------------|
-| Western mainstream | Allied military atrocities, structural economic violence |
-| Anti-interventionist | Atrocities by actors the West opposes, genuine security threats |
-| State media (any) | Anything unflattering to the state |
-| Financial press | Human costs, environmental externalities, labor conditions |
-| Think tanks | Conclusions that displease funders |
-
-When Source A reports X but Source B is silent: this is not evidence X is false — it is evidence X is inconvenient for B's position. The most important findings often emerge from the intersection of what different sources omit.
+After the multi-bubble sweep, map what each source type is SILENT about — run the **`source-omission-analysis`** skill, which carries the full omission-patterns table (source type → what it structurally omits → the structural reason) and the intersection protocol. The core move: when Source A reports X but Source B is silent, that is not evidence X is false — it is evidence X is inconvenient for B's position. The most important findings emerge from the intersection of what different sources omit.
 
 **Language Omission Analysis:**
 After the multi-bubble sweep, also check: what perspectives are ONLY available in non-English sources? If your entire evidence base is English-language, you are seeing reality through a single linguistic lens regardless of how many "perspectives" you've consulted.
