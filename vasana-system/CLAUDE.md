@@ -18,10 +18,6 @@ All pattern reads/writes go to the canonical location. The bundled `skills/patte
 
 A `CLAUDE.md` at the canonical location has the full operational rules (naming convention, guardrails, write destinations).
 
-## Naming Rule
-
-"Vasana" only for system name, entry skill (`vasana`), hook (`vasana.sh`), and the Vasana section in each skill. Everything else uses "pattern."
-
 ## Patterns Are Neutral
 
 Patterns are observations, not anti-patterns. Groove-deepening is also mastery. Framework-dissolution can be premature. The library presents what recurs; application skills apply their own lens.
