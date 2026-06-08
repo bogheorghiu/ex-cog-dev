@@ -45,11 +45,17 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Enable the 'ours' merge driver referenced by cloud-plugins' .gitattributes
+          # (/.claude/settings.json merge=ours). main carries a lean settings.json
+          # (security-toolkit + makers-toolkit); cloud-plugins carries all four. The
+          # driver keeps cloud-plugins' version during this merge, so the intentional
+          # divergence on that one file never blocks the sync.
+          git config merge.ours.driver true
           git fetch origin main
           if git merge --no-edit origin/main; then
             git push origin HEAD:cloud-plugins
           else
-            echo "::error::Merge conflict syncing main into cloud-plugins. The only intended delta is .claude/settings.json; if main now modifies that file, reconcile cloud-plugins by hand." >&2
+            echo "::error::Merge conflict syncing main into cloud-plugins on a file OTHER than .claude/settings.json (that one is handled by merge=ours). Reconcile cloud-plugins by hand." >&2
             git merge --abort
             exit 1
           fi
