@@ -3,9 +3,10 @@
 # Matcher: Bash
 #
 # SECURITY RATIONALE:
-# - Claude cannot merge PRs (requires user review + approval)
 # - Claude cannot push directly to main/master
 # - Claude cannot force push (destructive)
+# - PR merge (`gh pr merge`) is allowed by DEFAULT but blockable via the
+#   EXCOG_BLOCK_PR_MERGE toggle — see the pr-merge rule below for why.
 #
 # Location: .claude/hooks/scripts/block-dangerous-git.sh
 # Registered in: .claude/settings.local.json under PreToolUse
@@ -95,14 +96,23 @@ log_blocked_attempt() {
     echo "[$(date -Iseconds)] BLOCKED $rule: $cmd" >> "$log_dir/blocked-attempts.log" 2>/dev/null
 }
 
-# Block PR merge (using BASE_CMD)
+# Block PR merge (using BASE_CMD) — OPT-IN via EXCOG_BLOCK_PR_MERGE.
 # Matches: gh pr merge, gh pr merge 123, etc.
-if [[ "$BASE_CMD" =~ ^gh[[:space:]]+pr[[:space:]]+merge ]]; then
+#
+# Default is OFF (merge allowed): owner directive 2026-06-09 — Claude may
+# self-merge PRs it is confident are safe. `gh pr merge` still goes through
+# branch protection (required checks/reviews), so the unconditional blocks
+# below — push to main, force push, --admin, direct API merge — keep covering
+# the paths that actually bypass review. Set EXCOG_BLOCK_PR_MERGE=1 (or
+# true/yes; e.g. in settings.json "env" or the shell) to restore the block
+# for sessions/projects where self-merge is not wanted.
+if [[ "${EXCOG_BLOCK_PR_MERGE:-}" =~ ^(1|true|yes)$ ]] && \
+   [[ "$BASE_CMD" =~ ^gh[[:space:]]+pr[[:space:]]+merge ]]; then
     log_blocked_attempt "pr-merge" "$COMMAND"
     cat <<'EOF'
 {
   "decision": "block",
-  "reason": "🚫 Claude cannot merge PRs.\n\nThis requires user review and approval.\nPlease merge manually: gh pr merge <PR#>"
+  "reason": "🚫 PR merge is blocked in this session (EXCOG_BLOCK_PR_MERGE is enabled).\n\nThis requires user review and approval.\nPlease merge manually: gh pr merge <PR#>\n\n(To allow Claude to merge, unset EXCOG_BLOCK_PR_MERGE.)"
 }
 EOF
     exit 2

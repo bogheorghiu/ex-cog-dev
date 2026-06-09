@@ -112,7 +112,7 @@ configure, just skills that hold a line.
 
 ### security-toolkit
 
-`v0.2.3` · A basic draft, not a security product — plain bash hooks that pattern-match
+`v0.3.0` · A basic draft, not a security product — plain bash hooks that pattern-match
 on commands and tool output. No external tools, no sandbox; anything that doesn't match
 a pattern sails through. Useful friction against obvious mistakes, not something to rely
 on for real security.
@@ -121,7 +121,9 @@ on for real security.
   for the blatant stuff, quiet log for the rest, with a path allowlist. It flags and
   records; it doesn't block.
 - **Blocks dangerous git** before it runs: push to `main`/`master`, force push,
-  `reset --hard`, `--no-verify`, `branch -D`, `clean -fd`, `rm -rf`, PR self-merges.
+  `reset --hard`, `--no-verify`, `branch -D`, `clean -fd`, `rm -rf`. Blocking
+  `gh pr merge` is opt-in (`EXCOG_BLOCK_PR_MERGE=1`) — off by default, since
+  merge already passes through branch protection.
 - **Blocks Desktop Commander's** process-spawning and config-setting tools, the ones
   that slip past Claude Code's permission boundaries.
 
