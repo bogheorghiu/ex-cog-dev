@@ -114,6 +114,10 @@ Numbering follows the operator's walk-through.
 
 ## Open queue / next
 
+- **Failure-mode watch (n=1) → issue #112:** silently resolving an ambiguous
+  instruction (esp. scope) instead of surfacing it, with context loss as
+  accelerant. This session was instance #1. Promote to a real pattern only on a
+  2nd independent instance (per #100 / repetition-as-primitive).
 - **Finish current**, then start rules pass (#107).
 - Restore `research-logs-vs-methodology.md` (+ other recovered files) — rules phase.
 - Decide home for the "stale-monorepo-refs = data" note (CLAUDE.md?).
