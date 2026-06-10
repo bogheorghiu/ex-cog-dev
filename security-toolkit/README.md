@@ -13,7 +13,7 @@ These hooks are **guardrails against accidents and foot-guns**, not an adversari
 | Hook | Event | Matcher | What it does |
 |---|---|---|---|
 | `detect-prompt-injection.sh` | PostToolUse | `*` | Scan tool outputs (including MCP) for prompt-injection patterns. Tiered: HIGH_CONFIDENCE matches emit an in-session warning + log entry; LOW_CONFIDENCE matches log silently. Allowlist via `PROMPT_INJECTION_ALLOWLIST_GLOB` env var to suppress self-triggering on docs that describe the patterns. |
-| `block-dangerous-git.sh` | PreToolUse | `Bash` | Block `gh pr merge`, push to main/master, force push, `--no-verify`, `--admin`, `git checkout --`, `git stash drop`, `git reset --hard`, `git clean -fd`, `rm -rf` on directories, direct GitHub API merge calls. |
+| `block-dangerous-git.sh` | PreToolUse | `Bash` | Block push to main/master, force push, `--no-verify`, `--admin`, `git checkout --`, `git stash drop`, `git reset --hard`, `git clean -fd`, `rm -rf` on directories, direct GitHub API merge calls. Blocking `gh pr merge` is **off by default** — opt in via `EXCOG_BLOCK_PR_MERGE` (see Configuration). |
 | `block-dc-config.sh` | PreToolUse | `mcp__desktop-commander__*` | Block autonomous modification of Desktop Commander settings (`set_config_value`). |
 | `block-dc-execute.sh` | PreToolUse | `mcp__desktop-commander__*` | Block `start_process` / `execute_command` (bypasses sandbox; use the Bash tool instead). |
 
@@ -49,6 +49,26 @@ Example:
 
 ```bash
 export PROMPT_INJECTION_ALLOWLIST_GLOB='*/docs/security/*:*/PROMPT-INJECTION-AWARENESS*'
+```
+
+### `EXCOG_BLOCK_PR_MERGE`
+
+Set to `1`, `true`, or `yes` to make `block-dangerous-git.sh` block `gh pr merge`.
+**Default (unset or any other value): merging is allowed.**
+
+The default is permissive because `gh pr merge` already goes through GitHub branch
+protection (required checks/reviews), so blocking it client-side mostly added
+friction to an intended workflow — Claude self-merging PRs it's confident in. The
+paths that actually *bypass* review — push to main, force push, `--admin`, direct
+GitHub API merge calls — stay unconditionally blocked regardless of this toggle.
+
+Enable it per-project or per-machine wherever self-merge is not wanted, e.g. in
+`settings.json`:
+
+```json
+{
+  "env": { "EXCOG_BLOCK_PR_MERGE": "1" }
+}
 ```
 
 ## Logs
