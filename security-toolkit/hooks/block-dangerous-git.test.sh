@@ -3,7 +3,8 @@
 # Run: bash block-dangerous-git.test.sh
 #
 # Tests cover all blocked operations including:
-# - PR merge (gh pr merge)
+# - PR merge (gh pr merge) — opt-in rule, only active under EXCOG_BLOCK_PR_MERGE;
+#   tested in both states (toggle on → blocked; default/off → allowed)
 # - Push to main/master
 # - Force push
 # - Worktree remove
@@ -36,10 +37,17 @@ test_case() {
     local name="$1"
     local input="$2"
     local expected_exit="$3"  # 0 for allow, 2 for block
+    # Optional 4th arg: env assignments for opt-in rules (e.g.
+    # "EXCOG_BLOCK_PR_MERGE=1"). EXCOG_BLOCK_PR_MERGE is explicitly unset
+    # first so a value inherited from the caller's shell can't flip the
+    # expected outcome of default-state tests; the 4th arg then re-sets it
+    # for tests that exercise the toggled-on path. Unquoted on purpose —
+    # word splitting is what turns "A=1 B=2" into separate env arguments.
+    local extra_env="${4:-}"
 
     local exit_code=0
     local result
-    result=$(echo "$input" | bash "$HOOK" 2>/dev/null) || exit_code=$?
+    result=$(echo "$input" | env -u EXCOG_BLOCK_PR_MERGE $extra_env bash "$HOOK" 2>/dev/null) || exit_code=$?
 
     if [[ "$exit_code" -eq "$expected_exit" ]]; then
         echo -e "${GREEN}pass${NC} $name"
@@ -67,12 +75,16 @@ echo ""
 echo "Should BLOCK:"
 echo ""
 
-echo -e "${YELLOW}--- PR merge ---${NC}"
-test_case "gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2
+echo -e "${YELLOW}--- PR merge (opt-in: EXCOG_BLOCK_PR_MERGE=1) ---${NC}"
+test_case "gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "gh pr merge 123"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 123"}}' 2
+test_case "gh pr merge 123"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 123"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "gh pr merge --squash"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge --squash"}}' 2
+test_case "gh pr merge --squash"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge --squash"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
+
+test_case "gh pr merge (toggle=true)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=true"
+
+test_case "gh pr merge (toggle=yes)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=yes"
 
 echo ""
 echo -e "${YELLOW}--- Push to main/master ---${NC}"
@@ -112,6 +124,8 @@ test_case "git push --no-verify"     '{"tool_name":"Bash","tool_input":{"command
 
 echo ""
 echo -e "${YELLOW}--- --admin ---${NC}"
+# No toggle here on purpose: with EXCOG_BLOCK_PR_MERGE unset the pr-merge rule
+# is dormant, so a block proves the --admin rule itself fired (not the merge rule).
 test_case "gh pr merge --admin"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge --admin"}}' 2
 
 echo ""
@@ -160,7 +174,7 @@ echo -e "${YELLOW}--- Chain-form bypass (regression for 2026-05-20) ---${NC}"
 # Without the chain-prefix normalization the hook misses these — see
 # HANDOFF-block-dangerous-git-chain-bypass-2026-05-20-2001.md.
 
-test_case "cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /home/user/repo && gh pr merge 5 --squash"}}' 2
+test_case "cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /home/user/repo && gh pr merge 5 --squash"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
 test_case "cd && git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git push origin main"}}' 2
 
@@ -172,6 +186,7 @@ test_case "cd && git branch -D"     '{"tool_name":"Bash","tool_input":{"command"
 
 test_case "cd && git commit --no-verify"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git commit -m test --no-verify"}}' 2
 
+# Toggle off on purpose — proves the chain-stripped --admin rule fires on its own.
 test_case "cd && gh pr merge --admin"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && gh pr merge --admin"}}' 2
 
 test_case "cd && git checkout -- file"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && git checkout -- file.txt"}}' 2
@@ -184,23 +199,23 @@ test_case "cd && git clean -fd"     '{"tool_name":"Bash","tool_input":{"command"
 
 test_case "cd && rm -rf"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && rm -rf /some/dir"}}' 2
 
-test_case "pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && gh pr merge 5"}}' 2
+test_case "pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && gh pr merge 5"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
 test_case "pushd && git push origin main"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && git push origin main"}}' 2
 
 test_case "pushd && git push --force"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo && git push --force origin feature"}}' 2
 
-test_case "(cd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; gh pr merge 5)"}}' 2
+test_case "(cd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; gh pr merge 5)"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
 test_case "(cd; git push origin main)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; git push origin main)"}}' 2
 
 test_case "(cd; git push --force)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo; git push --force origin feature)"}}' 2
 
-test_case "cd a && cd b && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && cd repo && gh pr merge 5"}}' 2
+test_case "cd a && cd b && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && cd repo && gh pr merge 5"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "cd && pushd && gh pr merge (mixed)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && pushd /tmp/repo && gh pr merge 5"}}' 2
+test_case "cd && pushd && gh pr merge (mixed)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp && pushd /tmp/repo && gh pr merge 5"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "(pushd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; gh pr merge 5)"}}' 2
+test_case "(pushd; gh pr merge)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; gh pr merge 5)"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
 test_case "(pushd; git push origin main)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo; git push origin main)"}}' 2
 
@@ -210,13 +225,13 @@ test_case "(pushd; git push --force)"     '{"tool_name":"Bash","tool_input":{"co
 # yields 8 forms; the 4 above cover one half. Below covers the other 4 corners
 # so a future regex change that breaks one corner without breaking adjacent
 # ones can't slip through.
-test_case "cd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo; gh pr merge 5"}}' 2
+test_case "cd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo; gh pr merge 5"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "pushd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo; gh pr merge 5"}}' 2
+test_case "pushd; gh pr merge (no-paren, ;)"     '{"tool_name":"Bash","tool_input":{"command":"pushd /tmp/repo; gh pr merge 5"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "(cd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo && gh pr merge 5)"}}' 2
+test_case "(cd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(cd /tmp/repo && gh pr merge 5)"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "(pushd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo && gh pr merge 5)"}}' 2
+test_case "(pushd && gh pr merge) (paren, &&)"     '{"tool_name":"Bash","tool_input":{"command":"(pushd /tmp/repo && gh pr merge 5)"}}' 2 "EXCOG_BLOCK_PR_MERGE=1"
 
 # Chain + `command git` double-prefix — the normalization must re-run AFTER
 # the strip loop or `command git` survives at the start of BASE_CMD and the
@@ -292,6 +307,23 @@ test_case "gh pr view"     '{"tool_name":"Bash","tool_input":{"command":"gh pr v
 test_case "gh pr comment"     '{"tool_name":"Bash","tool_input":{"command":"gh pr comment 311 --body \"looks good\""}}' 0
 
 echo ""
+echo -e "${YELLOW}--- PR merge allowed by default (EXCOG_BLOCK_PR_MERGE unset/disabled) ---${NC}"
+# The pr-merge rule is opt-in: with the toggle unset (or set to a non-truthy
+# value) `gh pr merge` must pass through. These pin the default so a future
+# edit can't silently flip the rule back to always-on.
+test_case "gh pr merge (default)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0
+
+test_case "gh pr merge 123 --squash (default)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 123 --squash"}}' 0
+
+test_case "cd && gh pr merge (default)"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && gh pr merge 5"}}' 0
+
+test_case "gh pr merge (toggle=0)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE=0"
+
+test_case "gh pr merge (toggle=false)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE=false"
+
+test_case "gh pr merge (toggle=empty)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE="
+
+echo ""
 echo -e "${YELLOW}--- API calls that are NOT merge (false positive prevention) ---${NC}"
 test_case "curl GitHub API (not merge)"     '{"tool_name":"Bash","tool_input":{"command":"curl -sk https://api.github.com/repos/owner/repo/pulls/123"}}' 0
 
@@ -321,32 +353,36 @@ echo -e "${YELLOW}--- Documented bypasses (intentional non-handles; see hook out
 # accidentally over-blocks) cannot silently change scope. The advisory layer
 # proposed in HANDOFF-layered-bash-intent-detection-2026-05-20-2004.md is the
 # right place to catch these.
+#
+# The gh-pr-merge bypasses below run with EXCOG_BLOCK_PR_MERGE=1: with the
+# toggle off the rule is dormant and exit 0 would prove nothing about the
+# normalization — only with the rule armed does exit 0 assert a real bypass.
 
-test_case "quoted-path bypass: cd \"/path with spaces\" && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd \"/path with spaces\" && gh pr merge 5"}}' 0
+test_case "quoted-path bypass: cd \"/path with spaces\" && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd \"/path with spaces\" && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "escaped-path bypass: cd /path/with\\ spaces && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /path/with\\ spaces && gh pr merge 5"}}' 0
+test_case "escaped-path bypass: cd /path/with\\ spaces && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd /path/with\\ spaces && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "wrapper-exec bypass: bash -c \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr merge 5\""}}' 0
+test_case "wrapper-exec bypass: bash -c \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"bash -c \"gh pr merge 5\""}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "wrapper-exec bypass: eval \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"eval \"gh pr merge 5\""}}' 0
+test_case "wrapper-exec bypass: eval \"gh pr merge\""     '{"tool_name":"Bash","tool_input":{"command":"eval \"gh pr merge 5\""}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "wrapper-exec bypass: xargs -I{} gh pr merge {}"     '{"tool_name":"Bash","tool_input":{"command":"echo 5 | xargs -I{} gh pr merge {}"}}' 0
+test_case "wrapper-exec bypass: xargs -I{} gh pr merge {}"     '{"tool_name":"Bash","tool_input":{"command":"echo 5 | xargs -I{} gh pr merge {}"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "second-segment bypass: <safe> && <dangerous>"     '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}' 0
+test_case "second-segment bypass: <safe> && <dangerous>"     '{"tool_name":"Bash","tool_input":{"command":"git status && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "popd-prefix bypass: popd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"popd && gh pr merge 5"}}' 0
+test_case "popd-prefix bypass: popd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"popd && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "no-path bypass: cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd && gh pr merge 5"}}' 0
+test_case "no-path bypass: cd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"cd && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "no-path bypass: pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd && gh pr merge 5"}}' 0
+test_case "no-path bypass: pushd && gh pr merge"     '{"tool_name":"Bash","tool_input":{"command":"pushd && gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "no-path bypass: cd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"cd; gh pr merge 5"}}' 0
+test_case "no-path bypass: cd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"cd; gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
-test_case "no-path bypass: pushd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"pushd; gh pr merge 5"}}' 0
+test_case "no-path bypass: pushd; gh pr merge (semicolon variant)"     '{"tool_name":"Bash","tool_input":{"command":"pushd; gh pr merge 5"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
 test_case "bare-subshell bypass: (rm -rf /dir)"     '{"tool_name":"Bash","tool_input":{"command":"(rm -rf /tmp/test)"}}' 0
 
-test_case "bare-subshell bypass: (gh pr merge 5)"     '{"tool_name":"Bash","tool_input":{"command":"(gh pr merge 5)"}}' 0
+test_case "bare-subshell bypass: (gh pr merge 5)"     '{"tool_name":"Bash","tool_input":{"command":"(gh pr merge 5)"}}' 0 "EXCOG_BLOCK_PR_MERGE=1"
 
 echo ""
 echo -e "${YELLOW}--- Edge cases ---${NC}"
