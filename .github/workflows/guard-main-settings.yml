@@ -3,15 +3,18 @@ name: Guard main settings.json
 # main's .claude/settings.json is environment config: it registers the ex-cog-dev
 # marketplace and enables the lean always-on set (security-toolkit + makers-toolkit)
 # in every session. Feature PRs should NOT change it. A change almost always means
-# the branch was based on `cloud-plugins` (which enables all four) and would clobber
-# main's lean set with the heavy one. This guard blocks such PRs unless they carry
-# the `allow-settings-change` label — mirroring the version-bump-guard escape hatch.
+# the branch was based on an env branch (e.g. cloud-plugins / no-plugins) and would
+# clobber main's lean set. This guard blocks such PRs unless they carry the
+# `allow-settings-change` label -- mirroring the version-bump-guard escape hatch.
 #
-# It always runs (no `paths:` filter) so the check always reports a status, never
-# sits "pending" as a required check that simply didn't trigger.
+# Triggers include `labeled`/`unlabeled` so adding the label to an already-open PR
+# re-runs the guard (without it, the label wouldn't refresh the failed check). It
+# always runs (no `paths:` filter) so the check always reports a status, never sits
+# "pending" as a required check that simply didn't trigger.
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
 permissions:
@@ -33,11 +36,11 @@ jobs:
           if git diff --name-only "$BASE" "$HEAD" | grep -qx '.claude/settings.json'; then
             case ",$LABELS," in
               *,allow-settings-change,*)
-                echo "Label 'allow-settings-change' present — permitting the settings.json change." ;;
+                echo "Label 'allow-settings-change' present -- permitting the settings.json change." ;;
               *)
-                echo "::error::This PR modifies .claude/settings.json on main. That file is environment config (marketplace + the lean security-toolkit + makers-toolkit set); feature PRs should not change it — a change usually means the branch was based on cloud-plugins (all four) and would clobber main's lean set. If intentional, add the 'allow-settings-change' label and re-run." >&2
+                echo "::error::This PR modifies .claude/settings.json on main. That file is environment config (marketplace + the lean security-toolkit + makers-toolkit set); feature PRs should not change it -- a change usually means the branch was based on an env branch (cloud-plugins / no-plugins) and would clobber main's lean set. If intentional, add the 'allow-settings-change' label." >&2
                 exit 1 ;;
             esac
           else
-            echo "No change to .claude/settings.json — ok."
+            echo "No change to .claude/settings.json -- ok."
           fi
