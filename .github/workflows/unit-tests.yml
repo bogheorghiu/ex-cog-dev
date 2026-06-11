@@ -45,6 +45,7 @@ jobs:
           bash security-toolkit/hooks/block-dangerous-git.test.sh
           bash security-toolkit/hooks/detect-prompt-injection.test.sh
           bash security-toolkit/hooks/block-dc.test.sh
+          bash security-toolkit/hooks/announce-pr-merge-guard.test.sh
           bash vasana-system/hooks/count-skill-firings.test.sh
 
       - name: Stdlib Python suites
