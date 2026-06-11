@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Structural linter for research-toolkit skills.
+"""Structural linter for security-toolkit skills.
 
-Kept logic-identical to vasana-system/skills/test_skill_structure.py (which was
-lifted from this one, issue #40/#42) and security-toolkit/skills/
-test_skill_structure.py so the copies don't drift — only the plugin name and
-skills dir differ; a logic change in one goes into all three. Markdown-only skills have no executable logic to
-unit-test, but they DO have an interface: the SKILL.md frontmatter is what the
-model reads to decide whether to fire, and the house conventions are easy to
-break silently. This asserts the invariants that hold across every
-research-toolkit skill, so a future skill that breaks one fails the PR instead
-of shipping broken:
+Kept logic-identical to research-toolkit/skills/test_skill_structure.py (the
+original; see issue #40/#42) and vasana-system/skills/test_skill_structure.py —
+only the plugin name in the docstring and the printed banner differ. If you
+change the logic in one copy, change it in all three. Markdown-only skills have
+no executable logic to unit-test, but they DO have an interface: the SKILL.md
+frontmatter is what the model reads to decide whether to fire, and the house
+conventions are easy to break silently. This asserts the invariants that hold
+across every security-toolkit skill, so a future skill that breaks one fails
+the PR instead of shipping broken:
 
   - valid YAML frontmatter (the seed-question style invites the footgun below)
   - name == directory, kebab-case, <= 64 chars
@@ -155,7 +155,7 @@ def yaml_validity_error(fm):
 
 skill_files = sorted(_SKILLS_DIR.glob("*/SKILL.md"))
 
-print(f"\nLinting {len(skill_files)} research-toolkit skills under {_SKILLS_DIR.name}/ ...")
+print(f"\nLinting {len(skill_files)} security-toolkit skills under {_SKILLS_DIR.name}/ ...")
 check("glob found skills to lint", len(skill_files) > 0)
 
 for path in skill_files:
