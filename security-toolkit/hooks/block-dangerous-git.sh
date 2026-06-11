@@ -5,8 +5,10 @@
 # SECURITY RATIONALE:
 # - Claude cannot push directly to main/master
 # - Claude cannot force push (destructive)
-# - PR merge (`gh pr merge`) is allowed by DEFAULT but blockable via the
-#   EXCOG_BLOCK_PR_MERGE toggle — see the pr-merge rule below for why.
+# - PR merge (`gh pr merge`) is OFF by default (merge allowed). Turn the block
+#   ON per-user with `/pr-merge-guard on` (takes effect immediately) or
+#   declaratively with the EXCOG_BLOCK_PR_MERGE env var — see the pr-merge
+#   rule below for the resolution order and why it defaults off.
 #
 # Location: .claude/hooks/scripts/block-dangerous-git.sh
 # Registered in: .claude/settings.local.json under PreToolUse
@@ -96,23 +98,49 @@ log_blocked_attempt() {
     echo "[$(date -Iseconds)] BLOCKED $rule: $cmd" >> "$log_dir/blocked-attempts.log" 2>/dev/null
 }
 
-# Block PR merge (using BASE_CMD) — OPT-IN via EXCOG_BLOCK_PR_MERGE.
+# Block PR merge (using BASE_CMD) — OFF by default, two ways to turn ON.
 # Matches: gh pr merge, gh pr merge 123, etc.
 #
-# Default is OFF (merge allowed): owner directive 2026-06-09 — Claude may
-# self-merge PRs it is confident are safe. `gh pr merge` still goes through
-# branch protection (required checks/reviews), so the unconditional blocks
-# below — push to main, force push, --admin, direct API merge — keep covering
-# the paths that actually bypass review. Set EXCOG_BLOCK_PR_MERGE=1 (or
-# true/yes; e.g. in settings.json "env" or the shell) to restore the block
-# for sessions/projects where self-merge is not wanted.
-if [[ "${EXCOG_BLOCK_PR_MERGE:-}" =~ ^(1|true|yes)$ ]] && \
+# Resolution order (see pr_merge_block_enabled):
+#   1. EXCOG_BLOCK_PR_MERGE env var (1/true/yes = on, 0/false/no = off).
+#      Declarative path — settings.json "env", CI, or the shell. When set to a
+#      recognized value it is AUTHORITATIVE and wins over the state file.
+#   2. A user-level state file written by the `/pr-merge-guard` command
+#      (default ~/.claude/security-toolkit/pr-merge-guard; path overridable via
+#      EXCOG_PR_MERGE_STATE_FILE, which the test suite uses for isolation).
+#      Consulted only when the env var is unset/empty. This is what gives the
+#      command IMMEDIATE effect: the hook re-reads the file on every invocation,
+#      so a toggle applies to the very next git command — whereas settings.json
+#      "env" only re-applies at session start.
+#
+# Why OFF by default (owner directive 2026-06-09): Claude may self-merge PRs it
+# is confident are safe. `gh pr merge` still goes through branch protection
+# (required checks/reviews), so the unconditional blocks below — push to main,
+# force push, --admin, direct API merge — keep covering the paths that actually
+# bypass review. Turn the block ON when a human should always do the merge.
+pr_merge_block_enabled() {
+    local v="${EXCOG_BLOCK_PR_MERGE:-}"
+    [[ "$v" =~ ^(1|true|yes)$ ]] && return 0   # env explicit ON  (authoritative)
+    [[ "$v" =~ ^(0|false|no)$ ]] && return 1   # env explicit OFF (authoritative)
+    # Any other non-empty value: preserve prior semantics (only the ON-regex
+    # turns it on) — treat as OFF without consulting the state file.
+    [[ -n "$v" ]] && return 1
+    # Env unset/empty → consult the state file the /pr-merge-guard command writes.
+    local state_file="${EXCOG_PR_MERGE_STATE_FILE:-${HOME}/.claude/security-toolkit/pr-merge-guard}"
+    [[ -f "$state_file" ]] || return 1
+    local s
+    s=$(tr -d '[:space:]' < "$state_file" 2>/dev/null) || return 1
+    [[ "$s" =~ ^(1|true|yes|on)$ ]] && return 0
+    return 1
+}
+
+if pr_merge_block_enabled && \
    [[ "$BASE_CMD" =~ ^gh[[:space:]]+pr[[:space:]]+merge ]]; then
     log_blocked_attempt "pr-merge" "$COMMAND"
     cat <<'EOF'
 {
   "decision": "block",
-  "reason": "🚫 PR merge is blocked in this session (EXCOG_BLOCK_PR_MERGE is enabled).\n\nThis requires user review and approval.\nPlease merge manually: gh pr merge <PR#>\n\n(To allow Claude to merge, unset EXCOG_BLOCK_PR_MERGE.)"
+  "reason": "🚫 PR merge is blocked in this session (the PR-merge guard is ON).\n\nThis requires user review and approval.\nPlease merge manually: gh pr merge <PR#>\n\n(To allow Claude to merge: run /pr-merge-guard off, or unset EXCOG_BLOCK_PR_MERGE.)"
 }
 EOF
     exit 2

@@ -23,6 +23,20 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$SCRIPT_DIR/block-dangerous-git.sh"
 
+# Isolate the pr-merge state file the hook consults when EXCOG_BLOCK_PR_MERGE is
+# unset. Point the default at a guaranteed-absent path in a temp dir so every
+# default/unset test resolves to OFF deterministically — independent of whatever
+# ~/.claude/security-toolkit/pr-merge-guard happens to exist on the dev or CI
+# machine. State-file-specific tests below override EXCOG_PR_MERGE_STATE_FILE via
+# the 4th arg to point at files they create here.
+TEST_TMP="$(mktemp -d)"
+trap 'rm -rf "$TEST_TMP"' EXIT
+export EXCOG_PR_MERGE_STATE_FILE="$TEST_TMP/absent-default-state"
+STATE_ON="$TEST_TMP/state-on"; printf '1' > "$STATE_ON"
+STATE_ON_WORD="$TEST_TMP/state-on-word"; printf 'on\n' > "$STATE_ON_WORD"
+STATE_OFF="$TEST_TMP/state-off"; printf '0' > "$STATE_OFF"
+STATE_ABSENT="$TEST_TMP/state-absent"  # deliberately never created
+
 # Colors for output ($'...' form survives editor normalization that would
 # strip raw ESC bytes from a regular single-quoted string).
 RED=$'\033[0;31m'
@@ -38,11 +52,15 @@ test_case() {
     local input="$2"
     local expected_exit="$3"  # 0 for allow, 2 for block
     # Optional 4th arg: env assignments for opt-in rules (e.g.
-    # "EXCOG_BLOCK_PR_MERGE=1"). EXCOG_BLOCK_PR_MERGE is explicitly unset
-    # first so a value inherited from the caller's shell can't flip the
-    # expected outcome of default-state tests; the 4th arg then re-sets it
-    # for tests that exercise the toggled-on path. Unquoted on purpose —
-    # word splitting is what turns "A=1 B=2" into separate env arguments.
+    # "EXCOG_BLOCK_PR_MERGE=1", or "EXCOG_PR_MERGE_STATE_FILE=$STATE_ON" to arm
+    # the block via the state file the /pr-merge-guard command writes).
+    # EXCOG_BLOCK_PR_MERGE is explicitly unset first so a value inherited from
+    # the caller's shell can't flip the expected outcome of default-state tests;
+    # the 4th arg then re-sets it for tests that exercise the toggled-on path.
+    # EXCOG_PR_MERGE_STATE_FILE defaults (exported above) to an absent path so
+    # unset-env tests resolve to OFF regardless of the machine's real state file.
+    # Unquoted on purpose — word splitting is what turns "A=1 B=2" into separate
+    # env arguments.
     local extra_env="${4:-}"
 
     local exit_code=0
@@ -85,6 +103,19 @@ test_case "gh pr merge --squash"     '{"tool_name":"Bash","tool_input":{"command
 test_case "gh pr merge (toggle=true)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=true"
 
 test_case "gh pr merge (toggle=yes)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=yes"
+
+echo ""
+echo -e "${YELLOW}--- PR merge (opt-in via state file: the /pr-merge-guard command) ---${NC}"
+# The /pr-merge-guard command writes a user-level state file; the hook reads it
+# when EXCOG_BLOCK_PR_MERGE is unset, which is what makes a toggle take effect
+# immediately (no restart). These arm the block via the state file, not the env.
+test_case "state file = 1 → block"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_PR_MERGE_STATE_FILE=$STATE_ON"
+
+test_case "state file = on → block"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge 123"}}' 2 "EXCOG_PR_MERGE_STATE_FILE=$STATE_ON_WORD"
+
+test_case "cd && gh pr merge, state file = 1 → block"     '{"tool_name":"Bash","tool_input":{"command":"cd /tmp/repo && gh pr merge 5"}}' 2 "EXCOG_PR_MERGE_STATE_FILE=$STATE_ON"
+
+test_case "env=1 wins even with no state file → block"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 2 "EXCOG_BLOCK_PR_MERGE=1 EXCOG_PR_MERGE_STATE_FILE=$STATE_ABSENT"
 
 echo ""
 echo -e "${YELLOW}--- Push to main/master ---${NC}"
@@ -322,6 +353,15 @@ test_case "gh pr merge (toggle=0)"     '{"tool_name":"Bash","tool_input":{"comma
 test_case "gh pr merge (toggle=false)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE=false"
 
 test_case "gh pr merge (toggle=empty)"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE="
+
+# State-file resolution, OFF cases: absent file or a non-truthy value must allow,
+# and an explicit env OFF must override a state file that says ON (env is
+# authoritative). These pin the precedence the hook's resolver implements.
+test_case "state file absent → allow"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_PR_MERGE_STATE_FILE=$STATE_ABSENT"
+
+test_case "state file = 0 → allow"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_PR_MERGE_STATE_FILE=$STATE_OFF"
+
+test_case "env=0 overrides state file = 1 → allow"     '{"tool_name":"Bash","tool_input":{"command":"gh pr merge"}}' 0 "EXCOG_BLOCK_PR_MERGE=0 EXCOG_PR_MERGE_STATE_FILE=$STATE_ON"
 
 echo ""
 echo -e "${YELLOW}--- API calls that are NOT merge (false positive prevention) ---${NC}"

@@ -2,7 +2,7 @@
 
 Threat-detection and dangerous-action-blocking hooks for Claude Code.
 
-All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required.
+All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required. The plugin also ships one command (`/pr-merge-guard`) and one skill (`pr-merge-guard`) for the optional PR-merge guard — see [The PR-merge guard](#the-pr-merge-guard).
 
 ## What this is — and isn't
 
@@ -13,9 +13,10 @@ These hooks are **guardrails against accidents and foot-guns**, not an adversari
 | Hook | Event | Matcher | What it does |
 |---|---|---|---|
 | `detect-prompt-injection.sh` | PostToolUse | `*` | Scan tool outputs (including MCP) for prompt-injection patterns. Tiered: HIGH_CONFIDENCE matches emit an in-session warning + log entry; LOW_CONFIDENCE matches log silently. Allowlist via `PROMPT_INJECTION_ALLOWLIST_GLOB` env var to suppress self-triggering on docs that describe the patterns. |
-| `block-dangerous-git.sh` | PreToolUse | `Bash` | Block push to main/master, force push, `--no-verify`, `--admin`, `git checkout --`, `git stash drop`, `git reset --hard`, `git clean -fd`, `rm -rf` on directories, direct GitHub API merge calls. Blocking `gh pr merge` is **off by default** — opt in via `EXCOG_BLOCK_PR_MERGE` (see Configuration). |
+| `block-dangerous-git.sh` | PreToolUse | `Bash` | Block push to main/master, force push, `--no-verify`, `--admin`, `git checkout --`, `git stash drop`, `git reset --hard`, `git clean -fd`, `rm -rf` on directories, direct GitHub API merge calls. Blocking `gh pr merge` is **off by default** — turn it on with the `/pr-merge-guard` command or the `EXCOG_BLOCK_PR_MERGE` env var (see [The PR-merge guard](#the-pr-merge-guard)). |
 | `block-dc-config.sh` | PreToolUse | `mcp__desktop-commander__*` | Block autonomous modification of Desktop Commander settings (`set_config_value`). |
 | `block-dc-execute.sh` | PreToolUse | `mcp__desktop-commander__*` | Block `start_process` / `execute_command` (bypasses sandbox; use the Bash tool instead). |
+| `announce-pr-merge-guard.sh` | SessionStart | — | One-time, sentinel-gated notice that the optional PR-merge guard exists and is off by default. Fires once per machine (writes `~/.claude/security-toolkit/.pr-merge-guard-introduced`), then stays silent. Pure announcer: never blocks, always exits 0. |
 
 > No separate "detect-dc-injection" hook is needed. Desktop Commander tool outputs are covered by `detect-prompt-injection.sh`'s `*` matcher — the `tool` field in the JSONL log lets you filter for `mcp__desktop-commander__*` if you want DC-only audit.
 
@@ -30,9 +31,10 @@ Tests are co-located with each hook:
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/detect-prompt-injection.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.test.sh
+bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
 ```
 
-Both currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
+All three currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff. The `/pr-merge-guard` command and `pr-merge-guard` skill are prose artifacts (no unit test); the skill was checked structurally (frontmatter parses, `name == dir`, description ≤ 1024 chars, one `## Vasana`) — triggering is not yet measured (see `.claude/rules/skill-verification.md`).
 
 ## Requirements
 
@@ -51,25 +53,46 @@ Example:
 export PROMPT_INJECTION_ALLOWLIST_GLOB='*/docs/security/*:*/PROMPT-INJECTION-AWARENESS*'
 ```
 
-### `EXCOG_BLOCK_PR_MERGE`
+### The PR-merge guard
 
-Set to `1`, `true`, or `yes` to make `block-dangerous-git.sh` block `gh pr merge`.
-**Default (unset or any other value): merging is allowed.**
+The guard blocks Claude from running `gh pr merge` so a human always does the
+merge. It is **OFF by default** — `gh pr merge` already goes through GitHub branch
+protection (required checks/reviews), so blocking it client-side is an *extra*
+"a human merges" preference, not a safety floor. The paths that actually *bypass*
+review — push to main, force push, `--admin`, direct GitHub API merge calls — stay
+unconditionally blocked regardless of this guard.
 
-The default is permissive because `gh pr merge` already goes through GitHub branch
-protection (required checks/reviews), so blocking it client-side mostly added
-friction to an intended workflow — Claude self-merging PRs it's confident in. The
-paths that actually *bypass* review — push to main, force push, `--admin`, direct
-GitHub API merge calls — stay unconditionally blocked regardless of this toggle.
+There are two ways to turn it on; the hook resolves them in this order:
 
-Enable it per-project or per-machine wherever self-merge is not wanted, e.g. in
-`settings.json`:
+**1. The `/pr-merge-guard` command (interactive, immediate).** The simplest path —
+no files or env vars to edit by hand:
+
+```
+/pr-merge-guard          # show current state
+/pr-merge-guard on       # block gh pr merge (a human merges)
+/pr-merge-guard off      # allow gh pr merge (the default)
+```
+
+It writes a per-user state file at `~/.claude/security-toolkit/pr-merge-guard`,
+which the hook re-reads on every git command — so a change takes effect
+**immediately**, no restart. The `pr-merge-guard` **skill** explains the feature
+and can flip it for you when you ask ("stop auto-merging," "lock down main," "can
+you merge PRs?"). A one-time `SessionStart` notice (`announce-pr-merge-guard.sh`)
+tells you the feature exists the first time you start a session after installing.
+
+**2. The `EXCOG_BLOCK_PR_MERGE` env var (declarative, for config-as-code / CI).**
+`1`/`true`/`yes` = on, `0`/`false`/`no` = off. When set to a recognized value it
+is **authoritative and overrides the state file** (so CI or a committed
+`settings.json` can force the guard on or off regardless of the local toggle):
 
 ```json
 {
   "env": { "EXCOG_BLOCK_PR_MERGE": "1" }
 }
 ```
+
+Note that `settings.json` `env` only re-applies at session start, whereas the
+command takes effect immediately — prefer the command for interactive use.
 
 ## Logs
 

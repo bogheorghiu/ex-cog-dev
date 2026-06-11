@@ -1,7 +1,7 @@
 {
   "name": "security-toolkit",
-  "version": "0.3.0",
-  "description": "Threat-detection and dangerous-action-blocking hooks for Claude Code: prompt-injection detection (tiered, with allowlist; covers MCP tool outputs via the * matcher), block dangerous git operations (push to main, force push, reset --hard, --no-verify, etc.), and Desktop Commander input safeguards (block start_process and set_config_value).",
+  "version": "0.4.0",
+  "description": "Threat-detection and dangerous-action-blocking hooks for Claude Code: prompt-injection detection (tiered, with allowlist; covers MCP tool outputs via the * matcher), block dangerous git operations (push to main, force push, reset --hard, --no-verify, etc.), and Desktop Commander input safeguards (block start_process and set_config_value). Also ships an optional, per-user PR-merge guard — block Claude from running `gh pr merge` so a human always merges — that is OFF by default and toggled with the `/pr-merge-guard` command (on/off/status); the `pr-merge-guard` skill explains it and flips it on request.",
   "author": {
     "name": "bogheorghiu"
   }
