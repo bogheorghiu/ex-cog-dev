@@ -3,8 +3,5 @@
   "extraKnownMarketplaces": {
     "ex-cog-dev": { "source": { "source": "directory", "path": "." } }
   },
-  "enabledPlugins": {
-    "security-toolkit@ex-cog-dev": true,
-    "makers-toolkit@ex-cog-dev": true
-  }
+  "enabledPlugins": {}
 }
