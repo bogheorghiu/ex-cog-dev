@@ -1,8 +1,8 @@
 # security-toolkit
 
-Threat-detection and dangerous-action-blocking hooks for Claude Code.
+Threat-detection and dangerous-action-blocking hooks for Claude Code, plus security skills.
 
-All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required. The plugin also ships one command (`/pr-merge-guard`) and one skill (`pr-merge-guard`) for the optional PR-merge guard — see [The PR-merge guard](#the-pr-merge-guard).
+All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required. The plugin also ships one command (`/pr-merge-guard`) and one skill (`pr-merge-guard`) for the optional PR-merge guard — see [The PR-merge guard](#the-pr-merge-guard) — and the [`windows-wsl-security-verification`](#the-windows-wsl-security-verification-skill) skill.
 
 ## What this is — and isn't
 
@@ -20,6 +20,14 @@ These hooks are **guardrails against accidents and foot-guns**, not an adversari
 
 > No separate "detect-dc-injection" hook is needed. Desktop Commander tool outputs are covered by `detect-prompt-injection.sh`'s `*` matcher — the `tool` field in the JSONL log lets you filter for `mcp__desktop-commander__*` if you want DC-only audit.
 
+## The windows-wsl-security-verification skill
+
+The hooks above are the *prevention* layer; this skill is the *detection/recovery* layer — what you reach for when prevention may have already failed. It guides an "am I compromised?" IOC triage of a **Windows + WSL2 dev box** after a supply-chain scare (a poisoned npm/PyPI package, a trojaned VS Code extension, a backdoored dependency that ran as you), then a surface-reduction pass. It fires on "am I hacked / did I get owned", on a named bad package or CVE in your dependency chain, or on an AV detection you're unsure how to read.
+
+What it carries beyond a checklist: the discriminators that keep triage honest in both directions — filename IOCs via `find -name` not content-grep (your own notes match a researched term), VirusTotal *named-family* verdicts over the aggregate "popular threat label" (grayware vs. a trojan wearing the app's name), web-filter blocks read as destination-reputation events rather than infections, and the third-party-AV/Defender active-passive interplay (one full scan, not two).
+
+Honest limits, stated in the skill itself: it is **Windows/WSL-specific** (macOS and bare-Linux siblings are future work, not covered here); it **verifies, it does not harden** (it hands off to a hardening track at the end); and a clean result **raises confidence without proving** a machine clean — a good rootkit's job is to hide.
+
 ## `hooks.json` quoting convention
 
 The hook commands are written as `"\"${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh\""` — JSON-escaped outer double-quotes wrap the shell-level double-quoted path. The inner quotes are intentional: they protect against word-splitting when `$CLAUDE_PLUGIN_ROOT` resolves to a path containing spaces. Don't "simplify" them away.
@@ -34,7 +42,9 @@ bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
 ```
 
-All three currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff. The `/pr-merge-guard` command and `pr-merge-guard` skill are prose artifacts (no unit test); the skill was checked structurally (frontmatter parses, `name == dir`, description ≤ 1024 chars, one `## Vasana`) — triggering is not yet measured (see `.claude/rules/skill-verification.md`).
+All three currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
+
+Skills are prose artifacts, so their *structure* is what gets unit-tested: `skills/test_skill_structure.py` (a twin of the research-toolkit/vasana-system linters, kept logic-identical) asserts every SKILL.md's frontmatter parses, `name == dir`, description ≤ 1024 chars, and exactly one `## Vasana` section — CI runs it on every PR. Triggering (does the skill actually fire on the right turns?) is a separate, tiered measurement — see `.claude/rules/skill-verification.md`.
 
 ## Requirements
 
