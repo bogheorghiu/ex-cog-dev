@@ -64,13 +64,14 @@ jobs:
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
           python3 .github/scripts/test_check_version_bump.py
 
-      - name: Skill-structure linter (vasana-system)
+      - name: Skill-structure linters (vasana-system, security-toolkit)
         run: |
           set -euo pipefail
           # Run with PyYAML so the full parser catches every frontmatter YAML
           # error — including the unquoted `key: ... : ...` variant the stdlib
           # fallback in the linter can't. See vasana-system/skills/test_skill_structure.py.
           uv run --no-project --with pyyaml python vasana-system/skills/test_skill_structure.py
+          uv run --no-project --with pyyaml python security-toolkit/skills/test_skill_structure.py
 
       - name: MCP backend functional tests (via uvx)
         env:
