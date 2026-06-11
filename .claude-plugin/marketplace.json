@@ -23,7 +23,7 @@
     {
       "name": "security-toolkit",
       "source": "./security-toolkit",
-      "description": "Threat-detection and dangerous-action-blocking hooks: tiered prompt-injection detection with allowlist, dangerous git operation blocking (push to main, force push, reset --hard, etc.), and Desktop Commander safeguards"
+      "description": "Threat-detection and dangerous-action-blocking hooks, plus security skills: tiered prompt-injection detection with allowlist, dangerous git operation blocking (push to main, force push, reset --hard, etc.), Desktop Commander safeguards, an optional off-by-default PR-merge guard (a human always merges, toggled via /pr-merge-guard), and a guided \"am I compromised?\" IOC triage + attack-surface reduction for Windows + WSL2 dev boxes after a supply-chain scare (verifies, does not harden; a clean result raises confidence, never proves)"
     }
   ]
 }
