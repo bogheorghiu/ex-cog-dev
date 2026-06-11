@@ -1,0 +1,5 @@
+# no-plugins' .claude/settings.json (empty enabledPlugins) intentionally diverges
+# from main (security-toolkit + makers-toolkit). Keep THIS branch's version during
+# the main->no-plugins auto-sync. Requires: git config merge.ours.driver true (set
+# in the sync workflow).
+/.claude/settings.json merge=ours
