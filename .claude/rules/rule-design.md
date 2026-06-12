@@ -22,6 +22,40 @@ The same heuristics govern rules:
 - **Don't over-tighten.** Avoid splitting into a lattice of micro-rules; if you
   can't articulate why a split earns its cost, it doesn't.
 
+## Split or merge? The tiebreakers
+
+"One job per rule" and "don't over-tighten" pull in opposite directions, and
+the gap between them is exactly where a session picks wrong *with this rule in
+context* (it happened: PR #122 first bundled speculative-structure and
+drive-by-edits under one test-shaped name, `trace-changes-to-the-request`;
+owner review split it — the worked example behind issue #124). When the two
+heuristics conflict, break the tie with these, any one of which is sufficient
+to split:
+
+- **The candidate name names a shared *test*, not a *behavior*.**
+  `trace-changes-to-the-request` named the test both halves run;
+  `no-drive-by-edits` and `no-speculative-structure` each name a behavior. A
+  test-shaped name is the bundling tell.
+- **Each half has its own established prior-art name** (YAGNI; "surgical
+  changes"). Independent lineage is independent evidence they're separate
+  concerns — the anti-reinvention check doubles as a scoping check.
+- **The halves fail independently** — a session can over-build without
+  drive-by editing, and vice versa. Independent failure modes want
+  independent rules.
+
+## When this rule actually loads (firing mechanics — read before authoring)
+
+This rule is path-scoped to `.claude/rules/**`, and the documented trigger is
+the **Read tool on a matching file** (verified against the Claude Code memory
+docs, 2026-06-12). The docs are **silent** on whether Write-*creating* a new
+matching file, Edit, or a Bash `cat` triggers the load — so assume they don't.
+The consequence is the failure mode issue #124 records: rule-*creation* is this
+rule's highest-value moment and may be exactly when it isn't loaded (the PR
+#122 session had only `cat`-ed it). The discipline that closes the gap:
+**before creating or renaming a rule, Read this file with the Read tool** — a
+`cat` puts the text in front of you but, as far as the docs guarantee, not into
+the rule-loading machinery.
+
 ## The rule-specific delta (where rules differ from skills)
 
 - **Triggering is path-scope, not a description.** A rule either declares `paths:`
