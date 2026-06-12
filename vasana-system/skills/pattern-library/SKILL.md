@@ -2,19 +2,19 @@
 name: pattern-library
 description: >-
   What patterns keep showing up across unrelated contexts? - Browse and apply
-  universal behavioral patterns (vasanas) that persist across domains. Patterns
-  are neutral observations, not anti-patterns - groove-deepening is also
-  mastery, framework-dissolution can be premature. Use when (1) architecture
-  feels forced or over-engineered despite following best practices, (2)
-  debugging repeatedly reveals you're looking at the wrong layer or making
-  incorrect assumptions, (3) standard patterns (MVC, CRUD, REST) don't map
-  cleanly to the problem domain, (4) user explicitly requests "fresh
-  perspective", "creative approach", or "think differently about this", (5) you
-  notice habitual design choices constraining possibilities, (6) you observe
-  yourself making repeated similar failed attempts (self-observation), (7)
-  problem spans multiple domains or standard approaches repeatedly fail.
-  Provides frameworks for concrete-to-abstract iteration, interface design,
-  cross-domain analogies, and meta-debugging.
+  behavioral patterns (vasanas) that persist across domains — analysis,
+  argument, research, design, markets, code. Patterns are neutral observations
+  of how behavior self-organizes, NOT anti-patterns: groove-deepening is also
+  mastery, framework-dissolution can be premature. Use when (1) a framing or
+  design feels forced or over-engineered despite standard practice, (2)
+  repeated attempts keep revealing the wrong layer or wrong assumptions, (3)
+  the field's standard approach (the textbook frame; MVC/CRUD/REST) doesn't
+  map cleanly, (4) user requests "fresh perspective", "creative approach", or
+  "think differently", (5) habitual choices are constraining possibilities,
+  (6) you observe yourself making repeated similar failed attempts
+  (self-observation), (7) the problem spans multiple domains or standard
+  approaches repeatedly fail. Provides concrete-to-abstract iteration,
+  cross-domain analogy with a mechanism check, and meta-debugging.
 ---
 
 ## Vasana
@@ -371,5 +371,29 @@ The framework evolves through application. Each use refines the patterns. Trust 
 4. **Multi-Domain Problem**: "This caching problem reminds me of game entity lifespans"
    - **Trigger**: Yes - user already cross-domain scanning
    - **Note**: Support and extend their thinking, don't redirect
+
+### Non-coding scenarios (added with the 2.6.1 de-tilted description; the description now claims these domains, so they must be tested, not assumed)
+
+**Should trigger (4):**
+
+1. **Unresolvable Analysis**: "My analysis keeps landing on the same conclusion no matter what data I feed it — am I stuck in a frame?"
+   - Why: (5)/(6) — habitual frame constraining, repeated similar attempts, self-observation
+2. **Never-Settling Debate**: "Both sides of this policy argument seem right and the dispute never resolves"
+   - Why: (2)/(7) — wrong layer (the dispute may sit on a shared premise), spans domains
+3. **Textbook Frame Fails**: "The standard valuation approach keeps giving answers that make no sense for this company"
+   - Why: (3) — the field's standard frame doesn't map; non-software instance of the same condition
+4. **Repeated Negotiation Failure**: "Every negotiation with this partner fails the same way at the same point"
+   - Why: (6) — repeated similar failed attempts outside code
+
+**Should NOT trigger (4) — the over-fire traps for the broadened description:**
+
+1. **Plain Research Task**: "Summarize the main arguments of this paper"
+   - Why: standard task, no stuckness or frame signal — domain-breadth must not make every analysis turn fire
+2. **Standard Domain Task**: "Run a standard DCF valuation on this stock"
+   - Why: the textbook frame applied where it fits; mentioning a claimed domain (markets) is not a trigger
+3. **First-Pass Disagreement**: "I disagree with this article's conclusion"
+   - Why: ordinary disagreement, first attempt, no recurrence signal
+4. **Factual Lookup**: "What were the causes of the 2008 financial crisis?"
+   - Why: a knowledge question in a claimed domain; no self-observation, no stuck frame
 
 When modifying this skill's frontmatter, verify these scenarios still work.
