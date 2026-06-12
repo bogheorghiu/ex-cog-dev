@@ -26,7 +26,13 @@ from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
 
-# Pattern Library for Creative Coding
+# Pattern Library
+
+Patterns here are domain-general — they recur across epistemology, argumentation, design, markets, social judgment. Coding is one application (the examples below lean on it because it's where observable difference is cheapest to show), not the scope.
+
+## Canonical Location
+
+The live pattern-library is at the user's configured location (default: `ClaudeShared/pattern-library/`). The bundled patterns below are seed data. Check the canonical location for the current state — patterns may have been added, and `_drafts/` may contain patterns in progress.
 
 ## Core Directive
 Truth serves better than comfort. Admit limitations rather than fabricate solutions. Real code solving real problems beats elegant theory.
@@ -40,24 +46,15 @@ Detailed pattern files are in `patterns/` directory. Each contains:
 - Recognition signals
 - Integration with other patterns
 
-**Available Patterns:**
+**Available Patterns:** This skill does not maintain a hand-written catalog — any
+static list goes stale on every library change. Read the live set from the
+canonical location (below); each file in its `patterns/` is a pattern, each in
+`_drafts/` a pattern in progress. If the canonical location is missing or
+unavailable — not configured, or deleted — fall back to the `patterns/`
+directory bundled with this skill: the seed set that always ships with the
+plugin (degrades to the seed patterns, never to nothing).
 
-1. **[Inductive-Deductive Boundary](patterns/inductive-deductive-boundary.md)** - Know where fuzzy matching ends and deterministic execution begins; concepts (inductive) + rules (deductive) = emergent intelligence
-2. **[Rooted Flight](patterns/rooted-flight.md)** - Constraints create possibilities; master fundamentals to transcend
-3. **[Interface as Reality-Creation](patterns/interface-as-reality.md)** - Design interfaces as active translation layers
-4. **[Pattern-Recognition Witnessing](patterns/pattern-recognition-witness.md)** - Watch your debugging process to find blind spots
-5. **[Concrete-Abstract Dance](patterns/concrete-abstract-dance.md)** - Build concrete first, abstract after
-6. **[Cross-Domain Scanning](patterns/cross-domain-scanning.md)** - Find solutions in different domains
-7. **[Framework Dissolution](patterns/framework-dissolution.md)** - Know when to transcend frameworks
-8. **[Groove-Deepening](patterns/groove-deepening.md)** - Repeated patterns become both productive habits and invisible constraints
-9. **[Optimizing-Wrong-Stakeholder](patterns/optimizing-wrong-stakeholder.md)** - Optimize for user value, not task convenience
-10. **[False Consciousness as Behavior](patterns/false-consciousness-as-behavior.md)** - When correction attempts address beliefs but the pattern operates below propositional belief; behavior replaces behavior, not arguments
-11. **[Mechanism, Not Metaphor](patterns/mechanism-not-metaphor.md)** - Cross-domain pattern recognition fails when surface similarity replaces mechanism check; ask what mechanism transfers, not what shape rhymes
-12. **[Description Becomes Embodiment](patterns/description-becomes-embodiment.md)** - When a methodology is described with structural faithfulness, the description performs it; the pharmakon (description-as-instruction) is the mechanism, not a flaw
-13. **[Convergence by Accumulation](patterns/convergence-by-accumulation.md)** - Genuine convergence comes from accumulating evidence until only one reading survives, not from starting with the "best" interpretation
-14. **[Frame Pushback](patterns/frame-pushback.md)** - When a system resists the frame being applied to it, the resistance itself carries information about what frame the system actually needs
-
-**Note**: The canonical pattern-library lives at the user's configured location (default: `ClaudeShared/pattern-library/`). The catalog above reflects patterns at time of plugin release. Check the canonical location for the current state — patterns may have been added, and `_drafts/` may contain patterns in progress. To discover NEW patterns, see `record-pattern` skill. For stuckness detection, see `break-pattern` skill.
+**Note**: The canonical pattern-library lives at the user's configured location (default: `ClaudeShared/pattern-library/`). It is the single source of truth for current pattern state. To discover NEW patterns, see `record-pattern` skill. For stuckness detection, see `break-pattern` skill.
 
 ## Operational Triggers
 
