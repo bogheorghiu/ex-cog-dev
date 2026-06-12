@@ -30,6 +30,13 @@ You can learn the router-judge mechanics in ten minutes. The discipline is what 
 
 5. **Separate numerator from denominator in any firing-rate claim.** "It fired 7 times" is not a rate. The numerator (firings) comes from the log; the denominator (the should-have-fired turns) comes from *your run design* and exists nowhere else. Conflate them and "it fired a lot" silently becomes "it fires reliably" — with no one noticing the denominator was never defined.
 
+6. **Declare the model behind every role — the model is part of the instrument.** A run has distinct roles — designing the turn set, judging (Tier 1), driving the live session (Tier 2), interpreting the result — and each is played by *some* model whether or not you chose it. Left implicit, model identity is a hidden variable in an experiment whose whole point is one variable per arm, and an unrecorded one: results without model-per-role can't be compared across runs or reproduced later. The role-specific calls, each with its failure:
+   - **Judges (Tier 1): pinned and small — for two reasons that aren't cost.** *Comparability:* the judge is the measuring device; swap the judge model between runs and every comparison with a prior number is silently re-baselined — same description, different instrument, delta unattributable. *Floor-information:* the weak judge is the more informative one — a description the floor model routes correctly, a stronger model will too; the reverse tells you nothing.
+   - **Tier-2 session: the deployment model, never silently downgraded.** Firing is a property of model+harness, so a cheaper model's Tier-2 measures *that model's* firing, not your deployment's — downgrading doesn't make the measurement cheaper, it makes it a measurement of something else. A floor arm ("does it still fire on the weakest model that will run it?") is a deliberate, labelled second arm, never a cost substitute.
+   - **Design and interpretation: the strongest model available.** Turn-set quality compounds — one missing trap or one context-contaminated turn invalidates the run regardless of who executes it — and the ship/don't-ship reading at the end is judgment, not tallying.
+
+   No canonical lineup — model names rot as lineups and access shift, so the rule is the *roles and the recording*, not the names. Write model-per-role into the run design before running, and report it with the results.
+
 If you can articulate why one of these doesn't apply to the experiment in front of you, set it aside on those grounds. If you're setting it aside because it's inconvenient, that's the signal it's load-bearing here.
 
 ---
@@ -40,7 +47,7 @@ The split is not "cheap version / thorough version of the same test." The tiers 
 
 ### Tier 1 — Proxy experiment (cheap, runs anywhere, n>0 in minutes)
 
-Blind LLM "router" judges decide which skill, if any, they would auto-invoke — given a realistic catalog (with distractors) and a batch of user turns. The **only** thing that differs between arms is the variable under test (e.g. OLD vs NEW description); the skill name and everything else stay identical, so any delta is attributable to the change. Use independent judges per arm (three is enough to catch a split; one judge can't tell you whether a fire was robust or a coin-flip). The judges must be *blind* — they don't know an A/B is happening or which arm they're in — or you've measured the experimenter, not the description.
+Blind LLM "router" judges decide which skill, if any, they would auto-invoke — given a realistic catalog (with distractors) and a batch of user turns. The **only** thing that differs between arms is the variable under test (e.g. OLD vs NEW description); the skill name and everything else stay identical, so any delta is attributable to the change. Use independent judges per arm (three is enough to catch a split; one judge can't tell you whether a fire was robust or a coin-flip), on a **pinned judge model** — same model across arms and across runs, recorded with the result (discipline #6). The judges must be *blind* — they don't know an A/B is happening or which arm they're in — or you've measured the experimenter, not the description.
 
 Run it in **two rounds**:
 
@@ -58,7 +65,7 @@ See `references/router-judge-template.md` for the parameterized prompt; `referen
 
 The only tier that can measure firing under genuine attention scarcity. Tier 1 *forces* a router to read every description; Tier 2 lets the live model skim, ignore, and choose — the actual condition a description ships into.
 
-**Design the run (per skill).** Build a turn set with a known denominator:
+**Design the run (per skill).** Declare the session model first — it must be the model the skill actually deploys on, with any floor arm labelled as such (discipline #6). Then build a turn set with a known denominator:
 - **Clear positives** (lexical cue present) — they fire reliably; they prove the pipeline, not the wording.
 - **Oblique positives** — the skill's *symptom*, no lexical cue. Where a description earns its keep.
 - **Over-fire traps** — adjacent-but-wrong turns (a sibling skill's job); false-fires here are the precision cost.
@@ -89,9 +96,9 @@ The asymmetry is the whole point, so read by it: **Tier 1 can veto a rewrite but
 
 ## When it's working
 
-Every reported number is paired with the question it answers *and* the question it leaves open. Arms differ in exactly one variable. Round 2 exists, and the over-fire traps are genuinely adjacent. Firing-rate claims carry their denominator. A tie on easy turns is reported as a warmed-up pipeline, not a finding.
+Every reported number is paired with the question it answers *and* the question it leaves open. Arms differ in exactly one variable. Round 2 exists, and the over-fire traps are genuinely adjacent. Firing-rate claims carry their denominator. Every result records which model played which role. A tie on easy turns is reported as a warmed-up pipeline, not a finding.
 
-When it's **not** working: a single recall number is reported as "the description works"; the arms quietly differ in more than one thing; the easy-round tie is the headline; a firing count is dressed up as a firing rate; or — the subtlest — the proxy's result is offered as the answer to the attention question it cannot, by construction, address.
+When it's **not** working: a single recall number is reported as "the description works"; the arms quietly differ in more than one thing; the easy-round tie is the headline; a firing count is dressed up as a firing rate; the Tier-2 session quietly ran on a cheaper model than the skill deploys on; or — the subtlest — the proxy's result is offered as the answer to the attention question it cannot, by construction, address.
 
 ---
 
