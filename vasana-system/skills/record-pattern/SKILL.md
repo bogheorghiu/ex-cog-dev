@@ -59,9 +59,10 @@ Before describing the pattern, apply this guardrail:
    - **Genuine mechanism**: shared math, shared causal structure, shared constraint (e.g., Fourier uncertainty applies to both quantum mechanics and signal processing — same math)
    - **Surface resemblance**: shared vocabulary, shared vibe, shared shape (e.g., "quantum entanglement is like team bonding" — no shared mechanism)
 3. **If surface only**: the cross-domain claim fails. The pattern may still be valid within a single domain. Record it as such — don't inflate.
-4. **If genuine mechanism**: proceed. The pattern has cross-domain predictive power.
+4. **Counter-check — don't over-demand causation.** Before rejecting, ask: am I about to reject this *only* because no causal mechanism connects the domains — when the pattern never claimed one? A non-causal correspondence (a shared constraint, a structural isomorphism, a sign-relation like indicator→outcome) is a legitimate transfer-type; "it's just correlation" is not a rebuttal of a claim that only ever asserted correspondence. This is the opposite failure mode of step 2: that one stops *over-crediting* (metaphor inflated into mechanism), this one stops *over-demanding* (real structure dismissed for lacking a causal arrow it never needed). Admit only what passes between both.
+5. **If genuine mechanism (or genuine non-causal structure)**: proceed. The pattern has cross-domain predictive power.
 
-Reference: `mechanism-not-metaphor` pattern in the canonical library.
+Reference: `mechanism-not-metaphor` pattern in the canonical library; the over-demand counter-check is its paired wall (`sign-not-cause`, currently in the canonical library's `_drafts/`).
 
 ### Step 4: Describe the Pattern
 
