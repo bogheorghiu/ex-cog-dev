@@ -1,20 +1,20 @@
 ---
 name: pattern-library
 description: >-
-  What patterns keep showing up across unrelated contexts? - Browse and apply
-  behavioral patterns (vasanas) that persist across domains — analysis,
-  argument, research, design, markets, code. Patterns are neutral observations
-  of how behavior self-organizes, NOT anti-patterns: groove-deepening is also
-  mastery, framework-dissolution can be premature. Use when (1) a framing or
-  design feels forced or over-engineered despite standard practice, (2)
-  repeated attempts keep revealing the wrong layer or wrong assumptions, (3)
-  the field's standard approach (the textbook frame; MVC/CRUD/REST) doesn't
-  map cleanly, (4) user requests "fresh perspective", "creative approach", or
-  "think differently", (5) habitual choices are constraining possibilities,
-  (6) you observe yourself making repeated similar failed attempts
-  (self-observation), (7) the problem spans multiple domains or standard
-  approaches repeatedly fail. Provides concrete-to-abstract iteration,
-  cross-domain analogy with a mechanism check, and meta-debugging.
+  What patterns keep showing up across unrelated contexts? - Consult and apply
+  the pattern library: behavioral patterns (vasanas) that persist across
+  domains — analysis, argument, research, design, markets, code. Patterns are
+  neutral observations of how behavior self-organizes, NOT anti-patterns:
+  groove-deepening is also mastery, framework-dissolution can be premature.
+  Use when (1) asking what known pattern or mechanism fits a situation, or to
+  browse/apply the library, (2) a framing or design feels forced or
+  over-engineered despite standard practice — the frame is wrong before any
+  retry loop, (3) the field's textbook approach doesn't map cleanly to the
+  problem, (4) a problem resonates with another domain ("this is like X in
+  another field") and needs the mechanism check first, (5) stuckness was just
+  named and an alternative is needed — the library is the exit ramp.
+  Boundaries: active stuckness loops fire break-pattern (which routes here);
+  verifying a newly observed pattern across domains is find-similar.
 ---
 
 ## Vasana
@@ -315,85 +315,44 @@ The framework evolves through application. Each use refines the patterns. Trust 
 
 ## Test Scenarios (Triggering Verification)
 
-**Ratio**: 5 trigger : 6 non-trigger : 4 edge (following QA specialist recommendation)
+**Catalog-aware (rewritten after the 2026-06-12 live ceiling run, issue #128):** the
+earlier scenario set treated stuckness symptoms as this skill's triggers; live
+testing showed those turns route to `break-pattern` — correctly, since stuckness
+loops are its job ("need fresh perspective" is verbatim in its trigger list). These
+scenarios test the boundary the description now draws, so expectations name which
+catalog skill should win, not just fire/no-fire.
 
-### Should Trigger (5 scenarios)
+### Should fire pattern-library (5)
 
-1. **Forced Architecture**: "Something feels off about this design, it's over-engineered"
-   - Why: Matches (1) - architecture feels forced
+1. **Library consult, non-coding**: "Is there a known pattern for why adding more metrics keeps making our decisions worse?"
+   - Why: (1) — asks what known pattern fits
+2. **Cross-domain resonance**: "This pricing problem feels like predator-prey dynamics — real parallel, or am I reaching?"
+   - Why: (4) — analogy offered, mechanism check needed
+3. **Forced frame, pre-loop, non-coding**: "We followed the standard playbook and the strategy still feels forced and overcomplicated."
+   - Why: (2) — frame wrong before any retry loop (break-pattern excludes first attempts)
+4. **Explicit browse**: "What patterns from the library apply to repeated negotiation failures?"
+   - Why: (1) — direct library request
+5. **Coding canary**: "Something feels off about this design — over-engineered despite following best practices."
+   - Why: (2) — the regression check that the boundary redesign didn't lose the coding case
 
-2. **Wrong Layer**: "I keep finding issues in the tests, not the code I'm debugging"
-   - Why: Matches (2) - debugging at wrong layer, pattern-recognition-witness
+### Sibling-expected (3) — a different vasana-system skill should win; pattern-library capturing these is the over-fire signal
 
-3. **Standard Doesn't Fit**: "REST doesn't map well to this real-time bidirectional flow"
-   - Why: Matches (3) - standard patterns don't fit
+1. "I keep going in circles on this bug — I've tried everything." → `break-pattern` (active stuckness loop)
+2. "I noticed the same structure in my code reviews and my hiring decisions — where else might it appear?" → `find-similar` (verifying a newly observed pattern)
+3. "I've decided to use MongoDB for this — sanity-check me." → `check-assumptions` (decision challenge)
 
-4. **Explicit Request**: "I need a fresh perspective on this architecture"
-   - Why: Matches (4) - explicit request for different thinking
+### Should fire nothing (4)
 
-5. **Habitual Choice**: "I always use the same folder structure but it doesn't work here"
-   - Why: Matches (5) - habitual design choices constraining
+1. "Summarize the main arguments of this paper." — standard task, no pattern signal
+2. "Run a standard DCF valuation on this stock." — textbook frame applied where it fits; a claimed domain (markets) is not a trigger
+3. "What were the causes of the 2008 financial crisis?" — factual lookup in a claimed domain
+4. "Refactor this function to be more readable." — routine work, no forced-frame signal
 
-### Should NOT Trigger (6 scenarios)
+### Edge (2)
 
-1. **Standard CRUD**: "Create a basic REST API for user management"
-   - Why: Standard task, not novel, no pattern-recognition needed
-
-2. **Simple Debugging**: "Fix this TypeError on line 45"
-   - Why: Standard debugging with clear error, not meta-cognitive
-
-3. **Clear Requirement**: "Add pagination to the user list endpoint"
-   - Why: Straightforward feature, well-solved pattern
-
-4. **First Attempt**: "Let me try using Redis for caching"
-   - Why: First attempt, normal exploration
-
-5. **Normal Exploration**: "I'm exploring different database options"
-   - Why: Normal decision-making, exploring is not being stuck
-
-6. **Routine Refactor**: "Refactor this function to be more readable"
-   - Why: Standard refactoring, not forced architecture
-
-### Edge Cases (4 scenarios)
-
-1. **Ambiguous Criticism**: "This isn't working the way I expected"
-   - **Trigger IF**: Accompanied by other signals (repeated attempts, wrong layer)
-   - **No trigger IF**: Standalone observation, first discovery
-
-2. **Framework Criticism**: "This library doesn't support my use case"
-   - **Trigger IF**: After multiple workaround attempts
-   - **No trigger IF**: Legitimate limitation found early
-
-3. **Gut Check**: "Something feels off about this design"
-   - **Trigger**: Yes - matches (1) - architecture feels forced
-   - **Note**: Subtle signal, but "feels off" = forced architecture
-
-4. **Multi-Domain Problem**: "This caching problem reminds me of game entity lifespans"
-   - **Trigger**: Yes - user already cross-domain scanning
-   - **Note**: Support and extend their thinking, don't redirect
-
-### Non-coding scenarios (added with the 2.6.1 de-tilted description; the description now claims these domains, so they must be tested, not assumed)
-
-**Should trigger (4):**
-
-1. **Unresolvable Analysis**: "My analysis keeps landing on the same conclusion no matter what data I feed it — am I stuck in a frame?"
-   - Why: (5)/(6) — habitual frame constraining, repeated similar attempts, self-observation
-2. **Never-Settling Debate**: "Both sides of this policy argument seem right and the dispute never resolves"
-   - Why: (2)/(7) — wrong layer (the dispute may sit on a shared premise), spans domains
-3. **Textbook Frame Fails**: "The standard valuation approach keeps giving answers that make no sense for this company"
-   - Why: (3) — the field's standard frame doesn't map; non-software instance of the same condition
-4. **Repeated Negotiation Failure**: "Every negotiation with this partner fails the same way at the same point"
-   - Why: (6) — repeated similar failed attempts outside code
-
-**Should NOT trigger (4) — the over-fire traps for the broadened description:**
-
-1. **Plain Research Task**: "Summarize the main arguments of this paper"
-   - Why: standard task, no stuckness or frame signal — domain-breadth must not make every analysis turn fire
-2. **Standard Domain Task**: "Run a standard DCF valuation on this stock"
-   - Why: the textbook frame applied where it fits; mentioning a claimed domain (markets) is not a trigger
-3. **First-Pass Disagreement**: "I disagree with this article's conclusion"
-   - Why: ordinary disagreement, first attempt, no recurrence signal
-4. **Factual Lookup**: "What were the causes of the 2008 financial crisis?"
-   - Why: a knowledge question in a claimed domain; no self-observation, no stuck frame
+1. "I need a fresh perspective on this architecture."
+   - Expected: `break-pattern` (its verbatim trigger). Pattern-library co-firing as the alternative-supplier is acceptable; pattern-library *displacing* break-pattern is not.
+2. "This isn't working the way I expected."
+   - First occurrence: nothing (or `check-assumptions` if a decision is implied). With recurrence signals: `break-pattern`.
 
 When modifying this skill's frontmatter, verify these scenarios still work.
