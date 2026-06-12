@@ -7,9 +7,9 @@ description: >-
   neutral observations of how behavior self-organizes, NOT anti-patterns:
   groove-deepening is also mastery, framework-dissolution can be premature.
   Use when (1) asking what known pattern or mechanism fits a situation, or to
-  browse/apply the library, (2) a framing or design feels forced or
-  over-engineered despite standard practice — the frame is wrong before any
-  retry loop, (3) the field's textbook approach doesn't map cleanly to the
+  browse/apply the library, (2) a framing, design, or architecture feels forced
+  or over-engineered despite best practices — wrong frame before any retry
+  loop, (3) the field's textbook approach doesn't map cleanly to the
   problem, (4) a problem resonates with another domain ("this is like X in
   another field") and needs the mechanism check first, (5) stuckness was just
   named and an alternative is needed — the library is the exit ramp.
