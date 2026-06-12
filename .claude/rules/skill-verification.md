@@ -68,3 +68,10 @@ This is the **interim** verification protocol. The publish-readiness bar (#53)
 will formalize it into per-artifact criteria + automation, and the
 testing-taxonomy (#52) refines the tiers. Written to be **extended, not
 rewritten,** when those land.
+
+**Before designing a new Tier-2 run, read issue #72's procedure harvest.** The
+campaign-level procedure as actually executed (two-batch ceiling-gate structure,
+pre-registered decision rules, the exact dev recipe, the proxy-blind
+lexical-anchor regression class) lives in issue #72's comments pending
+formalization into the `skill-activation-testing` skill — valuable now, not yet
+in any shipped artifact, and this pointer is what keeps it findable until it is.
