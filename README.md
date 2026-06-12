@@ -1,5 +1,11 @@
 # ex-cog — externalized cognition
 
+Free plugins for Claude Cowork and Claude Code: investigation and verification
+skills for research of any kind, a memory that recognizes recurring patterns,
+build discipline for making things with AI, and guardrails that block dangerous
+commands. Built for knowledge work — most of it needs no code at all — and
+honest about what each tool does and doesn't do.
+
 AI doesn't think *for* you. At its best, it thinks *with* you. You hand it a
 half-formed question, a mess of a document, a thing you can't quite see the shape
 of — and it hands back something you can work with. That's *externalized cognition*:
@@ -25,8 +31,8 @@ left unsaid. Free to install, local, yours to change.
 
 ## Install
 
-**Claude Cowork** — add the marketplace `bogheorghiu/ex-cog-dev` via Customize →
-Browse plugins, then install the plugins you want.
+**Claude Cowork** — no terminal needed: add the marketplace `bogheorghiu/ex-cog-dev`
+via Customize → Browse plugins, then install the plugins you want.
 
 **Claude Code**
 
@@ -46,9 +52,12 @@ Browse plugins, then install the plugins you want.
 
 ### research-toolkit
 
-`v3.3.2` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
+`v3.3.3` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
 before you trust it.
 
+- **Not sure where to begin?** `research` routes the question for you — by domain,
+  by how deep you need to go, by what sources exist — so you don't have to know
+  the method names to use the methods.
 - **Map power.** `cui-bono` asks who gains and who loses, through six lenses —
   weapons, labor, environment, governance, supply chains, geopolitics.
   `deep-investigation-protocol` runs staged source sweeps for when the marketing and
@@ -59,7 +68,9 @@ before you trust it.
   military or defense ties against a red line you set (kept on your machine,
   never committed).
 - **Break your own case.** `dialectic-spiral` builds the strongest opposite of your
-  conclusion and runs it at the evidence, four rounds minimum. `text-deconstruction`
+  conclusion and runs it at the evidence, four rounds minimum — with a bench of
+  adversarial agents (a falsifier, a critic, a spiral that holds contradictions
+  open instead of resolving them) to do the arguing. `text-deconstruction`
   finds where a text contradicts itself on its own terms. `frame-rotation` rephrases
   the problem through another language's grammar to knock you out of English
   defaults. `iterative-verification` stops when the evidence clears the bar, not when
@@ -84,6 +95,13 @@ each other. Write it down. Test whether it's real.
   checks whether a saved pattern actually fires and changes anything. `pattern-library`
   browses the collection. `break-pattern` and `check-assumptions` turn the same
   scrutiny back on your own work.
+- **Beyond the loop.** `iterative-loop-engine` asks "am I *actually* done, or did I
+  just stop?" and keeps work cycling until the completion criteria — not fatigue —
+  say done. `self-improving-investigation` runs research through blind worker agents
+  and dialectic synthesis when the risk of confirming your own bias is high.
+  `inquiry-to-system` notices when a casual question is building toward something
+  larger and turns the conversation into structured output. `temporal-shaping` designs
+  the time-shape of a process — phases, pacing, why something feels off.
 - **Two MCP servers, told straight.** `relational-memory` works: it saves facts, task
   state, and core principles to disk in layered storage, recalls them by search, and
   summarizes old entries as they pile up. `edge-graph` records relations as weighted
@@ -112,10 +130,10 @@ configure, just skills that hold a line.
 
 ### security-toolkit
 
-`v0.4.0` · A basic draft, not a security product — plain bash hooks that pattern-match
-on commands and tool output. No external tools, no sandbox; anything that doesn't match
-a pattern sails through. Useful friction against obvious mistakes, not something to rely
-on for real security.
+`v0.5.0` · A basic draft, not a security product — plain bash hooks that pattern-match
+on commands and tool output, plus one guided-verification skill. No external tools, no
+sandbox; anything that doesn't match a pattern sails through. Useful friction against
+obvious mistakes, not something to rely on for real security.
 
 - **Catches prompt-injection** in any tool output, MCP results included — loud warning
   for the blatant stuff, quiet log for the rest, with a path allowlist. It flags and
@@ -129,6 +147,11 @@ on for real security.
   "lock down main").
 - **Blocks Desktop Commander's** process-spawning and config-setting tools, the ones
   that slip past Claude Code's permission boundaries.
+- **Answers "am I compromised?"** after a supply-chain scare — a poisoned npm or PyPI
+  package, a trojaned extension — with a guided check of a Windows + WSL2 machine
+  (`windows-wsl-security-verification`): known-bad package versions, persistence,
+  planted SSH keys, shell-rc injection, the Windows AV pass. It verifies, it doesn't
+  harden — and a clean result raises confidence, never proves you're clean.
 
 ## Architecture
 
