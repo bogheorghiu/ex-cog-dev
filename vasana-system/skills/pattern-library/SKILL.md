@@ -26,7 +26,9 @@ from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
 
-# Pattern Library for Creative Coding
+# Pattern Library
+
+Patterns here are domain-general — they recur across epistemology, argumentation, design, markets, social judgment. Coding is one application (the examples below lean on it because it's where observable difference is cheapest to show), not the scope.
 
 ## Canonical Location
 
