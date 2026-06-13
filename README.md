@@ -52,7 +52,7 @@ via Customize → Browse plugins, then install the plugins you want.
 
 ### research-toolkit
 
-`v3.3.3` · Verify a claim. Trace who benefits. Turn your own conclusion inside out
+Verify a claim. Trace who benefits. Turn your own conclusion inside out
 before you trust it.
 
 - **Not sure where to begin?** `research` routes the question for you — by domain,
@@ -87,7 +87,7 @@ before you trust it.
 
 ### vasana-system
 
-`v2.5.3` · Catch the same behavior surfacing in places that have nothing to do with
+Catch the same behavior surfacing in places that have nothing to do with
 each other. Write it down. Test whether it's real.
 
 - **The loop.** `vasana` flags a candidate mid-work. `record-pattern` captures it with
@@ -115,7 +115,7 @@ each other. Write it down. Test whether it's real.
 
 ### makers-toolkit
 
-`v0.8.2` · Discipline for building with AI. Methodology, not machinery — nothing to
+Discipline for building with AI. Methodology, not machinery — nothing to
 configure, just skills that hold a line.
 
 - `system-pilot` — six steps: define what "done" means, split spec from orchestration
@@ -130,7 +130,7 @@ configure, just skills that hold a line.
 
 ### security-toolkit
 
-`v0.5.0` · A basic draft, not a security product — plain bash hooks that pattern-match
+A basic draft, not a security product — plain bash hooks that pattern-match
 on commands and tool output, plus one guided-verification skill. No external tools, no
 sandbox; anything that doesn't match a pattern sails through. Useful friction against
 obvious mistakes, not something to rely on for real security.
