@@ -47,6 +47,12 @@ cannot see.**
   needs a live session to count, not a new mechanism. A worked live run (rates +
   the proxy-vs-live gap) is recorded in issue #53 (kept there rather than shipped
   — the specific run results are dev-facing).
+- **The Tier-2 instrument matches Anthropic's own practice.** The Claude Code
+  team logs skill usage through `PreToolUse` hooks to find skills "undertriggering
+  compared to our expectations" — the same mechanism as `count-skill-firings.sh`.
+  Source, worth a full read for description/trigger-keyword practice too:
+  <https://claude.com/blog/lessons-from-building-claude-code-how-we-use-skills>
+  (the item-by-item integration map for this repo is issue #134).
 
 ## Mistakes this protocol exists to prevent
 
