@@ -1,0 +1,69 @@
+name: Sync test-environment branches with main
+
+# Test-environment branches are each `main` + ONE commit that overwrites
+# .claude/settings.json to enable a specific plugin set for sessions started on
+# that branch:
+#   all-plugins -> all four plugins   (firing-test substrate; #67 / #72)
+#   no-plugins  -> none enabled       (control: /plugin install one skill in isolation)
+# main itself is lean (security-toolkit + makers-toolkit; loaded every session).
+#
+# Sync model: REBASE, not merge. Each env branch is rebased onto main whenever main
+# advances, so it stays exactly ONE commit ahead of main with no merge-commit pileup.
+# (A merge-based sync added one merge commit per main push, which read as a misleading
+# "N commits ahead" even though the only real difference is that single settings.json
+# file.) The env branch's own settings.json is preserved across the rebase by a
+# `theirs` merge driver scoped to that one file. Why `theirs` and not `ours`: under a
+# rebase HEAD is main and the env branch's commit is replayed on top, so the env
+# version is "theirs" -- the inverse of the `ours` driver a merge-based sync uses. The
+# path->driver mapping is injected via .git/info/attributes (not a committed
+# .gitattributes) so it is always in effect regardless of which tree is checked out
+# mid-rebase, and so the env branch needs no second commit. Because rebase rewrites the
+# env branch's history, the push is --force-with-lease. These branches are CI-owned;
+# nothing should be based on them locally (a local checkout would diverge on every
+# sync). Runs on every update to main (every merged PR), plus any non-PR advance, so an
+# env branch can't silently drift.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-test-envs
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [all-plugins, no-plugins]
+    steps:
+      - name: Check out ${{ matrix.branch }} (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+      - name: Rebase ${{ matrix.branch }} onto main
+        env:
+          TARGET: ${{ matrix.branch }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Preserve THIS branch's .claude/settings.json across the rebase. Under
+          # rebase, HEAD is main, so the env branch's replayed commit is "theirs" --
+          # the theirs driver keeps it. Scope the mapping via .git/info/attributes so
+          # it is always in effect mid-rebase and needs no committed .gitattributes.
+          git config merge.theirs.driver 'cp -f -- "%B" "%A"'
+          printf '/.claude/settings.json merge=theirs\n' > .git/info/attributes
+          git fetch origin main
+          if git rebase --merge origin/main; then
+            git push --force-with-lease origin "HEAD:$TARGET"
+          else
+            echo "::error::Rebase conflict syncing main into $TARGET on a file OTHER than .claude/settings.json (that one is handled by the theirs driver). Reconcile by hand." >&2
+            git rebase --abort
+            exit 1
+          fi
