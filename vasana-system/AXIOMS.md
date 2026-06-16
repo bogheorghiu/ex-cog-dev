@@ -11,16 +11,15 @@
 
 Vasana means a **pattern of conditioning** in the **behavior of the world** — a regularity in how
 phenomena at large condition one another, not merely how an individual acts. It is that regularity we
-care about, not the things being conditioned; and the same pattern recurs across unrelated domains,
-situations, and scales. Recurrence, relation, and distinction are *aspects* of one pattern — different
-angles, none more basic than another. Read every axiom relationally; together they are what the word means.
+probe, not the things being conditioned; and the same one recurs across unrelated domains, situations, and scales. Recurrence, relation, and
+distinction are *aspects* of one pattern — different angles on it, none more basic than another. Read every axiom relationally; together they are what the word means.
 
 ## Constitutive — what it is, and how it is known
 
 **A — Recurrence is primitive.** The recurrence is not a property of some underlying thing; it *is*
 what there is — and it is self-reinforcing: the pattern's recurrence deepens the groove that makes it
 recur. Its most literal form is *oscillation* — periodic recurrence; in physics or music, the
-mechanics of interaction between oscillations. One regularity, specified.
+mechanics of interaction between oscillations — the same regularity, differently specified.
 
 **A′ — Consciousness introduces novelty.** Recurrence on its own only deepens — grooves entrench.
 Conscious engagement is where novelty enters: the move that can break a groove. Persistence (A) and
