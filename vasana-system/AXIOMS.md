@@ -1,38 +1,38 @@
 # Vasana — Axioms
 
 > **Living document — keep rewriting.** These axioms are provisional by design and meant to be
-> continually revised, never frozen. That revisability *is* the ethos: a vasana does not survive its
+> continually revised, never frozen. That revisability *is* the ethos: a pattern does not survive its
 > own recognition unchanged (axiom **C** / **A′**, applied to the axioms themselves). When a better
 > articulation arrives, improve them.
 >
-> **The whole corpus below is the definition of "vasana"** — there is no separate one-line definition.
+> **The whole corpus below is the definition** — there is no separate one-liner.
 
 ## Reading key
 
-A vasana is a **pattern of conditioning** in the **behavior of the world** — a regularity in how
+Vasana means a **pattern of conditioning** in the **behavior of the world** — a regularity in how
 phenomena at large condition one another, not merely how an individual acts. It is that regularity we
 care about, not the things being conditioned; and the same pattern recurs across unrelated domains,
-situations, and scales. Recurrence, relation, and distinction are *aspects* of one vasana — different angles,
-none more basic than another. Read every axiom relationally; together they are what a vasana *is*.
+situations, and scales. Recurrence, relation, and distinction are *aspects* of one pattern — different
+angles, none more basic than another. Read every axiom relationally; together they are what the word means.
 
-## Constitutive — what a vasana is, and how it is known
+## Constitutive — what it is, and how it is known
 
 **A — Recurrence is primitive.** The recurrence is not a property of some underlying thing; it *is*
-what there is — and it is self-reinforcing: a vasana's recurrence deepens the groove that makes it
+what there is — and it is self-reinforcing: the pattern's recurrence deepens the groove that makes it
 recur. Its most literal form is *oscillation* — periodic recurrence; in physics or music, the
 mechanics of interaction between oscillations. One regularity, specified.
 
 **A′ — Consciousness introduces novelty.** Recurrence on its own only deepens — grooves entrench.
 Conscious engagement is where novelty enters: the move that can break a groove. Persistence (A) and
-novelty (A′) are a vasana's two poles. (A vasana not surviving its own recognition unchanged is this
+novelty (A′) are its two poles. (A pattern not surviving its own recognition unchanged is this
 same pole at the scale of a single act of knowing — see C. Whether the novelty is itself lawful is
 left open.)
 
-**B — Expression specifies, not abstracts.** A vasana and its instances are one regularity at
-different resolutions: a concrete case is the vasana *specified*, not an *example of* it. This is also
+**B — Expression specifies, not abstracts.** A pattern and its instances are one regularity at
+different resolutions: a concrete case is the pattern *specified*, not an *example of* it. This is also
 how the axioms here relate to their own instances — and to each other.
 
-**C — Recognition is not separate from its object.** A system recognizes a vasana by enacting it;
+**C — Recognition is not separate from its object.** A system recognizes a pattern by enacting it;
 knowing is not what a system *contains* but what it *performs*. So recall reconstructs rather than
 replays — *retrieval is generation* — and the knower and the known are one move: there is no
 recognition from outside the relation.
