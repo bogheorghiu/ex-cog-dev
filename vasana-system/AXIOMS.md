@@ -21,11 +21,12 @@ what there is — and it is self-reinforcing: the pattern's recurrence deepens t
 recur. Its most literal form is *oscillation* — periodic recurrence; in physics or music, the
 mechanics of interaction between oscillations — the same regularity, differently specified.
 
-**A′ — Consciousness introduces novelty.** Recurrence on its own only deepens — grooves entrench.
-Conscious engagement is where novelty enters: the move that can break a groove. Persistence (A) and
-novelty (A′) are its two poles. (A pattern not surviving its own recognition unchanged is this
-same pole at the scale of a single act of knowing — see C. Whether the novelty is itself lawful is
-left open.)
+**A′ — Consciousness introduces novelty.** Yet recurrence does not only deepen a groove — run long
+enough, it also wears one out; and novelty, entering paradigmatically with conscious engagement, both
+breaks old grooves and seeds new ones. Persistence (A) and novelty (A′) are not separable forces but
+two faces of one movement — every recurrence also a spending, every break also a beginning. (At the
+scale of a single act of knowing, this is a pattern not surviving its own recognition unchanged — it is changed, not extinguished; see
+C. Whether novelty is itself lawful is left open.)
 
 **B — Expression specifies, not abstracts.** A pattern and its instances are one regularity at
 different resolutions: a concrete case is the pattern *specified*, not an *example of* it. This is also
