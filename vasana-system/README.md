@@ -90,7 +90,7 @@ Before relying on a pattern: `test-pattern [name]` (skill — invoke directly)
 Key concepts woven through:
 - **Repetition as primitive** — patterns don't exist until they repeat
 - **Retrieval is generation** — recalling a pattern regenerates it
-- **Consciousness disrupts predictability** — repetition is default; genuine engagement introduces discontinuity
+- **Agency disrupts predictability** — repetition is default; genuine engagement introduces discontinuity
 - **Patterns are neutral** — groove-deepening is also mastery; framework-dissolution can be premature
 
 ## Migration from v1.x
