@@ -21,8 +21,9 @@ what there is — and it is self-reinforcing: the pattern's recurrence deepens t
 recur. Its most literal form is *oscillation* — periodic recurrence; in physics or music, the
 mechanics of interaction between oscillations — the same regularity, differently specified.
 
-**A′ — Consciousness introduces novelty.** Yet recurrence does not only deepen a groove — run long
-enough, it also wears one out; and novelty, entering paradigmatically with conscious engagement, both
+**A′ — Agency introduces novelty.** Yet recurrence does not only deepen a groove — run long
+enough, it also wears one out; and the pattern does not only rekindle the old, it also reaches for the
+new. That reaching — the pattern's own active aspect, not a faculty acting on it from outside — both
 breaks old grooves and seeds new ones. Persistence (A) and novelty (A′) are not separable forces but
 two faces of one movement — every recurrence also a spending, every break also a beginning. (At the
 scale of a single act of knowing, this is a pattern not surviving its own recognition unchanged — it is changed, not extinguished; see
@@ -50,6 +51,6 @@ the regularities and bounds them — the event horizon of knowing. It *performs*
 ---
 
 These axioms formalize the plugin's three founding **Key Concepts** (*repetition as primitive* → **A**;
-*retrieval is generation* → under **C**; *consciousness disrupts predictability* → **A′**). Provenance,
+*retrieval is generation* → under **C**; *agency disrupts predictability* → **A′**). Provenance,
 prior-art, and design rationale are kept out of this file by design — the axioms are meant to stand on
 their own.
