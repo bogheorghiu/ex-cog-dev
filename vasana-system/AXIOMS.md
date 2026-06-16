@@ -11,9 +11,11 @@
 
 A vasana is a regularity in the **behavior of the world** — in how phenomena at large unfold, not
 merely how an individual acts. It is the conditioning that shapes that unfolding, across unrelated
-domains, situations, and scales. Recurrence, relation, and distinction are *aspects* of one vasana —
-different angles, none more basic than another. Read every axiom relationally; together they are what
-a vasana *is*.
+domains, situations, and scales. To name a vasana is to assert a **presumed meaningful correlation** —
+a regularity worth tracking — not a claim about the *cause* or *essence* of what recurs. (Holding that
+line — correlation, not causation — is the patterns' job, e.g. `mechanism-not-metaphor`, not the
+reading key's.) Recurrence, relation, and distinction are *aspects* of one vasana — different angles,
+none more basic than another. Read every axiom relationally; together they are what a vasana *is*.
 
 ## Constitutive — what a vasana is, and how it is known
 
