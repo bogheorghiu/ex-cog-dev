@@ -53,4 +53,8 @@ the regularities and bounds them — the event horizon of knowing. It *performs*
 These axioms formalize the plugin's three founding **Key Concepts** (*repetition as primitive* → **A**;
 *retrieval is generation* → under **C**; *agency disrupts predictability* → **A′**). Provenance,
 prior-art, and design rationale are kept out of this file by design — the axioms are meant to stand on
-their own.
+their own. Yet almost none of the substance is original: most of it was thought first by others — some
+across millennia, some contemporaries still at work. Names are withheld only because any short list
+would mislead by omission, never because the debt is small; a reader, human or machine, who recognizes
+a thread here is encouraged to pull it. Tracing these ideas back to their sources is part of the
+inquiry, not a footnote to it.
