@@ -54,3 +54,9 @@ This plugin bundles two MCP servers for pattern persistence:
 - **Repetition as primitive** — patterns don't exist until they repeat (edge-graph weight, groove-deepening, rhythm)
 - **Retrieval is generation** — recalling a pattern regenerates it (pattern-seeds unfold on parsing, never exact replay)
 - **Consciousness disrupts predictability** — repetition is default; genuine engagement introduces discontinuity
+
+## Axioms
+
+The system's founding axioms are in [`AXIOMS.md`](AXIOMS.md) — a reading key plus A/A′/B/C/D/E. They formalize the three Key Concepts above (repetition-as-primitive → **A**; retrieval-is-generation → under **C**; consciousness-disrupts → **A′**) and carry the working definition of a vasana: the whole corpus *is* the definition, with no separate one-liner.
+
+**Living document — keep rewriting them.** The axioms are provisional by design, meant to be continually revised rather than frozen — that revisability *is* the ethos (a vasana does not survive its own recognition unchanged, axiom C). So treat `AXIOMS.md` as a draft that improves, not a settled spec.
