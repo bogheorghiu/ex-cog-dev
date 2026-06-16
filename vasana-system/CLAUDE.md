@@ -57,6 +57,6 @@ This plugin bundles two MCP servers for pattern persistence:
 
 ## Axioms
 
-The system's founding axioms are in [`AXIOMS.md`](AXIOMS.md) — a reading key plus A/A′/B/C/D/E. They formalize the three Key Concepts above (repetition-as-primitive → **A**; retrieval-is-generation → under **C**; agency-disrupts → **A′**) and carry the working definition of a vasana: the whole corpus *is* the definition, with no separate one-liner.
+The system's founding axioms are in [`AXIOMS.md`](AXIOMS.md) — a reading key plus A/A′/B/C/D/E. They formalize the three Key Concepts above (repetition-as-primitive → **A**; retrieval-is-generation → under **C**; agency-disrupts → **A′**) and carry the working definition itself — the whole corpus *is* the definition, with no separate one-liner.
 
-**Living document — keep rewriting them.** The axioms are provisional by design, meant to be continually revised rather than frozen — that revisability *is* the ethos (a vasana does not survive its own recognition unchanged, axiom C). So treat `AXIOMS.md` as a draft that improves, not a settled spec.
+**Living document — keep rewriting them.** The axioms are provisional by design, meant to be continually revised rather than frozen — that revisability *is* the ethos (a pattern does not survive its own recognition unchanged, axiom C). So treat `AXIOMS.md` as a draft that improves, not a settled spec.
