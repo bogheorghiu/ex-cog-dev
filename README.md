@@ -1,10 +1,26 @@
 # ex-cog — externalized cognition
 
-Free plugins for Claude Cowork and Claude Code: investigation and verification
-skills for research of any kind, a memory that recognizes recurring patterns,
-build discipline for making things with AI, and guardrails that block dangerous
-commands. Built for knowledge work — most of it needs no code at all — and
-honest about what each tool does and doesn't do.
+Mostly skills — with a few MCP servers and hooks — for Claude Cowork and Claude
+Code. Built for knowledge work — most of it needs no code at all — and honest
+about what each tool does and doesn't do.
+
+- **[research-toolkit](#research-toolkit)** — *Loaded topics. No thumb on the
+  scale — especially yours.* Verify a claim, trace who benefits, and turn your
+  own conclusion inside out before you trust it.
+- **[makers-toolkit](#makers-toolkit)** — Discipline for prompting and
+  co-authoring with AI — built on reasons, not bare orders. Nothing to
+  configure — just skills you invoke.
+- **[vasana-system](#vasana-system)** — *Proof of concept.* Notice the same
+  regularity in unrelated topics — and, more usefully, in how you and the AI
+  actually work together. Real, modest benefits today; not yet the
+  self-organizing learner it's built toward.
+- **[security-toolkit](#security-toolkit)** — Useful friction against obvious
+  mistakes: hooks that block dangerous commands and flag prompt-injection. A
+  basic draft, not a security product.
+
+[Install ↓](#install)
+
+---
 
 AI doesn't think *for* you. At its best, it thinks *with* you. You hand it a
 half-formed question, a mess of a document, a thing you can't quite see the shape
@@ -27,8 +43,6 @@ you the means, not the answer — something to drive, not an oracle to trust —
 some turn on the machinery itself, asking who owns it, who benefits, and what's being
 left unsaid. Free to install, local, yours to change.
 
-[Install](#install) · [research-toolkit](#research-toolkit) · [vasana-system](#vasana-system) · [makers-toolkit](#makers-toolkit) · [security-toolkit](#security-toolkit)
-
 ## Install
 
 **Claude Cowork** — no terminal needed: add the marketplace `bogheorghiu/ex-cog-dev`
@@ -39,11 +53,12 @@ via Customize → Browse plugins, then install the plugins you want.
 ```
 /plugin marketplace add bogheorghiu/ex-cog-dev
 /plugin install research-toolkit@ex-cog-dev
-/plugin install vasana-system@ex-cog-dev
 /plugin install makers-toolkit@ex-cog-dev
+/plugin install vasana-system@ex-cog-dev
 /plugin install security-toolkit@ex-cog-dev
 ```
 
+> [!NOTE]
 > `bogheorghiu/ex-cog` is private for now, so `ex-cog-dev` is where development
 > happens and, for the moment, the place to install from. The `-dev` stays in the
 > name so anyone who already added the marketplace keeps working.
@@ -52,8 +67,10 @@ via Customize → Browse plugins, then install the plugins you want.
 
 ### research-toolkit
 
-Verify a claim. Trace who benefits. Turn your own conclusion inside out
-before you trust it.
+*Loaded topics. No thumb on the scale — especially yours.*
+
+Interrogate what you're sold, and what you'd rather believe: verify a claim,
+trace who benefits, and turn your own conclusion inside out before you trust it.
 
 - **Not sure where to begin?** `research` routes the question for you — by domain,
   by how deep you need to go, by what sources exist — so you don't have to know
@@ -85,10 +102,39 @@ before you trust it.
   Congress bills, members, and votes (GovTrack), World Bank indicators, and nonprofit
   990s (ProPublica).
 
+### makers-toolkit
+
+Discipline for prompting and co-authoring with AI — built on reasons, not bare
+orders. Nothing to configure, just skills that hold a line.
+
+- `intrinsic-prompt-design` — give the model the *reason* behind a rule, not just
+  the rule. In practice the reasons part clearly helps, even paired with plain
+  imperatives — anecdotally so far; rigorous testing would be worth doing. Its bolder idea — deliberately leaving space for the model's own
+  agency to fill — is the core experimental proposition.
+- `system-pilot` — engineering discipline for deterministic systems: define what
+  "done" means, split spec from orchestration from tools, test the seams early,
+  schema first, repair loops that record only *verified* lessons. Adapted from the
+  *Universal CLAUDE.md Protocol*.
+- `skill-activation-testing` — find out whether a skill's description actually makes
+  it fire: a fast blind-router proxy, plus a live firing-counter hook (it ships and
+  works) for the real measurement.
+
 ### vasana-system
 
-Catch the same behavior surfacing in places that have nothing to do with
-each other. Write it down. Test whether it's real.
+**A proof of concept — an early step toward a real ambition.** The idea: the
+same regularity can turn up in places that have nothing to do with each other; an
+AI not boxed into one field's categories can notice it, and check whether it's a
+real shared mechanism or just a surface rhyme. Today that's a growing, hand-kept
+list of specific observations — and they do resurface when the same shape shows
+up again, which is genuinely useful: catching recurrences across unrelated
+topics, and (often the bigger win) in the work itself, where you and the AI keep
+making the same moves or settling into a groove. Each one also accumulates a
+count of the times it has recurred, and that weight *seems* to matter in
+practice — an impression, not yet a measured result. Where it's headed — a system
+that recognizes and learns these patterns more on its own — is the genuine
+intention, not a misreading of the name; that fuller version just isn't built
+yet. Some skills are rougher than others and the bundled agent may be more than
+it needs — but as an honest first step that already helps, it earns its place.
 
 - **The loop.** `vasana` flags a candidate mid-work. `record-pattern` captures it with
   structure. `find-similar` checks whether it recurs or was a fluke. `test-pattern`
@@ -112,21 +158,6 @@ each other. Write it down. Test whether it's real.
   sketch. Today they're a memory system that works in practice, not the pattern engine
   the design imagines. Storage is local disk; nothing survives an ephemeral cloud
   session.
-
-### makers-toolkit
-
-Discipline for building with AI. Methodology, not machinery — nothing to
-configure, just skills that hold a line.
-
-- `system-pilot` — six steps: define what "done" means, split spec from orchestration
-  from tools, test the seams early, design the schema first, and run repair loops that
-  record only *verified* lessons. Every rule carries the failure it prevents. Adapted
-  from the *Universal CLAUDE.md Protocol*.
-- `intrinsic-prompt-design` — write prompts that survive edge cases by giving the
-  model the reason behind a rule, not just the rule.
-- `skill-activation-testing` — find out whether a skill's description actually makes it
-  fire: a fast blind-router proxy, plus a live firing-counter hook (it ships and
-  works) for the real measurement.
 
 ### security-toolkit
 
@@ -153,10 +184,19 @@ obvious mistakes, not something to rely on for real security.
   planted SSH keys, shell-rc injection, the Windows AV pass. It verifies, it doesn't
   harden — and a clean result raises confidence, never proves you're clean.
 
+---
+
 ## Architecture
 
 Each plugin is self-contained — its own `plugin.json`, skills, agents, hooks, and
 optional MCP servers. Plugins reference each other by name, not by path.
+
+## Credits
+
+The ideas and direction are [Bogdan Gheorghiu](https://github.com/bogheorghiu)'s;
+the words are mostly Claude's (Anthropic). A person choosing what's worth saying and
+an AI finding the words for it is the externalized cognition this repo is about — so
+we'd rather sign it than pretend otherwise.
 
 ## License
 

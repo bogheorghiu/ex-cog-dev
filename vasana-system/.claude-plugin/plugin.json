@@ -1,8 +1,8 @@
 {
   "name": "vasana-system",
-  "description": "A vasana is a pattern that recurs across unrelated domains — the \"this has the same structure as that totally different thing\" realization. Vasana System captures them, tests each for real shared mechanism (not surface resemblance), and resurfaces them when the shape recurs elsewhere — so insight compounds. Memory for forms, not just facts. (Usage-weighted knowledge-graph layer: experimental.)",
+  "description": "A working proof of concept for catching the same structure in places that have nothing to do with each other — and in your own working process: notice such a regularity, capture it, and test each for a real shared mechanism, not surface resemblance. Today it's a growing, hand-kept list of specific observations that resurface when the shape shows up again, each accumulating a count of the times it has recurred. The self-organizing learner the system is built toward is the genuine direction, not yet the state — an early, already-useful step toward it. Memory for forms, not just facts; two local MCP servers (relational-memory + a usage-weighted knowledge graph, experimental). The term \"vasana\" is grounded in the plugin's axioms.",
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "2.7.3"
+  "version": "2.7.4"
 }

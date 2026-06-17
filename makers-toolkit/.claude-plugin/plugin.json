@@ -1,7 +1,7 @@
 {
   "name": "makers-toolkit",
-  "version": "0.10.0",
-  "description": "Build-discipline skills in command-with-reason register. system-pilot adapts the original Universal CLAUDE.md Protocol into intrinsic-motivation form for building deterministic systems. intrinsic-prompt-design is the meta-methodology of prompt design \u2014 how to write prompts that hold that discipline well, by giving the model reasons, substance, and explicit trust. skill-activation-testing is the paired test method \u2014 a two-tier A/B (cheap proxy + live firing-counter harness) for finding out whether a description change actually fires, with the validity limit of each tier named.",
+  "version": "0.10.2",
+  "description": "Discipline for prompting and co-authoring with AI — nothing to configure, just skills. intrinsic-prompt-design: give the model the reason behind a rule, not just the rule; the reasons part clearly helps, even paired with plain imperatives, though so far only anecdotally (rigorous testing is still worth doing), and its bolder idea — deliberately leaving space for the model's own agency to fill — is the core experimental proposition. system-pilot: engineering discipline for deterministic systems, adapting the original Universal CLAUDE.md Protocol. skill-activation-testing: a two-tier A/B (cheap proxy + live firing-counter harness) for whether a description change actually fires, with the validity limit of each tier named.",
   "author": {
     "name": "bogheorghiu"
   },
