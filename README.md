@@ -59,9 +59,9 @@ via Customize → Browse plugins, then install the plugins you want.
 ```
 
 > [!NOTE]
-> `bogheorghiu/ex-cog` is private for now, so `ex-cog-dev` is where development
-> happens and, for the moment, the place to install from. The `-dev` stays in the
-> name so anyone who already added the marketplace keeps working.
+> `ex-cog-dev` is the public, canonical marketplace — add and install from it
+> directly. The `-dev` in the name is historical; it stays so anyone who already
+> added the marketplace keeps working.
 
 ## Plugins
 

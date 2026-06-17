@@ -50,11 +50,9 @@ Every PR to `main` (and every push to `main`) runs three CI gates:
 
 Green `main` is the pre-publish bar.
 
-**This repo (`ex-cog-dev`) is the development source; the public plugin lives in the separate `bogheorghiu/ex-cog` repo.** Publishing = syncing `ex-cog-dev` → `ex-cog`, and that promotion *is* the release gate. The flow has **no `release`-branch step**: that branch was redundant with the dev/public split and never load-bearing (the `.mcp.json` URLs never pinned `@release`), so it is being retired.
+**`ex-cog-dev` is the public, canonical marketplace — consumers add and install from it directly.** A merge to `main` *is* the release; there is no second promotion step. (An older split kept a separate public `bogheorghiu/ex-cog` repo, with `ex-cog-dev` as the dev source and a dev→`ex-cog` sync as the release gate — issue #38; that split is retired in favour of this single public repo, and the legacy `ex-cog` repo is being wound down.)
 
-For the dev repo's own `.mcp.json`, the `uvx --from` URLs point at `ex-cog-dev` HEAD of `main`, so a bad commit to `main` here reaches anyone testing against the dev repo within ~24h (uvx cache TTL) or on `uvx --refresh`. The public is insulated from that until the next dev→`ex-cog` sync.
-
-> Reconsidering this? Collapsing the two repos into one — with the public installing directly and a `release` branch + `@release`-pinned URLs as the stability mechanism — is tracked in issue #38. Until that's decided, dev→`ex-cog` is the publish step.
+That makes `main` directly load-bearing for everyone: each plugin's `.mcp.json` `uvx --from` URL fetches `ex-cog-dev` HEAD of `main`, so a bad commit reaches every consumer within ~24h (uvx cache TTL) or immediately on `uvx --refresh`. No mirror insulates the public from `main` — green CI is the only gate.
 
 ## Development rules (`.claude/rules/`)
 
