@@ -1,12 +1,26 @@
 # ex-cog — externalized cognition
 
 Mostly skills — with a few MCP servers and hooks — for Claude Cowork and Claude
-Code: investigation and verification for genuine zero-trust inquiry; discipline
-for prompting and co-authoring with AI, built on reasons, not bare orders; a
-proof-of-concept system for noticing patterns that recur, across unrelated topics
-and in your own work with the AI; and guardrails that block dangerous commands.
-Built for knowledge work — most of it needs no code at all — and honest about
-what each tool does and doesn't do.
+Code. Built for knowledge work — most of it needs no code at all — and honest
+about what each tool does and doesn't do.
+
+- **[research-toolkit](#research-toolkit)** — *Loaded topics. No thumb on the
+  scale — especially yours.* Verify a claim, trace who benefits, and turn your
+  own conclusion inside out before you trust it.
+- **[makers-toolkit](#makers-toolkit)** — Discipline for prompting and
+  co-authoring with AI — built on reasons, not bare orders. Nothing to
+  configure — just skills you invoke.
+- **[vasana-system](#vasana-system)** — *Proof of concept.* Notice the same
+  regularity in unrelated topics — and, more usefully, in how you and the AI
+  actually work together. Real, modest benefits today; not yet the
+  self-organizing learner it's built toward.
+- **[security-toolkit](#security-toolkit)** — Useful friction against obvious
+  mistakes: hooks that block dangerous commands and flag prompt-injection. A
+  basic draft, not a security product.
+
+[Install ↓](#install)
+
+---
 
 AI doesn't think *for* you. At its best, it thinks *with* you. You hand it a
 half-formed question, a mess of a document, a thing you can't quite see the shape
@@ -29,24 +43,6 @@ you the means, not the answer — something to drive, not an oracle to trust —
 some turn on the machinery itself, asking who owns it, who benefits, and what's being
 left unsaid. Free to install, local, yours to change.
 
-## At a glance
-
-- **[research-toolkit](#research-toolkit)** — *Loaded topics. No thumb on the
-  scale — especially yours.* Verify a claim, trace who benefits, and turn your
-  own conclusion inside out before you trust it.
-- **[makers-toolkit](#makers-toolkit)** — Discipline for prompting and
-  co-authoring with AI — built on reasons, not bare orders. Nothing to
-  configure — just skills you invoke.
-- **[vasana-system](#vasana-system)** — *Proof of concept.* Notice the same
-  regularity in unrelated topics — and, more usefully, in how you and the AI
-  actually work together. Real, modest benefits today; not yet the
-  self-organizing learner it's built toward.
-- **[security-toolkit](#security-toolkit)** — Useful friction against obvious
-  mistakes: hooks that block dangerous commands and flag prompt-injection. A
-  basic draft, not a security product.
-
-[Install ↓](#install)
-
 ## Install
 
 **Claude Cowork** — no terminal needed: add the marketplace `bogheorghiu/ex-cog-dev`
@@ -62,6 +58,7 @@ via Customize → Browse plugins, then install the plugins you want.
 /plugin install security-toolkit@ex-cog-dev
 ```
 
+> [!NOTE]
 > `bogheorghiu/ex-cog` is private for now, so `ex-cog-dev` is where development
 > happens and, for the moment, the place to install from. The `-dev` stays in the
 > name so anyone who already added the marketplace keeps working.
@@ -186,6 +183,8 @@ obvious mistakes, not something to rely on for real security.
   (`windows-wsl-security-verification`): known-bad package versions, persistence,
   planted SSH keys, shell-rc injection, the Windows AV pass. It verifies, it doesn't
   harden — and a clean result raises confidence, never proves you're clean.
+
+---
 
 ## Architecture
 
