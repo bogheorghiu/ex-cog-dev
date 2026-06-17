@@ -63,11 +63,23 @@ check "unrecognized entrypoint no sentinel" "$([ ! -f "$SENTINEL" ] && echo 1 ||
 out=$(run_hook CLAUDECODE=1); rc=$?
 check "missing entrypoint is silent" "$([ -z "$out" ] && echo 1 || echo 0)"
 
+# Cowork: CLAUDE_CODE_IS_COWORK=1 forces silence even with CLAUDECODE=1 and an
+# otherwise-allowlisted entrypoint (proves the explicit exclusion wins over the
+# allowlist, so the gate holds if Cowork's entrypoint ever drifts).
+out=$(run_hook CLAUDECODE=1 CLAUDE_CODE_ENTRYPOINT=cli CLAUDE_CODE_IS_COWORK=1); rc=$?
+check "Cowork (CLAUDE_CODE_IS_COWORK set) is silent" "$([ -z "$out" ] && echo 1 || echo 0)"
+check "Cowork does NOT write the sentinel" "$([ ! -f "$SENTINEL" ] && echo 1 || echo 0)"
+
 # Dispatch: even with an otherwise-allowlisted entrypoint, CLAUDE_CODE_BRIEF
 # forces silence (Dispatch is the autonomous Desktop agent, never interactive).
 out=$(run_hook CLAUDECODE=1 CLAUDE_CODE_ENTRYPOINT=cli CLAUDE_CODE_BRIEF=1); rc=$?
 check "Dispatch (CLAUDE_CODE_BRIEF set) is silent" "$([ -z "$out" ] && echo 1 || echo 0)"
 check "Dispatch does NOT write the sentinel" "$([ ! -f "$SENTINEL" ] && echo 1 || echo 0)"
+
+# The real Dispatch signature (from a live env dump): CLAUDECODE=1,
+# entrypoint=local-agent, plus BRIEF and IS_COWORK both set.
+out=$(run_hook CLAUDECODE=1 CLAUDE_CODE_ENTRYPOINT=local-agent CLAUDE_CODE_BRIEF=1 CLAUDE_CODE_IS_COWORK=1); rc=$?
+check "real Dispatch signature is silent" "$([ -z "$out" ] && echo 1 || echo 0)"
 
 # --- Recognized Code surfaces announce ---
 
