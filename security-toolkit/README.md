@@ -16,7 +16,7 @@ These hooks are **guardrails against accidents and foot-guns**, not an adversari
 | `block-dangerous-git.sh` | PreToolUse | `Bash` | Block push to main/master, force push, `--no-verify`, `--admin`, `git checkout --`, `git stash drop`, `git reset --hard`, `git clean -fd`, `rm -rf` on directories, direct GitHub API merge calls. Blocking `gh pr merge` is **off by default** — turn it on with the `/pr-merge-guard` command or the `EXCOG_BLOCK_PR_MERGE` env var (see [The PR-merge guard](#the-pr-merge-guard)). |
 | `block-dc-config.sh` | PreToolUse | `mcp__desktop-commander__*` | Block autonomous modification of Desktop Commander settings (`set_config_value`). |
 | `block-dc-execute.sh` | PreToolUse | `mcp__desktop-commander__*` | Block `start_process` / `execute_command` (bypasses sandbox; use the Bash tool instead). |
-| `announce-pr-merge-guard.sh` | SessionStart | — | One-time, sentinel-gated notice that the optional PR-merge guard exists and is off by default. Fires once per machine (writes `~/.claude/security-toolkit/.pr-merge-guard-introduced`), then stays silent. Pure announcer: never blocks, always exits 0. |
+| `announce-pr-merge-guard.sh` | SessionStart | — | One-time, sentinel-gated notice that the optional PR-merge guard exists and is off by default. **Fires only on a recognized Claude Code surface**: excludes Cowork / Dispatch explicitly (`CLAUDE_CODE_IS_COWORK` / `CLAUDE_CODE_BRIEF`), then announces only with `CLAUDECODE=1` and an allowlisted `CLAUDE_CODE_ENTRYPOINT` (`cli` / `remote_*`) — silent everywhere else, where this git-workflow notice would only confuse a non-Code user. Then fires once per machine (writes `~/.claude/security-toolkit/.pr-merge-guard-introduced`) and stays silent. Pure announcer: never blocks, always exits 0. |
 
 > No separate "detect-dc-injection" hook is needed. Desktop Commander tool outputs are covered by `detect-prompt-injection.sh`'s `*` matcher — the `tool` field in the JSONL log lets you filter for `mcp__desktop-commander__*` if you want DC-only audit.
 
@@ -88,7 +88,9 @@ which the hook re-reads on every git command — so a change takes effect
 **immediately**, no restart. The `pr-merge-guard` **skill** explains the feature
 and can flip it for you when you ask ("stop auto-merging," "lock down main," "can
 you merge PRs?"). A one-time `SessionStart` notice (`announce-pr-merge-guard.sh`)
-tells you the feature exists the first time you start a session after installing.
+tells you the feature exists the first time you start a Claude Code session after
+installing — it stays silent in Cowork / Dispatch, where the notice would only
+confuse a non-Code user.
 
 **2. The `EXCOG_BLOCK_PR_MERGE` env var (declarative, for config-as-code / CI).**
 `1`/`true`/`yes` = on, `0`/`false`/`no` = off. When set to a recognized value it
