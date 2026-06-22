@@ -43,7 +43,7 @@ Active, descriptive names:
 - `productive-friction`
 - `assumption-surfacing`
 - `diverge-converge`
-- `inquiry-to-system`
+- `question-becomes-system`
 
 Avoid:
 - Passive names (`thinking-together`)

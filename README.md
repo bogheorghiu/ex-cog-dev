@@ -145,9 +145,8 @@ it needs — but as an honest first step that already helps, it earns its place.
   just stop?" and keeps work cycling until the completion criteria — not fatigue —
   say done. `self-improving-investigation` runs research through blind worker agents
   and dialectic synthesis when the risk of confirming your own bias is high.
-  `inquiry-to-system` notices when a casual question is building toward something
-  larger and turns the conversation into structured output. `temporal-shaping` designs
-  the time-shape of a process — phases, pacing, why something feels off.
+  `temporal-shaping` designs the time-shape of a process — phases, pacing, why
+  something feels off.
 - **Two MCP servers, told straight.** `relational-memory` works: it saves facts, task
   state, and core principles to disk in layered storage, recalls them by search, and
   summarizes old entries as they pile up. `edge-graph` records relations as weighted

@@ -24,7 +24,6 @@
 | **check-assumptions** | Pre-action verification against behavioral patterns |
 | **find-similar** | Cross-domain similarity search with temperature control |
 | **iterative-loop-engine** | Domain-agnostic iteration engine ("Am I ACTUALLY done, or did I just stop?") |
-| **inquiry-to-system** | Interaction choreography: curiosity → productive friction → emergent system |
 | **temporal-shaping** | ADSR/Reich cycle models for any time-based process |
 | **self-improving-investigation** | Self-correcting research with blind worker agents and dialectic synthesis |
 
