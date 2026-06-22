@@ -1,9 +1,8 @@
 ---
 name: iterative-loop-engine
 description: >-
-  "Am I ACTUALLY done, or did I just stop?" - Domain-agnostic iterative workflow
-  engine: define completion criteria up front, re-check them every pass, and do
-  not exit until all pass. Use when (1) task has clear completion
+  "Am I ACTUALLY done, or did I just stop?" - Iterative workflow engine,
+  all-purpose. Use when (1) task has clear completion
   criteria, (2) single-pass execution is insufficient, (3) quality requires
   iteration, (4) "keep going until X" patterns apply. Provides the abstract
   loop; pair with domain-specific criteria files. Does NOT trigger for: simple

@@ -1,9 +1,8 @@
 ---
 name: iterative-verification
 description: >-
-  "Is this ACTUALLY verified, or did I just say it is?" - An iterative
-  verification loop for factual accuracy: re-check claims against the evidence
-  every pass, and don't stop at the first plausible answer. Use when (1) claims require
+  "Is this ACTUALLY verified, or did I just say it is?" - Factual accuracy
+  verification loop. Use when (1) claims require
   evidence not assumption, (2) verification must be demonstrable, (3)
   single-pass investigation insufficient, (4) factual accuracy is critical.
   Provides the loop logic: iterate until verification thresholds met. Does NOT
