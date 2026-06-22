@@ -1,18 +1,16 @@
 ---
 name: iterative-verification
 description: >-
-  "Is this ACTUALLY verified, or did I just say it is?" - Ralph-wiggum
-  methodology applied to factual accuracy. Use when (1) claims require
+  "Is this ACTUALLY verified, or did I just say it is?" - Factual accuracy
+  verification loop. Use when (1) claims require
   evidence not assumption, (2) verification must be demonstrable, (3)
   single-pass investigation insufficient, (4) factual accuracy is critical.
   Provides the loop logic: iterate until verification thresholds met. Does NOT
   trigger for: opinions, preferences, how-to instructions, or when user
   explicitly wants quick answer.
-changelog:
-  - "2026-03-11: Added fact-verification examples (TikTok algorithm, Beit Shemesh casualties, Russia role), convergence warning protocol, probability distribution requirement, steel-man obligation, one-more sweep rule, dialectic spiral for contested claims, self-check questions 6-8. All examples from March 2026 current-events investigation."
 ---
 
-# Iterative Verification: Ralph-Wiggum for Facts
+# Iterative Verification
 
 **Seed question:** *Is this ACTUALLY verified, or did I just say it is?*
 
@@ -20,8 +18,7 @@ changelog:
 
 ## Core Principle
 
-Ralph-wiggum = iterative workflows.
-Iterative workflows = keep going until genuinely complete.
+An iterative workflow keeps going until genuinely complete.
 For facts: keep verifying until claims meet evidence thresholds.
 
 **The anti-pattern this counters:**
@@ -311,4 +308,4 @@ from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
 
-**Integration:** Use `/loop` command from ralph-loop plugin for automated iteration.
+**Integration:** Use the `/ralph-loop` command from the ralph-loop plugin for automated iteration.

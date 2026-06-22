@@ -1,7 +1,4 @@
----
-name: inquiry-to-system
-description: Use when a casual question leads to deeper exploration and the conversation seems to be building toward something larger - the pattern of curiosity → productive friction → iterative deepening → emergent system design. An interaction choreography for turning genuine inquiry into structured output.
----
+# Question Becomes System
 
 ## Vasana
 
@@ -12,19 +9,17 @@ from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
 
-# Inquiry to System
-
-## Core Tenet
-
-This is a Vasana - an interaction choreography, not an AI skill. It describes a dance that emerges between minds, not what either party does alone.
-
 ---
+
+**Principle**: A genuine open question, driven through productive friction and iterative deepening, can arrive at a built thing — a framework, a system, a project — that neither party could have designed at the outset.
+
+An interaction choreography: a dance that emerges between minds, not something either party does alone.
 
 ## What This Pattern Is
 
 A conversation that starts with genuine curiosity and, through productive friction and iterative deepening, arrives at something neither party could have designed alone.
 
-**Origin:** This Vasana was captured from a real conversation that began with "why is there so much slop-oriented marketing around AI?" and ended with the Vasana System itself.
+**Origin:** Captured from a real conversation that began with "why is there so much slop-oriented marketing around AI?" and ended with the Vasana System itself.
 
 ---
 
@@ -90,10 +85,10 @@ The conversation arrives somewhere:
 
 ---
 
-## Testing This Vasana
+## Testing This Pattern
 
 Before relying on this:
-1. **Baseline:** Have an exploratory conversation WITHOUT consciously invoking pattern
+1. **Baseline:** Have an exploratory conversation WITHOUT consciously invoking the pattern
 2. **With pattern:** Try another, consciously allowing the structure
 3. **Compare:** Did conscious invocation help or hinder?
 4. **Pressure:** Does it work when rushed?
@@ -102,7 +97,7 @@ Before relying on this:
 
 ---
 
-## Example: The Conversation That Created This Vasana
+## Example: The Conversation That Created This Pattern
 
 **Opening:** "Why do you think there's so much slop-oriented marketing around AI?"
 
