@@ -8,8 +8,6 @@ description: >-
   Provides the loop logic: iterate until verification thresholds met. Does NOT
   trigger for: opinions, preferences, how-to instructions, or when user
   explicitly wants quick answer.
-changelog:
-  - "2026-03-11: Added fact-verification examples (TikTok algorithm, Beit Shemesh casualties, Russia role), convergence warning protocol, probability distribution requirement, steel-man obligation, one-more sweep rule, dialectic spiral for contested claims, self-check questions 6-8. All examples from March 2026 current-events investigation."
 ---
 
 # Iterative Verification: Ralph-Wiggum for Facts

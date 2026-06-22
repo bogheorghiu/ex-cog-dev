@@ -8,8 +8,6 @@ description: >
   (TLC vs QLC, component sourcing) use Light Touch mode. Search and verify even if
   you think you know. Does NOT trigger for: what to watch/eat/wear, how-to
   instructions, when/where/who founded, or explicit "just tell me quick."
-changelog:
-  - "2026-03-11: Added self-reflexivity clause, pre-investigation setup, multi-perspective source sweep (Stage 1.5), source omission analysis, analytical patterns (closing window, manufactured consensus, threshold vs binary, externality framing, cui bono, Postol pattern), social media integration, confirmation bias countermeasures (steel-man, probability distribution, convergence warning, one-more sweep, generative dialectic), self-improvement integration. All additions validated in March 2026 current-events investigation."
 ---
 
 <EXTREMELY_IMPORTANT>
