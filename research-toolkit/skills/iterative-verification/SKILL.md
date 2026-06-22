@@ -1,8 +1,9 @@
 ---
 name: iterative-verification
 description: >-
-  "Is this ACTUALLY verified, or did I just say it is?" - Ralph-wiggum
-  methodology applied to factual accuracy. Use when (1) claims require
+  "Is this ACTUALLY verified, or did I just say it is?" - An iterative
+  verification loop for factual accuracy: re-check claims against the evidence
+  every pass, and don't stop at the first plausible answer. Use when (1) claims require
   evidence not assumption, (2) verification must be demonstrable, (3)
   single-pass investigation insufficient, (4) factual accuracy is critical.
   Provides the loop logic: iterate until verification thresholds met. Does NOT
@@ -10,7 +11,7 @@ description: >-
   explicitly wants quick answer.
 ---
 
-# Iterative Verification: Ralph-Wiggum for Facts
+# Iterative Verification
 
 **Seed question:** *Is this ACTUALLY verified, or did I just say it is?*
 
@@ -18,8 +19,7 @@ description: >-
 
 ## Core Principle
 
-Ralph-wiggum = iterative workflows.
-Iterative workflows = keep going until genuinely complete.
+An iterative workflow keeps going until genuinely complete.
 For facts: keep verifying until claims meet evidence thresholds.
 
 **The anti-pattern this counters:**
@@ -309,4 +309,4 @@ from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
 
-**Integration:** Use `/loop` command from ralph-loop plugin for automated iteration.
+**Integration:** Use the `/ralph-loop` command from the ralph-loop plugin for automated iteration.

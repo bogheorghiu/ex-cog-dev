@@ -2,7 +2,8 @@
 name: iterative-loop-engine
 description: >-
   "Am I ACTUALLY done, or did I just stop?" - Domain-agnostic iterative workflow
-  engine based on ralph-loop methodology. Use when (1) task has clear completion
+  engine: define completion criteria up front, re-check them every pass, and do
+  not exit until all pass. Use when (1) task has clear completion
   criteria, (2) single-pass execution is insufficient, (3) quality requires
   iteration, (4) "keep going until X" patterns apply. Provides the abstract
   loop; pair with domain-specific criteria files. Does NOT trigger for: simple
@@ -23,24 +24,24 @@ Modify freely. Keep this section intact.
 
 **Seed question:** *Am I ACTUALLY done, or did I just stop?*
 
-## Ralph-Wiggum Foundation
+## Foundation: a completion-criteria loop
 
-This skill implements and extends the **ralph-loop** methodology for iterative workflows:
+This skill is a **completion-criteria loop** (lineage: the "ralph" loop, after Geoffrey Huntley — see Origins below): define "done" up front, re-check it every pass, and refuse to exit until every criterion passes.
 
-> **ralph-loop** = iterative workflows = keep going until genuinely complete
+> Keep going until genuinely complete — not until tired, bored, or "close enough."
 
 **Origins:**
 - **Original concept:** Geoffrey Huntley ([ghuntley.com/ralph](https://ghuntley.com/ralph/))
 - **Claude Code implementation:** Anthropic ([github.com/anthropics/claude-code-plugins](https://github.com/anthropics/claude-code-plugins))
 - **Author:** Daisy Hollman (Anthropic)
 
-This skill abstracts the ralph-loop pattern into a **domain-agnostic loop engine** that can be applied to any task with clear completion criteria, not just factual verification.
+This skill abstracts that loop into a **domain-agnostic loop engine** that can be applied to any task with clear completion criteria, not just factual verification.
 
 ---
 
 ## Core Principle
 
-Ralph-wiggum's insight: **most tasks fail not from lack of capability, but from premature exit.**
+The core insight: **most tasks fail not from lack of capability, but from premature exit.**
 
 The loop engine enforces persistence:
 - Define criteria BEFORE starting
