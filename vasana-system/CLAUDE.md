@@ -20,7 +20,7 @@ A `CLAUDE.md` at the canonical location has the full operational rules (naming c
 
 ## Naming Rule
 
-"Vasana" only for system name, entry skill (`vasana`), hook (`vasana.sh`), and the Vasana section in each skill. Everything else uses "pattern."
+The word "Vasana" is reserved for four slots — system name, entry skill (`vasana`), hook (`vasana.sh`), the `## Vasana` section; everything else uses "pattern." Full rule + rationale: `.claude/rules/vasana-naming.md` (dev-time, path-scoped to `vasana-system/`). The shipped `vasana` skill states it in-band for consumers.
 
 ## Patterns Are Neutral
 
