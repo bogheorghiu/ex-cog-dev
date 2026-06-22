@@ -17,7 +17,7 @@ description: >-
 
 ## Core Principle
 
-What a source is silent about reveals its structural position more reliably than what it says. Every source occupies a position relative to power, funding, and ideology. That position determines what it can see — and what it structurally cannot or will not see.
+What a source is silent about reveals its structural position more reliably than what it says — because statements are cheap and can be strategic, while sustained silence is costlier to maintain and harder to fake. Every source occupies a position relative to power, funding, and ideology. That position determines what it can see — and what it structurally cannot or will not see.
 
 Silence is not absence of opinion. Silence is evidence that a topic is inconvenient for that source's position.
 
