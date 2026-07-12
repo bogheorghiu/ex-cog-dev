@@ -184,6 +184,11 @@ FOR EACH power pole assessed:
 
 **Exit criterion:** The meta-check yields no new asymmetry concerns, OR you've explicitly noted the remaining asymmetry and why it's genuine rather than analytical artifact.
 
+**Then lint the prose:** 4a audits the evidence table; the words and the
+option ordering can still carry the default frame after the table is clean.
+Before output on any bloc-contested analysis, run
+`references/frame-leak-lint.md`.
+
 ### 5. Output Structure
 
 ```

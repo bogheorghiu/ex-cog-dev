@@ -62,6 +62,20 @@ Key escalation triggers:
 **Propagation:** When invoking other skills, pass budget context:
 "Invoking youtube-research --budget" or "Invoking DIP --budget"
 
+## Close-Out Guards
+
+Before any routed investigation closes, apply two checks (they are cheap and
+they catch the two most-observed late-stage failures):
+
+- **Verified ≠ understood.** For each verified load-bearing line, re-read it
+  for meaning as a separate step: what does it imply for the question asked?
+  A sourcing checkmark suppresses semantic re-reading — schedule the second
+  read explicitly.
+- **External correction ⇒ global regeneration.** If an external objection or
+  correction arrived at any point, regenerate the salience map (what matters,
+  in what order) from scratch rather than patching the corrected point. A
+  tilt that produced one visible error has usually produced invisible ones.
+
 ## Platform Notes
 
 This skill is pure natural language routing — no platform-specific tools required. In Claude Code, use the Skill tool to invoke routed skills. In other platforms, load the routed skill's content directly.
