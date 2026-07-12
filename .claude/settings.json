@@ -4,7 +4,9 @@
     "ex-cog-dev": { "source": { "source": "directory", "path": "." } }
   },
   "enabledPlugins": {
-    "security-toolkit@ex-cog-dev": true,
-    "makers-toolkit@ex-cog-dev": true
+    "vasana-system@ex-cog-dev": true,
+    "research-toolkit@ex-cog-dev": true,
+    "makers-toolkit@ex-cog-dev": true,
+    "security-toolkit@ex-cog-dev": true
   }
 }
