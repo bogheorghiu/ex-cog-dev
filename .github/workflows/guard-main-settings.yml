@@ -13,9 +13,12 @@ name: Guard main settings.json
 # "pending" as a required check that simply didn't trigger.
 
 on:
+  # No base-branch filter: run on PRs into ANY base branch (not just main) so
+  # stacked integration-branch work (e.g. research-toolkit-v4) stays guarded.
+  # On non-main PRs settings.json is normally untouched, so this is trivially
+  # green -- but it still blocks a probe/env branch that gets PR'd by mistake.
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches: [main]
 
 permissions:
   contents: read

@@ -17,8 +17,9 @@ name: Unit tests
 on:
   push:
     branches: [main]
+  # No base-branch filter on PRs: run on PRs into ANY base branch so stacked
+  # integration-branch work (e.g. research-toolkit-v4) gets CI. Push is main-only.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
