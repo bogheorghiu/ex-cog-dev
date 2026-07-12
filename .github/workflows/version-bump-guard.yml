@@ -14,8 +14,11 @@ name: Version bump guard
 # `edited` event types below let that opt-out take effect without a new push).
 
 on:
+  # No base-branch filter: run on PRs into ANY base branch so phase PRs into an
+  # integration branch (e.g. research-toolkit-v4) are guarded. The check diffs
+  # against the PR's own base ref (github.event.pull_request.base.ref), so a
+  # phase PR is correctly compared to the integration branch, not to main.
   pull_request:
-    branches: [main]
     # Default (opened/synchronize/reopened) plus the events that let a title
     # marker or label toggle the opt-out re-run the check immediately.
     types: [opened, synchronize, reopened, labeled, unlabeled, edited]
