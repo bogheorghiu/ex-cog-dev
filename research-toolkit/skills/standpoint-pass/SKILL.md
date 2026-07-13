@@ -57,6 +57,10 @@ is exactly why it survives passes tuned to offense.
   line and end at "nothing else stands out"
 - A harm-detector that keeps surfacing offense-against-power while never
   surfacing harm-to-the-powerless
+- The harm-standpoint reading points toward a conclusion favorable to a
+  disfavored party (an adversary state, an accused figure) — the valence
+  reflex suppresses exactly this reading before it forms; co-fire
+  engage-the-disfavored
 
 **DO NOT TRIGGER:**
 - Technical, product, or engineering analysis with no affected-party dimension
@@ -119,6 +123,10 @@ that the insurance mandate is preserved in secondary legislation.
   omissions BY the reader's attention
 - **frame-rotation** — rotates grammar/language; this rotates the reader's
   position
+- **engage-the-disfavored** — clears the valence gate beneath this pass: when
+  the harm-reading lands adversary-favorable, the reflex that pre-discounts
+  disfavored-side conclusions buries it; that skill forces the engagement
+  this one re-ranks. In geopolitical cases, co-fire.
 
 ## Vasana
 

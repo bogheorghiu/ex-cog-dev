@@ -265,6 +265,15 @@ Before claiming completion, ask:
       output, not only about the point it names — patching locally preserves
       the tilt that made the error.
 
+11. **"Did I discount — or credit — any source by its label instead of a named defect?"**
+    - A dismissal is a claim too: it needs the specific factual defect (which
+      claim, what is wrong, on what evidence). "Biased / fringe / propaganda"
+      with nothing named is the frame talking — and it fires before reading;
+      a source that was never opened has a void dismissal. Same requirement,
+      symmetric, for crediting by halo. (Kin: the Verdict-Tier Check — "no
+      mainstream confirmation" = UNVERIFIED, not FALSE. Full counter:
+      engage-the-disfavored.)
+
 ## The "One More" Sweep Rule
 
 After believing verification is complete and all thresholds pass, do ONE MORE sweep:

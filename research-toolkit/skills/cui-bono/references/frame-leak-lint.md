@@ -41,6 +41,20 @@ rewrite itself introduce a new tilt (over-correction into false balance;
 debiasing only the direction you're trained to notice)? Exit when a pass
 yields no new hits, or the remaining hits are justified in writing.
 
+## 4. Convergence-credit check (launder-to-disown)
+
+Scan the draft's conclusions against sources discounted earlier in this
+investigation. Where a conclusion converges with one, either credit the
+overlap explicitly ("this is what X already argued") or state in writing how
+the routes are independent. The tells: the reframe adds abstraction but no
+new predictive content; a felt pull to contrast your version *against* the
+source rather than acknowledge the overlap. The discomfort of crediting is
+the signal the pattern was operating — an uncredited convergence reads as
+independent corroboration to every downstream reader, which is a provenance
+error manufactured at output time. (This is the output-time detector; the
+intake-time counter that keeps disfavored sources from being dismissed unread
+is the `engage-the-disfavored` skill.)
+
 ## Scope: establishment vs power-accuser (generalized)
 
 "Dominant bloc vs other bloc" is one instance. The same unmarked-default move

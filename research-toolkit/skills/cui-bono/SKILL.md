@@ -90,6 +90,8 @@ For each claim AND its rebuttal:
 
 *Validated March 2026: Cited domestic media (interested party) and fact-checking ecosystem members (shared methodology pool) as "verification" without mapping their incentive structures. Conclusion was correct; process was flawed.*
 
+The strongest form of asymmetric skepticism is the source never opened — a dismissal that fired before reading, which no audit of the analyzed evidence can catch. That intake face is engage-the-disfavored's job; run it beneath this skill on bloc-contested material.
+
 ### 2b. Unexamined Dichotomy Investigation (MANDATORY)
 
 When an unexamined dichotomy is identified (dead/alive, good/bad, ally/adversary), **investigate at least one position between the binary poles.**
@@ -267,6 +269,7 @@ Auto-activates if budget-mode skill is active in session.
 - **manufactured-consensus-detection** — test whether source agreement is genuine or manufactured
 - **source-omission-analysis** — map what each perspective is silent about
 - **dev-job-defense-ties** — labor-market instantiation: consumes this skill's buyer-chain to screen a tech/creative job for military end-use and apply an operator red line
+- **engage-the-disfavored** — intake-time counterpart to §2a/§4a: forces engagement of sources the valence reflex would close unread; supplies the counter-case agent for deep investigations
 
 ---
 

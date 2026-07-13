@@ -64,6 +64,8 @@ After gathering sources from multiple perspectives, construct this table:
 
 ### Building the Map
 
+**Sweep-omission guard.** Before analyzing what sources omit, audit what your own sweep omitted: does the source set include fact-based analyses favoring the disfavored side, or was the set itself valence-filtered at intake? An omission map built on a filtered set reports your filter as everyone's silence. (Intake counterpart: engage-the-disfavored.)
+
 1. **List all claims and events** from your research sweep
 2. **For each claim, note which source categories reported it** (use bubble taxonomy A-J from comprehensive methodology if available)
 3. **For each claim, note which source categories are silent**
