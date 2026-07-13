@@ -22,6 +22,8 @@ Consensus is evidence — but only when it is genuine. When multiple "independen
 
 Distinguishing these is critical because manufactured consensus creates the appearance of verification without actual independent confirmation.
 
+This applies to consensus about *sources* as much as about *claims*: a discrediting label — "fringe", "conspiracist", "discredited" — is often one profile's editorial aside echoed downstream until it reads as settled consensus. Topology-map the label's provenance before importing it as a verdict, the same way you would any manufactured agreement.
+
 **The anti-pattern this counters:**
 ```
 ❌ "Multiple sources agree, so it must be true"
@@ -209,6 +211,7 @@ Effective corporate PR created the appearance of independent consensus around a 
 | **source-omission-analysis** | Complementary — omission analysis maps what sources DON'T say; this skill tests what they DO say in unison |
 | **cui-bono** | Contradiction Analysis methods (Direct, Deductive, Falsification, Standpoint) apply to testing whether consensus survives challenge |
 | **frame-rotation** | When manufactured consensus is detected, frame-rotation helps find the perspective that the manufactured narrative was designed to displace |
+| **engage-the-disfavored** | Intake-time counterpart: a manufactured label-consensus ("fringe"/"conspiracist" echoed downstream) is exactly what pre-discounts a disfavored source before its facts are read — map the label's consensus here, engage the source there |
 
 **Workflow position:** Invoke when convergence warning fires during iterative-verification, OR when the source-omission-analysis reveals that everyone is saying the same thing. Run BEFORE accepting consensus as evidence in the dialectic spiral.
 
