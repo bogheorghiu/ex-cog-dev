@@ -37,7 +37,8 @@ jobs:
             exit 0
           fi
           # Write terms to a temp file (never echoed). Drop blank lines.
-          printf '%s\n' "${DENYLIST}" | grep -v '^[[:space:]]*$' > "${RUNNER_TEMP}/denylist.txt" || true
+          # accept '|'-separated (single-line) OR newline-separated denylist values
+          printf '%s\n' "${DENYLIST}" | tr '|' '\n' | grep -v '^[[:space:]]*$' > "${RUNNER_TEMP}/denylist.txt" || true
           if [ ! -s "${RUNNER_TEMP}/denylist.txt" ]; then
             echo "::warning::PII_DENYLIST secret held no non-blank terms — PII gate is INACTIVE."
             exit 0
