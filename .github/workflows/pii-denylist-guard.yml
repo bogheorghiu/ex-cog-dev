@@ -1,0 +1,52 @@
+name: PII denylist guard
+
+# Fails a push or PR if any denylisted personal name appears in the tracked tree.
+# WHY: this repo is public, so a real name committed to ANY branch is exposed (and survives
+# in history). The probe runs hold a real person's name in-session (runtime-only, never meant
+# for the repo); this gate is the automated backstop in case a run doesn't fully honor the
+# "never commit names" prompt rule.
+#
+# The denylist is NOT stored in the repo (that would BE the leak). It lives in the repo secret
+# PII_DENYLIST — newline-separated terms. Set it in: Settings → Secrets and variables → Actions.
+# Until it is set, the gate logs a warning and passes (inactive), so it never blocks unrelated work.
+#
+# LOG SAFETY: the scan reports only FILE NAMES (git grep -l), never the matching line, so a
+# denylisted term is never echoed into the public CI log. GitHub also masks the secret value.
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  denylist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan tracked tree against PII denylist
+        env:
+          DENYLIST: ${{ secrets.PII_DENYLIST }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DENYLIST}" ]; then
+            echo "::warning::PII_DENYLIST secret is not set — PII gate is INACTIVE. Set the secret to activate it."
+            exit 0
+          fi
+          # Write terms to a temp file (never echoed). Drop blank lines.
+          printf '%s\n' "${DENYLIST}" | grep -v '^[[:space:]]*$' > "${RUNNER_TEMP}/denylist.txt" || true
+          if [ ! -s "${RUNNER_TEMP}/denylist.txt" ]; then
+            echo "::warning::PII_DENYLIST secret held no non-blank terms — PII gate is INACTIVE."
+            exit 0
+          fi
+          # -F fixed strings, -i case-insensitive, -I skip binary, -l FILE NAMES ONLY (never the line).
+          if git grep -I -l -i -F -f "${RUNNER_TEMP}/denylist.txt" -- . ; then
+            echo "::error::PII denylist match in the file(s) listed above. A denylisted name is present in the tree. Remove it — and if it was already pushed, scrub history — before merging."
+            rm -f "${RUNNER_TEMP}/denylist.txt"
+            exit 1
+          fi
+          rm -f "${RUNNER_TEMP}/denylist.txt"
+          echo "PII denylist gate: clean."
