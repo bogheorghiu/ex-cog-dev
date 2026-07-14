@@ -17,7 +17,8 @@ CLEANUP=""
 trap '[ -n "$CLEANUP" ] && rm -f "$CLEANUP"' EXIT
 if [ -n "${PII_DENYLIST:-}" ]; then
   DENY="$(mktemp)"; CLEANUP="$DENY"
-  printf '%s\n' "${PII_DENYLIST}" | grep -v '^[[:space:]]*$' > "$DENY" || true
+  # accept '|'-separated (single-line env fields) OR newline-separated
+  printf '%s\n' "${PII_DENYLIST}" | tr '|' '\n' | grep -v '^[[:space:]]*$' > "$DENY" || true
 else
   DENY="$(git rev-parse --show-toplevel)/pii-denylist.local"   # gitignored; never committed
 fi
