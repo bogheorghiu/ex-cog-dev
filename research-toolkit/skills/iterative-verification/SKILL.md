@@ -274,6 +274,12 @@ Before claiming completion, ask:
       mainstream confirmation" = UNVERIFIED, not FALSE. Full counter:
       engage-the-disfavored.)
 
+12. **"Did the method change since the earliest conclusions?"**
+    - If yes: re-run the matured checks against those early conclusions
+      before claiming completion (Principle P8). Early conclusions passed a
+      weaker gate than late ones — that gradient is invisible unless
+      checked.
+
 ## The "One More" Sweep Rule
 
 After believing verification is complete and all thresholds pass, do ONE MORE sweep:

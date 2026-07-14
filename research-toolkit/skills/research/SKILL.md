@@ -21,6 +21,27 @@ Central entry point for any research question. Routes to the right skill(s) base
 3. **ROUTE** to the appropriate skill(s)
 4. **PROPAGATE** budget flag if active
 
+## Investigation Profile (onboarded once)
+
+Stable preferences live in a persistent profile OUTSIDE the plugin —
+language space, deliverable format, default budget, saturation threshold.
+The skill ships profile-less: it assumes no values until the operator
+supplies them (a committed default would both leak an operator's setup and
+become everyone's inherited default).
+
+- **Locate/read/write** via the self-describing store: run
+  `python3 "${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/config.py" describe`
+  and use the interface it emits (do not hard-code commands here — they
+  drift; the script is the source of truth).
+- **First run** (any `get profile/*` returns `NO_ELEMENT`): offer onboarding
+  — skippable; a decline is persisted as `profile/engagement: never` and
+  never re-asked. Ask at most four questions: languages you can/want to
+  search · default deliverable (template report / brief / three sentences) ·
+  default budget mode · saturation threshold (default: the P3 stop rule,
+  once Phase 3 ships).
+- **Every routed investigation** reads the profile first and states which
+  profile values it applied.
+
 ## Routing
 
 Consult `reference/topic-based-escalation.md` for the full escalation table. Quick decision tree:
@@ -62,6 +83,20 @@ Key escalation triggers:
 **Propagation:** When invoking other skills, pass budget context:
 "Invoking youtube-research --budget" or "Invoking DIP --budget"
 
+## Report Template
+
+For any investigation producing a written deliverable, COPY
+`assets/report-template.md` and fill it — do not re-derive the structure.
+The template carries the sections that get dropped exactly when
+inconvenient (per-camp omissions, symmetric cui-bono, errata) and the
+version protocol that keeps corrections from being orphaned. Sections that
+genuinely don't apply are kept with "n/a — why", not deleted: the reader
+must see that the slot was considered.
+
+A template is an asset to copy, never a mandatory rail: when a web search
+and three sentences is the right answer, that answer is sovereign — say
+the template was skipped and why.
+
 ## Close-Out Guards
 
 Before any routed investigation closes, apply two checks (they are cheap and
@@ -75,6 +110,12 @@ they catch the two most-observed late-stage failures):
   correction arrived at any point, regenerate the salience map (what matters,
   in what order) from scratch rather than patching the corrected point. A
   tilt that produced one visible error has usually produced invisible ones. (Principle P3.)
+- **Method matured ⇒ re-apply backward.** If the method evolved during the
+  investigation (a new check adopted, a source class re-weighted), re-apply
+  the matured method to conclusions drawn before it existed, before
+  closing (Principle P8 (the-method-matures-backward)). Expect boundaries
+  and interpretations to sharpen rather than facts to flip — that
+  sharpening is the point.
 
 ## Platform Notes
 
