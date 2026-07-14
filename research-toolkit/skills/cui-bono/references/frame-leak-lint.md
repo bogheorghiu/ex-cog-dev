@@ -5,7 +5,7 @@ or establishment-vs-accuser questions. It exists because the default frame
 operates *before* analysis does — in word choice and option ordering — so
 explicit debiasing (cui-bono §4a) can pass while the draft still carries the
 tilt. Self-review missed this twice on record; external challenge caught it
-both times. A lint is the external challenge, scheduled.
+both times. A lint is the external challenge, scheduled. (Principle P6 (the-frame-leaks-upstream); the symmetric-scope rule below is Principle P4 (counter-default) applied to prose.)
 
 ## 1. Frame-marking pass (words)
 

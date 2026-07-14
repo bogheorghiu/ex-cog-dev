@@ -109,7 +109,7 @@ someone in this investigation has read the primary source directly.
 Why this exists: an intermediary's summary is a *positioned compression* — it
 keeps what its author found salient and silently drops the rest. The evidence
 tier describes the SOURCE's quality; `[RELAY]` describes YOUR distance from
-it. The two are independent, which is why the tag stacks instead of replacing.
+it. The two are independent, which is why the tag stacks instead of replacing. (Principle P1 (relayed-is-not-read).)
 
 ## Threshold Requirements
 
@@ -256,14 +256,14 @@ Before claiming completion, ask:
    - A sourcing checkmark suppresses semantic re-reading: once a line is
      verified, attention releases it. After verification, run the value
      question as its own separate step — what does this line MEAN for the
-     question asked, as distinct from whether it is accurately quoted?
+     question asked, as distinct from whether it is accurately quoted? (Principle P2 (verified-is-not-understood).)
 
 10. **"Did an external correction just land?"**
     - If yes: treat the whole salience map as suspect, not just the corrected
       point. Regenerate the ranking/summary from scratch with the correction
       in hand. A correction is evidence about the process that produced the
       output, not only about the point it names — patching locally preserves
-      the tilt that made the error.
+      the tilt that made the error. (Principle P3 (inherited-salience-is-not-importance) — the map, not the point, is suspect.)
 
 11. **"Did I discount — or credit — any source by its label instead of a named defect?"**
     - A dismissal is a claim too: it needs the specific factual defect (which

@@ -6,6 +6,16 @@ Research and cognition toolkit: investigation protocols, cognitive flexibility, 
 
 ## What's Included
 
+### Principles
+
+`principles/PRINCIPLES.md` is the toolkit's shared epistemic substrate — the
+stance its skills act on, extracted into one auditable place instead of drifting
+across many skills in many wordings. Skills cite it by number and slug (e.g.
+`Principle P4 (counter-default)`); each principle carries the mechanism and the
+observed failure it counters, so a citation points at a *reason*, not an order.
+The numbering is append-only — a superseded principle is marked deprecated in
+place, never renumbered — so a reference can't silently rot.
+
 ### Skills
 
 | Skill | Purpose |
