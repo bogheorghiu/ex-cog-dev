@@ -33,3 +33,5 @@ htmlcov/
 *.swp
 .idea/
 .vscode/
+pii-denylist.local
+pii-denylist.txt
