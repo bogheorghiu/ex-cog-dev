@@ -108,6 +108,10 @@ Search these source positions thoroughly. Record what each source says AND what 
 **Your output file:** [path to researcher output file]
 Write ALL findings to this file. Include:
 - Every claim with evidence tier label (VERIFIED/CREDIBLE/ALLEGED/SPECULATIVE)
+- Tag [RELAY] on any claim you took from a summary, digest, or another agent's
+  output instead of the primary source. Load-bearing claims may not remain
+  [RELAY]: verify against the primary source or demote to satellite. Note what
+  you checked when you clear a tag.
 - Sources with dates and links
 - What your sources are SILENT about (omission notes)
 - Your preliminary synthesis
@@ -163,9 +167,11 @@ check what THIS investigation omits that ANOTHER investigation covers.]
 **Order of operations:**
 1. Wait for researcher files to have content
 2. Verify key empirical claims FIRST (dates, numbers, attributions)
-3. THEN run the full generative dialectic (minimum 4 rounds)
-4. Apply source omission analysis across ALL researcher outputs
-5. Test for manufactured consensus when researchers agree
+3. Hunt [RELAY] tags: any load-bearing claim still tagged [RELAY] is an
+   automatic challenge — no primary source read means no verified claim.
+4. THEN run the full generative dialectic (minimum 4 rounds)
+5. Apply source omission analysis across ALL researcher outputs
+6. Test for manufactured consensus when researchers agree
 
 If you need to challenge researchers, send messages via SendMessage.
 Write your complete critique to your output file.

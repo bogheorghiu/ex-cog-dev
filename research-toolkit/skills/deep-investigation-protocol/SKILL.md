@@ -533,6 +533,15 @@ Social media provides ground-level perspectives no publication captures:
 
 ## Confirmation Bias Countermeasures
 
+### Frame-Leak Lint (pre-output)
+
+Countermeasures below operate on explicit analysis; the default frame also
+leaks *upstream* of analysis — in unmarked evaluative words applied to
+power-aligned actors and in first-option ordering. Before output on any
+bloc-contested or establishment-vs-accuser question, run the lint at
+`skills/cui-bono/references/frame-leak-lint.md` (frame-marking pass ·
+first-option audit · recursive prose check).
+
 ### Steel-Man Obligation
 For every conclusion, construct the strongest possible contrarian argument:
 - If leaning toward crisis: what is the strongest case for quick resolution? Quantify it (e.g., 15-20% probability — not zero).

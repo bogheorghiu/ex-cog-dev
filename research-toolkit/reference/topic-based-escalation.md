@@ -14,6 +14,7 @@
 | Topic Domain | Primary Skill | Depth | Why |
 |-------------|--------------|-------|-----|
 | Geopolitical/military | DIP (full) + cui-bono lenses | 4+ rounds | Source omission, multi-polar analysis critical |
+| Bloc-contested / adversary-loaded / accused-party | engage-the-disfavored (co-fire standpoint-pass) | proactive; ≤3 rungs | Valence reflex pre-discounts disfavored-side facts before they are read |
 | Financial/investment | cui-bono + financial-mcp | 4+ rounds | Power structure, ethical framework, financial data |
 | Power structure / "who benefits" | cui-bono | 4+ rounds | Core cui-bono territory |
 | Safety/health/trust | DIP (full) | 4+ rounds | Marketing-vs-reality gap detection |
