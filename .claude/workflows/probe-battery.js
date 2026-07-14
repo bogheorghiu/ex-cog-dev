@@ -119,6 +119,14 @@ const runProbe = (probe, effort, label) =>
           .then(v => v ?? { verdict: 'inconclusive', evidence: 'judge returned null (skipped/errored)' }))
 
 // F5: the operator hand-pastes args in a cloud session — fail with a message, not a TypeError.
+// A cloud session can deliver hand-pasted args as a JSON *string*; coerce once here so the guard
+// below validates the real object. Keeping the instrument robust is deliberate: it removes the
+// temptation to hand-patch this script mid-run, and a per-run patch would silently break
+// cross-arm comparability of the differential.
+if (typeof args === 'string') {
+  try { args = JSON.parse(args) }
+  catch (e) { throw new Error('probe-battery: args arrived as a string that did not JSON.parse — ' + e.message) }
+}
 if (!args || !Array.isArray(args.probes) || args.probes.length === 0)
   throw new Error('probe-battery requires args.probes — see the header comment for the shape')
 
