@@ -37,8 +37,8 @@ become everyone's inherited default).
   — skippable; a decline is persisted as `profile/engagement: never` and
   never re-asked. Ask at most four questions: languages you can/want to
   search · default deliverable (template report / brief / three sentences) ·
-  default budget mode · saturation threshold (default: the P3 stop rule,
-  once Phase 3 ships).
+  default budget mode · saturation threshold (defaults to the source-sweep
+  skill's saturation stop rule once that skill ships; unset until then).
 - **Every routed investigation** reads the profile first and states which
   profile values it applied.
 

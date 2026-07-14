@@ -130,5 +130,6 @@ re-apply the matured method to them. Expected asymmetry (observed): facts
 rarely flip; boundaries and interpretations sharpen — which is exactly what is
 worth catching, because boundaries are what conclusions rest on.
 
-*Operationalized as:* `research` close-out + report-template version protocol
-(planned — register M4/M12).
+*Operationalized as:* `iterative-verification` self-check #12; `research`
+close-out guard (method-matured ⇒ re-apply backward);
+`research/assets/report-template.md` version protocol.
