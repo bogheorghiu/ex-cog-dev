@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# pre-push PII guard — blocks a push whose commits contain a denylisted personal name.
+#
+# This file carries NO names, so it is safe to commit. The names are read at push time from,
+# in order: the PII_DENYLIST env var (cloud env-vars field, same name as the CI secret), else the
+# gitignored file pii-denylist.local at the repo root (.gitignore keeps it out of the repo).
+#
+# Activate per clone (one of):
+#     cp .githooks/pre-push "$(git rev-parse --git-path hooks)/pre-push"   # simplest, no side effects
+#     git config core.hooksPath .githooks                                  # cleaner, but overrides .git/hooks/*
+# With no denylist file present the hook is inert (the CI pii-denylist-guard still applies).
+set -uo pipefail
+
+# Denylist source, in order: the PII_DENYLIST env var (cloud env-vars field / same name as the CI
+# secret, newline-separated), else the uncommittable local file. Names never live in this hook.
+CLEANUP=""
+trap '[ -n "$CLEANUP" ] && rm -f "$CLEANUP"' EXIT
+if [ -n "${PII_DENYLIST:-}" ]; then
+  DENY="$(mktemp)"; CLEANUP="$DENY"
+  printf '%s\n' "${PII_DENYLIST}" | grep -v '^[[:space:]]*$' > "$DENY" || true
+else
+  DENY="$(git rev-parse --show-toplevel)/pii-denylist.local"   # gitignored; never committed
+fi
+if [ ! -s "$DENY" ]; then
+  echo "pre-push: no PII_DENYLIST env var and no denylist file — PII pre-push guard INACTIVE (CI gate still applies)." >&2
+  exit 0
+fi
+
+z=0000000000000000000000000000000000000000
+rc=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$z" ] && continue                                  # ref deletion
+  if [ "$remote_sha" = "$z" ]; then
+    commits=$(git rev-list "$local_sha" --not --remotes=origin)        # new branch: only un-pushed commits
+  else
+    commits=$(git rev-list "$remote_sha..$local_sha")
+  fi
+  [ -z "$commits" ] && continue
+  # -q so the matched line (which contains the name) is never printed; report the ref only.
+  if git log -p --no-color -U0 $commits 2>/dev/null | grep -I -i -F -q -f "$DENY"; then
+    echo "pre-push BLOCKED ($local_ref): a denylisted personal name is in the commits being pushed." >&2
+    echo "  Remove it — and amend/rebase it out of history — before pushing. Denylist: $DENY" >&2
+    rc=1
+  fi
+done
+exit $rc
