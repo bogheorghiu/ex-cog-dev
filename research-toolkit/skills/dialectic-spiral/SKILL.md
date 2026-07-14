@@ -100,6 +100,16 @@ The dialectic spiral is itself a framework with blind spots:
 
 **If the spiral feels performative — if your skepticism is comfortable and your resolutions unsurprising — you are not yet done.** The spiral works when it surprises you.
 
+**Exit discipline — false-balance guard.** "Both sides are motivated,
+therefore UNRESOLVED" is a spiral failure mode, not a finding: symmetric
+scrutiny is owed, symmetric conclusions are not (Principle P5
+(symmetric-scrutiny-is-not-symmetric-conclusions)). If after a full spiral
+the evidence is asymmetric — e.g. one camp's own internal documents
+contradict its public frame — the resolution states that asymmetry and its
+size. Downgrading your own priors (Principle P4 (counter-default)) never
+licenses crediting a self-exculpatory frame against its author's own
+documents.
+
 ## Cross-References
 
 - **Invoked by:** adversarial-critic agent

@@ -70,11 +70,11 @@ they catch the two most-observed late-stage failures):
 - **Verified ≠ understood.** For each verified load-bearing line, re-read it
   for meaning as a separate step: what does it imply for the question asked?
   A sourcing checkmark suppresses semantic re-reading — schedule the second
-  read explicitly.
+  read explicitly. (Principle P2.)
 - **External correction ⇒ global regeneration.** If an external objection or
   correction arrived at any point, regenerate the salience map (what matters,
   in what order) from scratch rather than patching the corrected point. A
-  tilt that produced one visible error has usually produced invisible ones.
+  tilt that produced one visible error has usually produced invisible ones. (Principle P3.)
 
 ## Platform Notes
 

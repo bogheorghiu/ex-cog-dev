@@ -285,7 +285,7 @@ Prefer: "X does [specific thing] [evidence tier]. For use cases involving [A], t
 
 ### Pre-Verdict Gate
 
-Before assigning verdict: CONFIRMED requires independent corroboration. DISCONFIRMED requires specific counter-evidence. Everything else is UNVERIFIED. Source-origin discounts credibility but does not falsify.
+Before assigning verdict: CONFIRMED requires independent corroboration. DISCONFIRMED requires specific counter-evidence. Everything else is UNVERIFIED. Source-origin discounts credibility but does not falsify. Symmetric scrutiny does not owe symmetric conclusions — Principle P5 (symmetric-scrutiny-is-not-symmetric-conclusions).
 
 ## Output Structure (MANDATORY)
 
@@ -540,7 +540,7 @@ leaks *upstream* of analysis — in unmarked evaluative words applied to
 power-aligned actors and in first-option ordering. Before output on any
 bloc-contested or establishment-vs-accuser question, run the lint at
 `skills/cui-bono/references/frame-leak-lint.md` (frame-marking pass ·
-first-option audit · recursive prose check).
+first-option audit · recursive prose check). (Principle P6 (the-frame-leaks-upstream).)
 
 ### Steel-Man Obligation
 For every conclusion, construct the strongest possible contrarian argument:

@@ -162,7 +162,7 @@ The question is not "which pole is worse" but "what power structures does this e
 
 #### 4a. Recursive Debiasing Check
 
-The asymmetric skepticism error reasserts at each meta-level. A one-time correction is insufficient — the correction itself can carry the same bias. Run this check after completing the multi-polar analysis:
+The asymmetric skepticism error reasserts at each meta-level. A one-time correction is insufficient — the correction itself can carry the same bias. This check operationalizes Principle P4 (counter-default). Run this check after completing the multi-polar analysis:
 
 ```
 FOR EACH power pole assessed:
@@ -189,7 +189,7 @@ FOR EACH power pole assessed:
 **Then lint the prose:** 4a audits the evidence table; the words and the
 option ordering can still carry the default frame after the table is clean.
 Before output on any bloc-contested analysis, run
-`references/frame-leak-lint.md`.
+`references/frame-leak-lint.md`. (Principle P6 (the-frame-leaks-upstream).)
 
 ### 5. Output Structure
 
@@ -237,7 +237,7 @@ Before relying on any external data source, check SOURCE_CLASSIFICATIONS.md:
 
 1. **Material Reality First**: Follow the money, not the marketing. Revenue sources reveal true business models.
 
-2. **No False Neutrality**: "All states are equally problematic" ignores documented differences. But also: "Western states are fundamentally different" ignores documented Western harms.
+2. **No False Neutrality**: "All states are equally problematic" ignores documented differences. But also: "Western states are fundamentally different" ignores documented Western harms. (Principle P5 (symmetric-scrutiny-is-not-symmetric-conclusions) — see `../../principles/PRINCIPLES.md`.)
 
 3. **Graduated Assessment**: Avoid binary pass/fail. Articulate trade-offs. "Least problematic" when no clean options exist.
 
