@@ -132,7 +132,7 @@ These outlets challenge Western narratives but may serve other power structures.
 ## Integration Notes
 
 ### For Cui Bono Skill
-This framework supplements SOURCE_CLASSIFICATIONS.md. That file covers data tools/APIs.
+This framework supplements the data-tool assessments now at `../source-dossier/references/data-tool-assessments.md` (moved from this skill's SOURCE_CLASSIFICATIONS.md in 4.2.0). That file covers data tools/APIs.
 This file covers journalistic and analytical sources used during investigation.
 Both apply simultaneously.
 

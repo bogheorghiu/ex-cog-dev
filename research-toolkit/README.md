@@ -32,6 +32,8 @@ place, never renumbered — so a reference can't silently rot.
 | **manufactured-consensus-detection** | Test whether source agreement is genuine independent corroboration or coordinated messaging from a single origin |
 | **source-omission-analysis** | Map what sources are NOT saying — omissions reveal structural position more reliably than statements |
 | **dev-job-defense-ties** | Screen a dev job/studio/employer for hidden military or defense ties — runs cui-bono for the buyer-chain, then classifies by end-use and buyer-nationality against *your* red line. Ships profile-less (builds + remembers your threshold on first run, or always-run/never-ask); mechanism, domain pack, and profile are decoupled and swappable |
+| **saturation-sweep** | Horizontal coverage in declared waves with a novelty ledger and a measured stop rule — makes "done searching" demonstrable instead of felt, and names what the sweep did NOT reach |
+| **source-dossier** | Classify a source by four observable grounds (content over time, ownership, self-positioning, dated behavior) before weighing its claims — the power/funding trace applied symmetrically to ALL sources, including fact-checkers and anti-disinfo NGOs; append-only per-source memory |
 
 ### Commands
 
