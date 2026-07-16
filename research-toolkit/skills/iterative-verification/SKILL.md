@@ -276,7 +276,7 @@ Before claiming completion, ask:
 
 12. **"Did the method change since the earliest conclusions?"**
     - If yes: re-run the matured checks against those early conclusions
-      before claiming completion (Principle P8). Early conclusions passed a
+      before claiming completion (Principle P8 (the-method-matures-backward)). Early conclusions passed a
       weaker gate than late ones — that gradient is invisible unless
       checked.
 

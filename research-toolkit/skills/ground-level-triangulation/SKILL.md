@@ -73,8 +73,9 @@ any camp — the claim is weaker than its citation count suggests (Principle P4
 ## Guardrails
 
 - **Vernacular = standpoint data, never counts.** What a public's language
-  reveals about its frame is standpoint input (Principle P3); it is not a
-  vote count for the claim.
+  reveals about its frame is standpoint input (Principle P3
+  (inherited-salience-is-not-importance)); it is not a vote count for the
+  claim.
 - **Silence under economic dependency ≠ endorsement.** A public that cannot
   afford to speak is not agreeing.
 - **An unreachable vein is a finding.** Firewalled, suppressed-at-source, or

@@ -91,8 +91,8 @@ symmetrically, or it is not a method).
 - **Symmetry gate (hard).** The power/funding trace applies to ALL sources —
   including debunkers, fact-checkers, and anti-disinfo NGOs. A dossier opens
   at FIRST use of any source as an anchor, regardless of camp. Government
-  sanction and entity lists are positioned sources under Principle P4 — traced
-  inputs, never anchors.
+  sanction and entity lists are positioned sources under Principle P4
+  (counter-default) — traced inputs, never anchors.
 
 ## Per-Source Memory (append-only, outside the plugin)
 
