@@ -37,8 +37,9 @@ become everyone's inherited default).
   — skippable; a decline is persisted as `profile/engagement: never` and
   never re-asked. Ask at most four questions: languages you can/want to
   search · default deliverable (template report / brief / three sentences) ·
-  default budget mode · saturation threshold (defaults to the source-sweep
-  skill's saturation stop rule once that skill ships; unset until then).
+  default budget mode · saturation threshold (defaults to saturation-sweep's
+  stop rule — a wave adding under ~10% new material, or two waves moving no
+  verdict; unset until the operator sets one).
 - **Every routed investigation** reads the profile first and states which
   profile values it applied.
 
@@ -50,6 +51,7 @@ Consult `reference/topic-based-escalation.md` for the full escalation table. Qui
 - "Should I invest in / support X?" → **cui-bono + financial-mcp** (a dedicated **stonk** agent to orchestrate these is in design — issue #61)
 - "Who benefits from X?" → **cui-bono** skill (power analysis)
 - "Should I take this dev job / is this studio defense-linked?" — or any dev job/employer evaluation → **dev-job-defense-ties** (runs cui-bono, classifies the buyer against your saved profile)
+- "Have we searched enough? / What are we missing?" → **saturation-sweep** (declared axes, novelty ledger, measured stop)
 - "What's happening with X?" (geopolitical/military) → **DIP** + **cui-bono** lenses
 - "Learn X from YouTube" → **youtube-research**
 - "Analyze this Substack" → **substack-research**

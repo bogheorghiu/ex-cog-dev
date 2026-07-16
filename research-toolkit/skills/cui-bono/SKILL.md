@@ -29,7 +29,7 @@ Cui bono maps how power actually moves through systems — tracing beneficial ow
 /01_INVESTIGATION_METHODOLOGY.md   # Full multi-lens framework, named techniques
 /02_QUICK_REFERENCE.md             # One-page operational reference
 /02_METHODOLOGY_REFERENCE.md       # Detailed technique backgrounds
-/SOURCE_CLASSIFICATIONS.md         # External data source assessments (Layer 1)
+/SOURCE_CLASSIFICATIONS.md         # (Layer 1 data-tool assessments → source-dossier/references/data-tool-assessments.md as of 4.2.0)
 /SOURCE_DIVERSITY_FRAMEWORK.md     # Journalistic/analytical source positioning (Layer 2)
 /lenses/                           # Domain-specific investigation templates
   environmental.md
@@ -227,7 +227,9 @@ If [priority B] highest: [different conclusion]
 
 ## External Data Sources
 
-Before relying on any external data source, check SOURCE_CLASSIFICATIONS.md:
+Before relying on any external data source, check source-dossier's
+references/data-tool-assessments.md (moved from this skill in 4.2.0), and open a
+dossier for any recurring source:
 - **BANNED**: Don't use (e.g., Candid - governance capture)
 - **PENDING**: Apply assessment framework before relying on
 - **ASSESSED**: Documented limits, use appropriately
