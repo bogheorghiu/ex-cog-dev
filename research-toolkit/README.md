@@ -35,6 +35,8 @@ place, never renumbered — so a reference can't silently rot.
 | **saturation-sweep** | Horizontal coverage in declared waves with a novelty ledger and a measured stop rule — makes "done searching" demonstrable instead of felt, and names what the sweep did NOT reach |
 | **source-dossier** | Classify a source by four observable grounds (content over time, ownership, self-positioning, dated behavior) before weighing its claims — the power/funding trace applied symmetrically to ALL sources, including fact-checkers and anti-disinfo NGOs; append-only per-source memory |
 | **ground-level-triangulation** | Map a bloc-contested geopolitical claim across five language-publics with different, independent stakes — convergence across independent publics grounds a claim, origin-concentration in one node weakens it, symmetrically; unreachable veins recorded as findings |
+| **kernel-shell** | Decompose a contrarian or heterodox thesis into atoms (observation / inference / intent-attribution / satellite) and verdict each on its own evidence — never the thesis as a bundle; intent-attributions marked UNVERIFIED by construction. Anti-railroading: outputs no thesis-level label |
+| **label-function-analysis** | Unbundle a loaded label (extremist, denier, conspiracy theorist, shill) into observation/intent/mechanism/actor, autopsy the debate axis it enforces, run cui-bono on the label itself, and test whether the replacement axis is falsifiable |
 
 ### Commands
 

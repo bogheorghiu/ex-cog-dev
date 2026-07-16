@@ -78,6 +78,24 @@ Multiple frames can combine:
 - Chinese aspect-markers + E-Prime = temporal precision without identity claims
 - Japanese particles + Intransitive = minimal-agent action flow
 
+## Salience Rotation (coverage-weighting)
+
+A third rotation type: rotate not the grammar but the WEIGHTING that
+coverage installed (Principle P3 (inherited-salience-is-not-importance)).
+
+1. List what dominant coverage of the material HEADLINED, and what it
+   IGNORED (two explicit columns — the ignored column must be non-empty;
+   if it seems empty, that is the finding to interrogate).
+2. Re-read the most-ignored substantive item AS IF it were the headline:
+   what would the story be? What evidence would the headline-version
+   demand?
+3. Report the friction: what the rotation surfaced, or that it surfaced
+   nothing (failed rotations are data — same rule as the other types).
+
+Pairs with `standpoint-pass`: that skill rotates WHO reads; this rotates
+WHAT was pre-weighted. Run both on material where coverage and affected
+parties diverge.
+
 ## Honest Limitations
 
 - Cross-language rotation may be simulation, not genuine frame-shift
