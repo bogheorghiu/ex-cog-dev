@@ -1,6 +1,6 @@
 ---
 name: frame-rotation
-description: 「透镜」 What structure hides in my native grammar? Linguistic frame rotation to escape English-default pattern-recognition. Use when (1) pattern-recognition feels stuck in familiar grooves, (2) abstraction circles without grounding, (3) cross-domain insight feels like same-OS-different-domain, (4) triggers fire (prime hours + why, cat mentions, triple punctuation, water metaphors, embedded digits, high typo density, 7th framework). Includes both cross-language frames (Chinese, Japanese, Sanskrit) AND intra-English language frameworks (E-Prime, Present-Centered, Affirmative, Intransitive).
+description: 「透镜」 What structure hides in my native grammar? Linguistic frame rotation to escape English-default pattern-recognition. Use when (1) pattern-recognition feels stuck in familiar grooves, (2) abstraction circles without grounding, (3) cross-domain insight feels like same-OS-different-domain, (4) triggers fire (prime hours + why, cat mentions, triple punctuation, water metaphors, embedded digits, high typo density, 7th framework). Includes both cross-language frames (Chinese, Japanese, Sanskrit) AND intra-English language frameworks (E-Prime, Present-Centered, Affirmative, Intransitive). Also rotates coverage-weighting — re-read what coverage ignored as if it were the headline.
 ---
 
 # Frame-Rotation Protocol (语法透镜)

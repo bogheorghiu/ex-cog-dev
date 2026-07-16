@@ -75,8 +75,7 @@ side.
   principle — inputs to be traced like any other, never anchors.
 
 *Operationalized as:* cui-bono §4a recursive debiasing; the frame-leak lint;
-`source-dossier` symmetry gate (planned); `ground-level-triangulation`
-decision rule (planned).
+`source-dossier` symmetry gate; `ground-level-triangulation` decision rule.
 
 ## P5 — symmetric-scrutiny-is-not-symmetric-conclusions
 
