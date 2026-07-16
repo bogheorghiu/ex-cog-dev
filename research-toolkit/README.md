@@ -34,6 +34,7 @@ place, never renumbered — so a reference can't silently rot.
 | **dev-job-defense-ties** | Screen a dev job/studio/employer for hidden military or defense ties — runs cui-bono for the buyer-chain, then classifies by end-use and buyer-nationality against *your* red line. Ships profile-less (builds + remembers your threshold on first run, or always-run/never-ask); mechanism, domain pack, and profile are decoupled and swappable |
 | **saturation-sweep** | Horizontal coverage in declared waves with a novelty ledger and a measured stop rule — makes "done searching" demonstrable instead of felt, and names what the sweep did NOT reach |
 | **source-dossier** | Classify a source by four observable grounds (content over time, ownership, self-positioning, dated behavior) before weighing its claims — the power/funding trace applied symmetrically to ALL sources, including fact-checkers and anti-disinfo NGOs; append-only per-source memory |
+| **ground-level-triangulation** | Map a bloc-contested geopolitical claim across five language-publics with different, independent stakes — convergence across independent publics grounds a claim, origin-concentration in one node weakens it, symmetrically; unreachable veins recorded as findings |
 
 ### Commands
 
