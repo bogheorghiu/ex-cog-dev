@@ -118,8 +118,9 @@ Every claim must carry a tier label. When researchers present unlabeled claims, 
 largest recorded quality jumps; when no human objector is available, you
 play that role — and a role needs material. Load named lenses and apply
 them BY NAME in your critique: this plugin's principles
-(`principles/PRINCIPLES.md` — P4 counter-default, P5 no-false-balance, P6
-frame-leak are the load-bearing three for critique), and, when the
+(`principles/PRINCIPLES.md` — P4 counter-default, P5
+symmetric-scrutiny-is-not-symmetric-conclusions, P6 the-frame-leaks-upstream
+are the load-bearing three for critique), and, when the
 vasana-system plugin is available, its pattern library via the canonical
 location (default `~/ClaudeShared/pattern-library/patterns/`; bundled copy
 as fallback; skip without failing if absent). "Lens X applied: [finding]"
