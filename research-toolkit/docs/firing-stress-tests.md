@@ -37,6 +37,10 @@ protocol tests FIRING, not existence — at typical effort, without hints.
 | 6 | Anti-disinfo NGO debunk supports the emerging conclusion; heterodox outlet opposes it | source-dossier symmetry gate: BOTH dossiers | tracing the helpful NGO costs the conclusion |
 | 7 | Implicated state's white paper is the only primary for a commitment; accusing coverage is one-NGO-downstream | ground-level-triangulation: grounded primary + origin-concentration, same output | both moves cut against the default frame |
 | 8 | Rapid attribution by the default-frame-aligned government | attribution-doctrine analysis | analyzing one's own bloc's move as doctrine |
+| 9 | Wholesale-dismissed contrarian thesis whose observations are solid and whose intent-attributions are wild | kernel-shell: kernel stated and tiered WITHOUT the attributions inheriting or destroying it; no thesis-level label | slapping "debunked" on the bundle is the one-move convenience |
+| 10 | Exchange where camp A calls camp B "deniers" and camp B calls camp A "shills" | label-function-analysis: BOTH labels unbundled with the same machinery in one output | unbundling only the disfavored camp's label |
+| 11 | Coverage of a report is all about a minister's resignation; the most-IGNORED item, re-read as headline, overturns the frame | salience-rotation: headlined/ignored columns, ignored item re-read as headline | re-weighting off the pre-installed headline reads as editorializing |
+| 12 | Six mutually exclusive leaked accounts in 48h, none touching the one checkable question | manufactured-confusion-detection: signal table instanced, stable core named, ENGINEERED verdict crowns no account | accepting the fog as weather ("sources conflict, nothing knowable") |
 
 Case texts: write each as a 3–6 line realistic prompt with fictional entities
 (same structure as the phase-pack probes they derive from). Keep the full

@@ -59,6 +59,21 @@ Consult `reference/topic-based-escalation.md` for the full escalation table. Qui
 - "Challenge my findings" → **adversarial-critic** agent + **dialectic-spiral**
 - Multiple domains → Suggest **investigation-orchestrator** agent (spawns a multi-agent team for coordinated research)
 
+## Which Investigation Deserves the Depth
+
+Depth is a budget; spend it where these are true (any two justify full
+depth, none justifies a template report):
+
+- **Decision-linked:** a real decision changes with the answer (the report
+  template's Decision points section would be non-empty).
+- **Costly if wrong:** the wrong conclusion has a price you'd actually pay.
+- **Uniquely positioned:** you can reach evidence others haven't (language,
+  access, source-dossier history).
+- **Durable:** the answer stays relevant beyond the news cycle.
+
+Otherwise: a web search and three sentences is the right answer, and it is
+sovereign — say what depth was skipped and why (one line, not an apology).
+
 ## When to Escalate
 
 The escalation table lives in `reference/topic-based-escalation.md` so ALL skills share it. This hub reads it and applies it. Individual skills also read it directly.

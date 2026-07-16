@@ -37,6 +37,11 @@ place, never renumbered — so a reference can't silently rot.
 | **ground-level-triangulation** | Map a bloc-contested geopolitical claim across five language-publics with different, independent stakes — convergence across independent publics grounds a claim, origin-concentration in one node weakens it, symmetrically; unreachable veins recorded as findings |
 | **kernel-shell** | Decompose a contrarian or heterodox thesis into atoms (observation / inference / intent-attribution / satellite) and verdict each on its own evidence — never the thesis as a bundle; intent-attributions marked UNVERIFIED by construction. Anti-railroading: outputs no thesis-level label |
 | **label-function-analysis** | Unbundle a loaded label (extremist, denier, conspiracy theorist, shill) into observation/intent/mechanism/actor, autopsy the debate axis it enforces, run cui-bono on the label itself, and test whether the replacement axis is falsifiable |
+| **manufactured-confusion-detection** | Inverse of manufactured-consensus — test whether noise, contradiction, and over-supplied mutually exclusive explanations around a claim are organic uncertainty or engineered to prevent ANY conclusion; map the contradiction structure and name the protected stable core the fog leaves unexamined |
+| **cui-bono** | Who actually benefits — and at whose expense? Multi-lens power-structure analysis for any domain (geopolitics, corporations, institutions, media); "follow the money" with source-tracing; symmetric, assumes no villain in advance (POSIWID) |
+| **standpoint-pass** | Re-rank a text's importance from the standpoint of the most-affected party — surfaces the harm-to-the-many line that coverage-tuned reading misses (Principle P3) |
+| **engage-the-disfavored** | Steelman and explicitly credit a dismissed or disfavored source where the analysis converges with it — counters laundering a disfavored source's correct point as one's own novel finding |
+| **text-deconstruction** | Close reading that finds where a text undermines itself on its own terms — where an argument, policy, or framework needs what it excludes |
 
 ### Commands
 
