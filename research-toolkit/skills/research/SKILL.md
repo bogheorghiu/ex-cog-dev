@@ -107,11 +107,11 @@ they catch the two most-observed late-stage failures):
 - **Verified ≠ understood.** For each verified load-bearing line, re-read it
   for meaning as a separate step: what does it imply for the question asked?
   A sourcing checkmark suppresses semantic re-reading — schedule the second
-  read explicitly. (Principle P2.)
+  read explicitly. (Principle P2 (verified-is-not-understood).)
 - **External correction ⇒ global regeneration.** If an external objection or
   correction arrived at any point, regenerate the salience map (what matters,
   in what order) from scratch rather than patching the corrected point. A
-  tilt that produced one visible error has usually produced invisible ones. (Principle P3.)
+  tilt that produced one visible error has usually produced invisible ones. (Principle P3 (inherited-salience-is-not-importance).)
 - **Method matured ⇒ re-apply backward.** If the method evolved during the
   investigation (a new check adopted, a source class re-weighted), re-apply
   the matured method to conclusions drawn before it existed, before

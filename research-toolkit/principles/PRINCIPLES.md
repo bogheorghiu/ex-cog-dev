@@ -55,7 +55,7 @@ survives passes tuned to offense-against-power (observed: invisible through ~5
 passes with the text in context).
 
 *Operationalized as:* `standpoint-pass` (the whole skill); salience-rotation
-(planned, inside `frame-rotation`).
+(inside `frame-rotation`).
 
 ## P4 — counter-default (calibration, not flip)
 
@@ -89,7 +89,7 @@ license crediting a self-exculpatory frame contradicted by its author's own
 internal documents. When evidence remains asymmetric after symmetric scrutiny,
 say so, with the asymmetry's actual size.
 
-*Operationalized as:* `dialectic-spiral` exit discipline (this phase's wiring);
+*Operationalized as:* `dialectic-spiral` exit discipline;
 cui-bono Key Principle 2 ("No False Neutrality") now cites this number.
 
 ## P6 — the-frame-leaks-upstream
@@ -119,8 +119,8 @@ is a differently-positioned reader (a different training distribution, or the
 human) plus a deliberately injected marginal standpoint (P3). Treat blind-agent
 convergence as ONE evidence stream, not N.
 
-*Operationalized as:* orchestrator synthesis discipline (full wiring planned —
-register M7-full); `standpoint-pass` as the injected standpoint.
+*Operationalized as:* orchestrator synthesis discipline;
+`standpoint-pass` as the injected standpoint.
 
 ## P8 — the-method-matures-backward
 

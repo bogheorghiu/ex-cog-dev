@@ -6,7 +6,7 @@
      gets overwritten by the original the next time someone copies from it.
      On any external objection: record it here (concession or parry), then
      RECOMPUTE what survives — re-run the salience map and the verdict table,
-     don't patch the single point (Principle P3). -->
+     don't patch the single point (Principle P3 (inherited-salience-is-not-importance)). -->
 
 ## Errata & versions
 
@@ -37,7 +37,7 @@
 | # | Claim | Tier (+[RELAY] if unverified relay) | Verdict | What would change it |
 |---|-------|--------------------------------------|---------|----------------------|
 
-<!-- Load-bearing claims may not remain [RELAY] (Principle P1). Every verdict
+<!-- Load-bearing claims may not remain [RELAY] (Principle P1 (relayed-is-not-read)). Every verdict
      carries a falsifier — a verdict with no "what would change it" is a
      belief, not a finding. -->
 
@@ -53,7 +53,7 @@
 <!-- Per source USED (not per claim): position, funding/ownership trace,
      what it was used for, what it is silent about. Symmetric: the trace
      applies to debunkers and anti-disinfo organizations exactly as to
-     everyone else (Principle P4). -->
+     everyone else (Principle P4 (counter-default)). -->
 
 ## Symmetric cui-bono
 
