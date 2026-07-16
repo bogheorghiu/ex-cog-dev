@@ -220,6 +220,15 @@ If [priority B] highest: [different conclusion]
 
 **Hypothesis-Based Inquiry**: Story is hypothesis until verified. Willingness to abandon when contradicted.
 
+**Cui Bono ≠ Cui Auctor**: Benefit identifies SUSPECTS, never authors.
+"Who gains" generates hypotheses; authorship needs its own evidence chain.
+The **calendar test** keeps the two apart: what was already in the pipeline
+before the event? A benefit captured through pre-existing plans, budgets,
+or draft legislation is opportunism until authorship evidence exists —
+beneficiaries are often just the fastest to exploit what they did not
+cause. Run the test both ways: it also catches the reverse error of
+clearing an actor BECAUSE their gain looks too obvious.
+
 **Language/Power Analysis**: Examine what ideological work terminology does. When corporate frameworks import nation-state language:
 - **MFN provisions** ("Most Favored Nations"): Trade treaty terms applied to platform contracts.
 - **Protocol/standard**: Technical neutrality language masking power concentration.
