@@ -60,6 +60,7 @@ place, never renumbered — so a reference can't silently rot.
 | Module | Purpose |
 |--------|---------|
 | **reference/topic-based-escalation.md** | Shared routing logic — maps topics to skills and escalation thresholds. Referenced by the research hub and all research skills. Not a skill; read directly. |
+| **reference/ecosystem-positioning.md** | Where this toolkit sits among published investigation frameworks (DISARM, Bellingcat, Oxford Computational Propaganda, Chomsky's filters) — capability comparison and the gaps it does not cover. Not a skill; read directly. |
 
 ### Agents
 
@@ -68,14 +69,15 @@ place, never renumbered — so a reference can't silently rot.
 | **adversarial-critic** | Reads investigation output files and runs the generative dialectic spiral. Generates the exact OPPOSITE of each synthesis and tests it against evidence. |
 | **falsifier** | Adversarial verification — seeks disconfirmation, designs falsification tests, reports with evidence. Pairs with dialectic-spiral for stress-testing claims. |
 | **investigation-orchestrator** | Orchestrates full multi-agent investigations: designs team, assigns source-position scopes, deploys researchers + adversarial-critic, manages dialectic rounds, produces final synthesis |
+| **negative-dialectical-spiral** | Holds a contradiction open instead of resolving it — maps where a concept fails against particulars via context-isolated tension tracking. Use when synthesis feels too neat, or the dialectic-spiral resolves when it should hold open. |
 | **release-tagger** | Helps prepare tagged stable releases for ex-cog plugins — guides through git tagging and publish workflow |
 
 ### MCP Servers
 
 | Server | Purpose | Status |
 |--------|---------|--------|
-| **financial-data** | Stock market data via yfinance | Stable |
-| **transparency-mcp** | Public transparency data: US Congress (GovTrack), World Bank indicators, ProPublica nonprofit 990 filings — all free, no API keys | Active |
+| **financial-mcp** | Stock price, history, company info and standard technical indicators via yfinance; local ticker cache. No API key. | Basic — thin data access, not an analysis engine |
+| **transparency-mcp** | Keyless public data: US Congress bills/members/votes (GovTrack), World Bank development indicators, US nonprofit Form 990 filings (ProPublica) | Basic — thin data access, not an analysis engine |
 
 > **Note:** relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin where they belong (core dependencies of pattern persistence).
 
