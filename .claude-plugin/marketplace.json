@@ -1,5 +1,6 @@
 {
   "name": "ex-cog-dev",
+  "description": "Externalized cognition — investigation, pattern-recognition and build-discipline plugins for thinking-with-AI.",
   "owner": {
     "name": "bogheorghiu",
     "url": "https://github.com/bogheorghiu"
