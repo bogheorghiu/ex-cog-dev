@@ -37,6 +37,11 @@ place, never renumbered — so a reference can't silently rot.
 | **ground-level-triangulation** | Map a bloc-contested geopolitical claim across five language-publics with different, independent stakes — convergence across independent publics grounds a claim, origin-concentration in one node weakens it, symmetrically; unreachable veins recorded as findings |
 | **kernel-shell** | Decompose a contrarian or heterodox thesis into atoms (observation / inference / intent-attribution / satellite) and verdict each on its own evidence — never the thesis as a bundle; intent-attributions marked UNVERIFIED by construction. Anti-railroading: outputs no thesis-level label |
 | **label-function-analysis** | Unbundle a loaded label (extremist, denier, conspiracy theorist, shill) into observation/intent/mechanism/actor, autopsy the debate axis it enforces, run cui-bono on the label itself, and test whether the replacement axis is falsifiable |
+| **manufactured-confusion-detection** | Inverse of manufactured-consensus — test whether noise, contradiction, and over-supplied mutually exclusive explanations around a claim are organic uncertainty or engineered to prevent ANY conclusion; map the contradiction structure and name the protected stable core the fog leaves unexamined |
+| **cui-bono** | Who actually benefits — and at whose expense? Multi-lens power-structure analysis for any domain (geopolitics, corporations, institutions, media); "follow the money" with source-tracing; symmetric, assumes no villain in advance (POSIWID) |
+| **standpoint-pass** | Re-rank a text's importance from the standpoint of the most-affected party — surfaces the harm-to-the-many line that coverage-tuned reading misses (Principle P3) |
+| **engage-the-disfavored** | Steelman and explicitly credit a dismissed or disfavored source where the analysis converges with it — counters laundering a disfavored source's correct point as one's own novel finding |
+| **text-deconstruction** | Close reading that finds where a text undermines itself on its own terms — where an argument, policy, or framework needs what it excludes |
 
 ### Commands
 
@@ -55,6 +60,7 @@ place, never renumbered — so a reference can't silently rot.
 | Module | Purpose |
 |--------|---------|
 | **reference/topic-based-escalation.md** | Shared routing logic — maps topics to skills and escalation thresholds. Referenced by the research hub and all research skills. Not a skill; read directly. |
+| **reference/ecosystem-positioning.md** | Where this toolkit sits among published investigation frameworks (DISARM, Bellingcat, Oxford Computational Propaganda, Chomsky's filters) — capability comparison and the gaps it does not cover. Not a skill; read directly. |
 
 ### Agents
 
@@ -63,14 +69,15 @@ place, never renumbered — so a reference can't silently rot.
 | **adversarial-critic** | Reads investigation output files and runs the generative dialectic spiral. Generates the exact OPPOSITE of each synthesis and tests it against evidence. |
 | **falsifier** | Adversarial verification — seeks disconfirmation, designs falsification tests, reports with evidence. Pairs with dialectic-spiral for stress-testing claims. |
 | **investigation-orchestrator** | Orchestrates full multi-agent investigations: designs team, assigns source-position scopes, deploys researchers + adversarial-critic, manages dialectic rounds, produces final synthesis |
+| **negative-dialectical-spiral** | Holds a contradiction open instead of resolving it — maps where a concept fails against particulars via context-isolated tension tracking. Use when synthesis feels too neat, or the dialectic-spiral resolves when it should hold open. |
 | **release-tagger** | Helps prepare tagged stable releases for ex-cog plugins — guides through git tagging and publish workflow |
 
 ### MCP Servers
 
 | Server | Purpose | Status |
 |--------|---------|--------|
-| **financial-data** | Stock market data via yfinance | Stable |
-| **transparency-mcp** | Public transparency data: US Congress (GovTrack), World Bank indicators, ProPublica nonprofit 990 filings — all free, no API keys | Active |
+| **financial-mcp** | Stock price, history, company info and standard technical indicators via yfinance; local ticker cache. No API key. | Basic — thin data access, not an analysis engine |
+| **transparency-mcp** | Keyless public data: US Congress bills/members/votes (GovTrack), World Bank development indicators, US nonprofit Form 990 filings (ProPublica) | Basic — thin data access, not an analysis engine |
 
 > **Note:** relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin where they belong (core dependencies of pattern persistence).
 
