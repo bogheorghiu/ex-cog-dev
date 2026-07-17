@@ -4,5 +4,13 @@
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "4.6.0"
+  "version": "4.6.0",
+  "userConfig": {
+    "firing_filter": {
+      "type": "boolean",
+      "default": true,
+      "title": "Firing filter (deterministic firing layer)",
+      "description": "Master switch for the zero-model firing layer (words arm, situations inject one guidance each, blocks only on claim-vs-record facts). Disabling removes the toolkit's only layer that fires without anyone noticing anything — every recorded failure was caught by a human, none by self-review; the prose rules alone are the layer that failed silently on record. Runtime control per session: /research-toolkit:firing-filter [status|on|off]."
+    }
+  }
 }
