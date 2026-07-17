@@ -62,6 +62,7 @@ jobs:
           python3 research-toolkit/skills/research/scripts/test_config.py
           python3 research-toolkit/skills/dev-job-defense-ties/test_screen_efficiency.py
           python3 research-toolkit/lib/test_brainstorm.py
+          python3 research-toolkit/hooks/firing-filter/test_firing_filter.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py

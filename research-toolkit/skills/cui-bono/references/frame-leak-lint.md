@@ -10,11 +10,17 @@ both times. A lint is the external challenge, scheduled. (Principle P6 (the-fram
 ## 1. Frame-marking pass (words)
 
 Scan the draft for unmarked evaluative words applied to power-aligned actors,
-options, or sources. Non-exhaustive watchlist:
+options, or sources. The watchlist lives as data, not prose, so that this
+lint and the firing-filter hook read the SAME rows and cannot drift apart
+(one asset, two consumers — before this refactor the list was a blockquote
+no script could read):
 
-> clean · safe · neutral · trusted · reliable · credible · reputable ·
-> respected · mainstream · obvious · standard · fringe · conspiratorial ·
-> discredited · extreme
+- shipped rows: `${CLAUDE_PLUGIN_ROOT}/hooks/firing-filter/seed/lexicon.jsonl`
+  (the `arm-watchlist` entry's stems are this lint's word list; other rows
+  add the recorded verdict vocabulary and absence phrases);
+- your own grown rows: `${CLAUDE_PLUGIN_DATA}/firing-filter/local/lexicon.jsonl`
+  (read them too if present — a locally-mined word is as binding as a
+  shipped one).
 
 For each hit, ask: **"whose default?"** Then either
 - attach the evidence that earns the word (making it marked), or
