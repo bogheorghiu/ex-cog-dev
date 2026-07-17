@@ -1,0 +1,68 @@
+name: Plugin manifest validate
+
+# Gates the ONE class of catalog the filesystem can't replace.
+#
+# Most lists of "what exists" are duplication that rots — the tree already says it,
+# so the fix is to delete the list, not to check it (see the repo's README prune in
+# #166, and ~/.claude/rules/filesystem-is-the-catalog.md). But `marketplace.json`
+# and each `plugin.json` are machine-read manifests: the format *requires* them, and
+# marketplace entries can restate metadata that also lives in a plugin's own manifest.
+# That residue is what this gate covers — single-source what you can, gate what the
+# format forces you to duplicate.
+#
+# It runs Anthropic's own validator, which they recommend for exactly this: "Pass
+# --strict to treat warnings as errors. Use it in CI to catch a misspelled field name
+# or a field left over from another tool's manifest before publishing."
+# (code.claude.com/docs/en/plugins-reference)
+#
+# What it catches that no other gate here does — validating the marketplace root
+# cascades into every entry whose `source` is a local path, so one command covers all
+# four plugins:
+#   - marketplace.json schema errors, duplicate plugin names, source path traversal
+#   - each plugin's own plugin.json, reported as "plugins[N] plugin.json → ..."
+#   - a marketplace entry whose `version` disagrees with that plugin's plugin.json
+#     (the manifest-duplication drift check — 3 of 4 plugin descriptions had silently
+#     drifted before this landed)
+#   - unrecognized / misspelled manifest fields, with a did-you-mean suggestion
+#     (verified: injecting "discription" fails the run)
+#
+# Verified offline + unauthenticated: `env -i` with an empty HOME validates fine, so
+# the runner needs no login, no API key, no network beyond the npm install.
+#
+# The CLI version is pinned deliberately (~/.claude/rules/install-integrity.md: pin,
+# don't chase latest — an unpinned validator can start failing CI from an upstream
+# change at any time). The trade-off is the other direction: a pinned validator won't
+# recognise a manifest field added upstream later, and --strict would flag it. Bump
+# this pin consciously when that happens; don't "fix" it by unpinning.
+
+on:
+  push:
+    branches: [main]
+  # No base-branch filter on PRs: run on PRs into ANY base branch so integration-branch
+  # work (e.g. research-toolkit-v4) is gated too. Matches the other guards here.
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code (pinned)
+        # Install scripts run here on purpose: this package fetches its own native
+        # binary on install, so --ignore-scripts would leave it non-functional. The
+        # exact-version pin is the integrity lever for a first-party package.
+        run: npm install -g @anthropic-ai/claude-code@2.1.212
+
+      - name: Validate marketplace + every plugin manifest
+        run: |
+          set -euo pipefail
+          claude plugin validate . --strict
