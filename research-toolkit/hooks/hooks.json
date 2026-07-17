@@ -11,7 +11,7 @@
         ]
       },
       {
-        "matcher": "Task|Agent",
+        "matcher": "^(Task|Agent)$",
         "hooks": [
           {
             "type": "command",
@@ -20,7 +20,7 @@
         ]
       },
       {
-        "matcher": "Write|Edit",
+        "matcher": "^(Write|Edit)$",
         "hooks": [
           {
             "type": "command",
