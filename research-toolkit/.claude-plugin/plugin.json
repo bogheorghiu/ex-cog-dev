@@ -4,7 +4,7 @@
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "4.6.0",
+  "version": "4.6.1",
   "userConfig": {
     "firing_filter": {
       "type": "boolean",
