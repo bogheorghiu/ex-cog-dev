@@ -288,6 +288,27 @@ class TestHandle(unittest.TestCase):
                                           "tool_input": {"content": VERDICT_DOC}})
             self.assertIsNone(out)
 
+    def test_master_switch_off_is_full_passthrough(self):
+        # Regression: master_enabled() shipped UNWIRED in 4.6.0–4.6.1, so
+        # CLAUDE_PLUGIN_OPTION_FIRING_FILTER=off silently did nothing (an
+        # M11 probe's "off" arm still armed). Off must mean: no output, no
+        # ledger dir, no state — assertable from the filesystem.
+        with Env():
+            os.environ["CLAUDE_PLUGIN_OPTION_FIRING_FILTER"] = "off"
+            try:
+                for ev, payload in (
+                        ("session-start", {"session_id": "s1"}),
+                        ("user-prompt", {"session_id": "s1",
+                                         "prompt": SOURCE_DISPATCH
+                                         + " credibility debunk propaganda"}),
+                        ("pre-write", {"session_id": "s1",
+                                       "tool_input": {"content": VERDICT_DOC}}),
+                        ("stop", {"session_id": "s1"})):
+                    self.assertIsNone(ff.handle(ev, payload))
+                self.assertFalse((ff.data_dir() / "ledger").exists())
+            finally:
+                del os.environ["CLAUDE_PLUGIN_OPTION_FIRING_FILTER"]
+
 
 class TestFailOpen(unittest.TestCase):
     def test_garbage_stdin_exits_zero_and_passes_through(self):

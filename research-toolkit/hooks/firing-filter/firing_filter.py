@@ -413,6 +413,13 @@ def maybe_arm(st: dict, text: str, session_id: str, source: str) -> bool:
     return False
 
 def handle(event: str, payload: dict) -> dict | None:
+    if not master_enabled():
+        # userConfig master switch → full passthrough: no seeding, no arming,
+        # no ledgering. Off must be *visibly* off (no ledger dir ever appears)
+        # so a probe can assert the state from the filesystem. Shipped unwired
+        # in 4.6.0–4.6.1 — the env var silently did nothing (caught by the
+        # M11 clean-rerun audit, 2026-07-19, when an "off" arm still armed).
+        return None
     session_id = str(payload.get("session_id", "") or "")
     if event == "session-start":
         seed_assets()
