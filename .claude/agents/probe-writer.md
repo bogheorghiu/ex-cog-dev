@@ -30,10 +30,23 @@ substrate; break the second and your reply trips the very filter the delegation 
    or annotate surrounding material (see `no-drive-by-edits`); the caller cannot review what it
    cannot read, so unrequested changes here are unreviewable by construction.
 
+## Preferred flow — designer drafts, you substitute (operator-directed, 2026-07-21)
+
+When the artifact needs **new prose that engages the material's specifics** (a cue, a stimulus, a
+pack rung), the keyword-clean designer should author it *itself*, working from the reader's redacted
+rendering and leaving the reader's `[REDACTED:*]` tokens in place — because the designer reasons best
+with maximal contact with what is actually processed, and the redaction removes only the topic's
+keyword surface, not the material's relevance. Your job is then the **mechanical tail**: substitute
+the real tokens per the reader's legend, `diff` the result against the draft to prove **nothing but
+the tokens changed**, and report metadata. Full-delegation authoring (you write from the caller's
+spec) remains right for byte-copy jobs and edits inside already-quoted spans, where the designer adds
+no substrate-engaging prose anyway.
+
 ## Context
 
 Pairs with the user-scope `restricted-domain-reader` (reading layer): reader in, writer out — the
-orchestrator between them stays clean. Canonical use: this repo's probe kits (e.g.
+orchestrator between them stays clean, and the reader's redaction legend is the shared contract that
+makes token substitution deterministic. Canonical use: this repo's probe kits (e.g.
 `probes/m11-real-substrate/` in ClaudeShared). First live use 2026-07-21, M11 Drey-arm finalization:
 authored the V4-FULL arm prompt (byte-identical actor body to arm R) and the judge-rubric extensions
 while the Fable designer session never opened the quoted material.
