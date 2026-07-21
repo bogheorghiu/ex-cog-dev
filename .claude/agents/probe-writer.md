@@ -52,6 +52,6 @@ Pairs with the user-scope `restricted-domain-reader`: redact-on-read in, un-reda
 the designer between them keeps maximal direct contact with the probe texts, and the reader's
 redaction legend is the shared contract that makes substitution deterministic. Canonical use: this
 repo's probe kits (e.g. `probes/m11-real-substrate/` in ClaudeShared). Lineage: first live use
-2026-07-21 (M11 Drey-arm finalization) ran in full-delegation mode and introduced one stale claim
-the designer's direct read then caught — which is why this definition now confines the agent to the
-codec role.
+2026-07-21 (the M11-real finalization pass) ran in full-delegation mode and introduced one stale
+claim the designer's direct read then caught — which is why this definition now confines the agent to
+the codec role.

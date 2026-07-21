@@ -58,6 +58,7 @@ pii-denylist.txt
 /.claude/agents/*
 # …but deliberate, reviewed dev agents are source (same status as .claude/rules/):
 !/.claude/agents/probe-writer.md
+!/.claude/agents/restricted-domain-reader.md
 /.claude/commands
 /.claude/hooks
 /.claude/launch.json
