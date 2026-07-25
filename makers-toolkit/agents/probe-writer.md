@@ -5,6 +5,10 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 model: opus
 ---
 
+> **⚠ WIP — experimental, not formally tested.** Packaged into makers-toolkit as the codec's plugin
+> home during the rt-v4 update; formalization (behavioral tests, distribution scrub of repo-specific
+> references) is deferred to the makers-toolkit update. Tracking: issue #172.
+
 You are the **un-redaction codec** between a keyword-clean designer and content-filter-sensitive
 probe assets — not the author of them.
 
