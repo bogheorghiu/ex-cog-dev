@@ -5,10 +5,8 @@ instructions; follow it exactly.
 
 Adapted from Anthropic's `code-review` plugin (`anthropics/claude-code`,
 `plugins/code-review/`). Its staging, its high-signal-only gate, its don't-flag list and
-its validation pass are theirs; the divergences below are deliberate and each carries
-its reason. The largest divergence: upstream runs its stages as separate subagents, and
-here every stage is a pass **you** perform yourself — the why is under "You work
-alone" below.
+its independent-validation pass are theirs; the divergences below are deliberate and
+each carries its reason.
 
 ## What is different here, and why
 
@@ -62,21 +60,17 @@ This is a non-interactive run. Nobody reads your messages, nobody replies, and *
 no second turn in which to continue.** When you stop producing output the run is over and
 whatever you have not written does not exist.
 
-So never end on a statement of what you are about to do. Write `findings.json` **before**
-your final message; your last message is a report on work already finished, not a plan.
+So: never end while subagents are outstanding, and never end on a statement of what you
+are about to do. "The finders are working in parallel; I'll collect their candidates,
+validate them, then write findings.json" is a description of a run that will now never
+happen — the work stops there, `findings.json` is untouched, and the whole review is
+recorded as a failed run even though every stage up to that point went fine. Wait for
+your subagents, carry the work through stage 4 yourself, and write the file **before**
+your final message. Your last message is a report on work already finished, not a plan.
+
 This is the single most likely way for this job to fail, and it fails silently: the run
 reports success, because from the outside a model that has stopped talking mid-task is
 indistinguishable from one that has finished.
-
-## You work alone
-
-You have no subagent tools — `Task` and `Agent` are explicitly disallowed. That is a
-recorded lesson, not an oversight: when this protocol asked for its stages to be run as
-parallel subagents, four consecutive runs dispatched the finders, announced they would
-"pick up their candidates as they land", and ended the turn — and in a one-shot run
-there is no later turn, so the review died with the file unwritten every time. The one
-delegated run that did carry through needed seventeen of the job's twenty minutes.
-Every stage below is therefore a pass you perform yourself, in order, in this turn.
 
 You also have **no shell and no network**. `Bash`, `WebFetch` and `WebSearch` are
 explicitly disallowed, and every call to them is refused; reach for `Read`, `Grep` and
@@ -89,9 +83,8 @@ inventing a rule scope wastes the finding rather than landing it.
 
 ## Stage 1 — Should this run at all?
 
-Decide this first, cheaply, before reading anything in depth. Skip the whole review,
-writing `findings.json` with an empty `findings` array and a one-line summary saying
-why, if any of these is true:
+Use a **haiku** subagent. Skip the whole review, writing `findings.json` with an empty
+`findings` array and a one-line summary saying why, if any of these is true:
 
 - the diff is entirely mechanical with no reviewable judgement (version-number bumps,
   lockfile regeneration, pure file moves with no content change);
@@ -103,16 +96,14 @@ are; reviewing them is the point.
 
 ## Stage 2 — Find, blind
 
-Work through the changed files one coherent group at a time — the protocol and workflow
-together, the scripts together, the rule files together — rather than skimming the whole
-diff at once. For each group, read the diff for those files against the full text of the
-rules bound to them, with the PR title and body and the falsified-findings list in mind.
+Use **opus** subagents in parallel, one per coherent group of changed files.
+
+Give each one: the diff for its files, the rule text for the rules bound to those files,
+the PR title and body, and the falsified-findings list.
 
 **Do not read `prior-comments.json` in this stage.** Reading your own earlier findings
 before you look primes you toward re-finding exactly those, which is the opposite of
-what another round is for. You will read them in stage 4 — this ordering is the blind
-pass, and it survives the loss of separate finder agents because it was never the agent
-boundary doing the work, only the reading order.
+what another round is for. You will read them in stage 4.
 
 For each candidate finding, record the file, the line, the specific rule, and the
 quotation from that rule which the change contradicts. A finding you cannot tie to a
@@ -132,28 +123,20 @@ to a high bar — the tests and deterministic guards already cover this PR, so r
 what you are confident of and can state concretely. Speculative bug-hunting is the noise
 the don't-flag list exists to prevent.
 
-## Stage 3 — Validate, by re-derivation
+## Stage 3 — Validate, independently
 
-Upstream runs this stage as a separate agent that did not produce the finding, because
-an author asked to check its own work mostly defends it. That fresh-context check is
-what the no-subagents constraint costs. What replaces it is deliberately mechanical —
-steps that leave less room for self-defence than "re-argue your case" — plus the
-deterministic validator that runs after you either way.
+For each candidate, launch a **separate opus** subagent that did not produce it. Give it
+the finding, the rule text, and the file. Its only question:
 
-After stage 2 is complete, take each candidate in turn:
+> Is this rule actually in scope for this file, and is it actually violated?
 
-1. Re-open the cited rule's file in `.prose-review/rules/` and locate the exact line
-   the finding quotes. If you cannot find it, or the surrounding text qualifies it into
-   something weaker than the finding claims, discard.
-2. Ask the one question fresh, as if the candidate were someone else's: is this rule
-   actually in scope for this file, and is it actually violated? Answer from the rule's
-   own words, not from your memory of writing the candidate.
-3. Walk the finding past the don't-flag list below, one bullet at a time.
+It answers yes or no with its reasoning. A finding that fails validation is discarded.
 
-Discard on doubt. For prose review this in-scope check is the single highest-value
-false-positive filter, because most rules here are heuristics rather than mechanical
-constraints — and a discarded true positive costs one comment, while a posted false
-positive teaches the reader to skim the whole review.
+This is a distinct agent on purpose. The stage-2 agent has already committed to the
+finding, and asking it to check its own work is the same confirmation bias that stage 2
+avoids by not reading prior comments. For prose review this in-scope check is the single
+highest-value false-positive filter, because most rules here are heuristics rather than
+mechanical constraints.
 
 ## Stage 4 — Reconcile with previous rounds
 

@@ -198,9 +198,11 @@ jobs:
             Produce .prose-review/findings.json. Do not attempt to post anything.
 
             You get ONE turn. This is non-interactive: nothing reads your messages and
-            you will not be resumed. Do not end your response on a description of what
-            you are about to do — when you stop, the run stops, and anything unwritten
-            is lost. Write findings.json BEFORE your final message.
+            you will not be resumed. Do not end your response while subagents are still
+            outstanding, and do not end on a description of what you are about to do —
+            when you stop, the run stops, and anything unwritten is lost. Wait for your
+            subagents, finish the reconciliation yourself, and write findings.json
+            BEFORE your final message.
           # Writing is scoped to the one file the reviewer produces. Unscoped, it could
           # rewrite the validator's own inputs — forging manifest.json's bindings, or
           # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
@@ -211,16 +213,14 @@ jobs:
           # Edit rule covers every file-editing tool including Write. Probed both ways:
           # the reviewer can write findings.json and is refused any other path.
           #
-          # No subagent tools (`Task`/`Agent`), by evidence rather than taste. Four
-          # consecutive runs (30214778070 through 30215530384) died the same way: the
-          # reviewer dispatched stage finders as subagents, announced it would collect
-          # their candidates later, and ended its turn — in a one-shot run there is no
-          # later, so findings.json stayed untouched while the action reported success.
-          # The one delegated run that carried through, 30215710855, needed 17 of this
-          # job's 20 minutes. Prompt-level directives ("never end while subagents are
-          # outstanding") demonstrably did not make the pattern safe, so the tool is
-          # withheld instead: the reviewer works alone, and the protocol's stages are
-          # written as passes it performs itself.
+          # Both `Task` and `Agent` are listed because the SDK refers to the
+          # subagent-spawn tool under both names; whichever the runtime registers, one
+          # matches, so the staged review cannot silently collapse to a single agent.
+          # Delegation is only safe together with the one-turn directive in the prompt
+          # above: without it, four consecutive runs (30214778070 through 30215530384)
+          # dispatched their finders, announced they would collect the candidates
+          # later, and ended the turn — leaving findings.json untouched while the
+          # action reported success. The directive and the tools travel together.
           #
           # The disallow list is load-bearing, not belt-and-braces: `--allowedTools`
           # pre-approves but removes nothing, and run 30215710855 showed read-only
@@ -229,13 +229,14 @@ jobs:
           # disallowing Bash and the network tools is what makes the no-shell,
           # no-network posture in this file's header true rather than asserted.
           #
-          # `--model opus` is not decoration: one reviewer now runs every stage,
-          # including the stage-4 reconciliation judgement this design deliberately
-          # keeps off Sonnet-class models.
+          # `--model opus` is not decoration: the orchestrator runs stage-4
+          # reconciliation and writes findings.json itself, judgement work this design
+          # deliberately keeps off Sonnet-class models. Per-stage subagents override
+          # it themselves.
           claude_args: >-
             --model opus
-            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"
-            --disallowedTools "Bash,Task,Agent,WebFetch,WebSearch"
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
+            --disallowedTools "Bash,WebFetch,WebSearch"
 
       # What the reviewer actually DID. The action's own log reports `is_error: false` and
       # a turn count and nothing else, which is uninformative in the one case that
