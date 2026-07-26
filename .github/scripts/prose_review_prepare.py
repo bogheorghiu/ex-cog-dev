@@ -261,6 +261,32 @@ def main() -> int:
 
     (out_dir / "rule-bindings.md").write_text("\n".join(lines), encoding="utf-8")
 
+    # The reviewer must know the limits it will be held to BEFORE it writes, otherwise
+    # every run wastes a repair round rediscovering them. Values come from the workflow
+    # env, so changing a limit is a one-line workflow edit and the model, the validator
+    # and this file cannot drift apart.
+    limits = {
+        "max_comment_chars": int(os.environ.get("PROSE_REVIEW_MAX_COMMENT_CHARS", "1200")),
+        "max_quoted_lines": int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6")),
+        "repair_rounds": int(os.environ.get("PROSE_REVIEW_REPAIR_ROUNDS", "1")),
+    }
+    (out_dir / "constraints.md").write_text(
+        "# Constraints your findings are held to\n\n"
+        "These are enforced by a script after you write. A finding that breaks one is not\n"
+        "posted, so it costs you the finding rather than merely earning a warning.\n\n"
+        f"- **Comment length**: at most **{limits['max_comment_chars']} characters** for\n"
+        f"  `summary` and `detail` combined.\n"
+        f"- **Quoting**: at most **{limits['max_quoted_lines']} lines** of quoted source per\n"
+        f"  finding. This job's logs and comments are publicly readable; quote the minimum\n"
+        f"  that makes the point.\n"
+        f"- **Issue and PR references**: write `issue #N` or `PR #N`, never a bare `#N`.\n"
+        f"  GitHub renders a hovercard for a bare number on the web, but review comments\n"
+        f"  also arrive as plain-text email, where there is no icon and no preview.\n"
+        f"- **Repair rounds**: **{limits['repair_rounds']}**. If findings are rejected you\n"
+        f"  get that many chances to fix and resubmit them, then whatever still fails is\n"
+        f"  dropped. Rejections come back with the exact reason for each.\n",
+        encoding="utf-8")
+
     print(f"prepared {len(changed)} changed files, "
           f"{len(artifact_rules)} artifact rules, "
           f"{len(conversation_rules)} conversation rules, "

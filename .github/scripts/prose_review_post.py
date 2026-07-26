@@ -44,6 +44,25 @@ REQUIRED_FIELDS = ("file", "line", "rule", "severity", "summary", "detail")
 # disagreement between two components can take.
 SELF_CONTRADICTION = "self-contradiction"
 
+# A change that is simply wrong, citing no convention. Kept as its own category rather
+# than folded into self-contradiction because the two route differently in triage: a
+# self-contradiction is a documentation defect, a bug is a code defect.
+BUG = "bug"
+
+RESERVED_CITATIONS = {SELF_CONTRADICTION, BUG}
+
+# Limits come from the environment, and the same values are published to the reviewer in
+# constraints.md before it writes. Hardcoding them in two places is how the model's idea
+# of the rules and the enforcement of them drift apart.
+MAX_COMMENT_CHARS = int(os.environ.get("PROSE_REVIEW_MAX_COMMENT_CHARS", "1200"))
+MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
+
+# `issue #N` / `PR #N`, never a bare `#N`. GitHub renders a hovercard for the bare form
+# on the web, which is why the repo's rule permits it in issue bodies -- but review
+# comments also arrive as plain-text email, where no icon or preview exists, so the
+# strict form is what actually serves the reader here.
+BARE_REF = re.compile(r"(?<!issue )(?<!PR )(?<![\w/])#\d+")
+
 # A finding becomes a public comment, so its text is an output channel. The reviewer has
 # no reason to ever quote a credential, and the job environment is readable from inside
 # the runner (/proc/self/environ), so anything token-shaped in a finding is either an
@@ -113,6 +132,22 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, "finding text contains something credential-shaped"))
             continue
 
+        text = f"{raw['summary']}\n{raw['detail']}"
+
+        if len(text) > MAX_COMMENT_CHARS:
+            rejected.append((raw, f"comment is {len(text)} characters; the limit is {MAX_COMMENT_CHARS}"))
+            continue
+
+        quoted = sum(1 for ln in text.splitlines() if ln.lstrip().startswith((">", "    ", "\t")))
+        if quoted > MAX_QUOTED_LINES:
+            rejected.append((raw, f"quotes {quoted} lines; the limit is {MAX_QUOTED_LINES}"))
+            continue
+
+        bare = BARE_REF.search(text)
+        if bare:
+            rejected.append((raw, f"writes a bare '{bare.group(0)}'; use 'issue {bare.group(0)}' or 'PR {bare.group(0)}'"))
+            continue
+
         severity = str(raw["severity"]).lower()
         if severity not in MIN_SEVERITY:
             rejected.append((raw, f"severity '{severity}' below the reporting threshold"))
@@ -127,7 +162,7 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
         # The reserved citation cites no rule, so the two rule checks do not apply to it.
         # Every other check still does -- it must target a real changed file at a real
         # line in the diff.
-        if rule != SELF_CONTRADICTION:
+        if rule not in RESERVED_CITATIONS:
             if not (REPO_ROOT / ".claude" / "rules" / f"{rule}.md").is_file():
                 rejected.append((raw, f"cites rule '{rule}', which does not exist"))
                 continue
@@ -158,6 +193,8 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
     rule = finding["rule"]
     if rule == SELF_CONTRADICTION:
         cite = "_The change contradicts itself; no rule is cited._"
+    elif rule == BUG:
+        cite = "_Reported as a defect in the change itself; no rule is cited._"
     else:
         link = f"https://github.com/{repo}/blob/{head_sha}/.claude/rules/{rule}.md"
         cite = f"Rule: [`{rule}`]({link})"
@@ -202,6 +239,16 @@ def main() -> int:
         json.dumps([{"finding": f, "reason": r} for f, r in rejected], indent=2),
         encoding="utf-8",
     )
+
+    if os.environ.get("PROSE_REVIEW_VALIDATE_ONLY") == "1":
+        # First pass of the repair loop: report what failed and stop, so the reviewer
+        # gets one chance to fix its own findings rather than losing them silently.
+        print(f"validate-only: {len(accepted)} would post, {len(rejected)} rejected")
+        gh_out = os.environ.get("GITHUB_OUTPUT")
+        if gh_out:
+            with open(gh_out, "a", encoding="utf-8") as fh:
+                fh.write(f"rejected={len(rejected)}\n")
+        return 0
 
     if not accepted:
         # Nothing to say. Posting "0 comments" on every push is pure noise: a required

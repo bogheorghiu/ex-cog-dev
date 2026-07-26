@@ -54,6 +54,15 @@ jobs:
 
     env:
       PROSE_REVIEW_DIR: .prose-review
+      # Limits live here and nowhere else. The prepare step publishes them to the
+      # reviewer in constraints.md and the validator reads the same variables, so the
+      # model's idea of the rules and their enforcement cannot drift apart.
+      PROSE_REVIEW_MAX_COMMENT_CHARS: "1200"
+      PROSE_REVIEW_MAX_QUOTED_LINES: "6"
+      # How many chances a rejected finding gets to be fixed before it is dropped.
+      # Actions cannot loop steps, so raising this past 1 means adding another repair
+      # step below; the value is what the reviewer is told, so keep the two in step.
+      PROSE_REVIEW_REPAIR_ROUNDS: "1"
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -174,6 +183,41 @@ jobs:
             --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
 
-      - name: Validate the findings and post the review
+      - name: Validate the findings
+        id: validate
+        if: steps.gate.outputs.review == 'true'
+        env:
+          PROSE_REVIEW_VALIDATE_ONLY: "1"
+        run: python3 .github/scripts/prose_review_post.py
+
+      # A rejected finding is usually a fixable mistake -- a rule cited that does not
+      # bind the file, a comment a little over length -- not a bad finding. Dropping it
+      # silently wastes work the reviewer already did and teaches nothing, so it gets
+      # told exactly what failed and one pass to correct it.
+      - name: Repair rejected findings
+        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ROUNDS != '0'
+        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          classify_inline_comments: false
+          prompt: |
+            Some of your findings were rejected by validation and will not be posted.
+
+            Read .prose-review/rejected.json. Each entry has the finding and the exact
+            reason it failed. Read .prose-review/constraints.md and
+            .prose-review/rule-bindings.md again.
+
+            Rewrite .prose-review/findings.json so it contains every finding that already
+            passed, plus any rejected one you can genuinely fix. Drop a rejected finding
+            rather than forcing it: if the rule you cited does not bind that file, the
+            finding was probably wrong, not merely misfiled.
+
+            This is your only repair pass.
+          claude_args: >-
+            --model opus
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"
+
+      - name: Post the review
         if: steps.gate.outputs.review == 'true'
         run: python3 .github/scripts/prose_review_post.py

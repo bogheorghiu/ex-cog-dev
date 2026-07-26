@@ -29,6 +29,7 @@ them; do not try to fetch anything.
 | `.prose-review/rule-bindings.md` | **which rules bind which changed file** |
 | `.prose-review/prior-comments.json` | comments from previous review rounds |
 | `.prose-review/falsified.md` | findings previously confirmed as false positives |
+| `.prose-review/constraints.md` | **the limits your findings are held to** — read this first |
 
 You may also `Read`, `Grep` and `Glob` the repository itself — to read a rule's full
 text, or to check whether something a change assumes actually exists.
@@ -73,9 +74,12 @@ on its own terms rather than against a convention. Cite it as
 `"rule": "self-contradiction"`, the one reserved value the validator accepts without a
 rule file.
 
-General bug-hunting is **not** in scope. A bug finding cites no rule, so nothing bounds
-it, and unbounded findings are the noise the don't-flag list exists to prevent — the
-tests and the deterministic guards already cover code correctness on this PR.
+**A genuine defect in changed code** is also in scope, cited as `"rule": "bug"`. It is a
+separate reserved value from `self-contradiction` because the two route differently when
+triaged: a self-contradiction is a documentation defect, a bug is a code defect. Hold it
+to a high bar — the tests and deterministic guards already cover this PR, so report only
+what you are confident of and can state concretely. Speculative bug-hunting is the noise
+the don't-flag list exists to prevent.
 
 ## Stage 3 — Validate, independently
 
@@ -171,7 +175,8 @@ Write `.prose-review/findings.json` and nothing else:
 }
 ```
 
-`severity` is `blocking` or `should-fix`. Anything you would have marked lower is
+`rule` is a rule name from `rule-bindings.md`, or one of the two reserved values
+`self-contradiction` / `bug`. `severity` is `blocking` or `should-fix`. Anything you would have marked lower is
 something the previous section told you not to flag; drop it instead.
 
 If you found nothing, write an empty `findings` array with a summary saying what you
