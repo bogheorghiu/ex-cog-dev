@@ -21,6 +21,7 @@ get wrong.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -266,7 +267,24 @@ def main() -> int:
 
     findings_file = work / "findings.json"
     if not findings_file.is_file():
-        print("::error::reviewer produced no findings.json — treating as a failed run")
+        # The prepare step seeds this file, so its absence means something deleted it
+        # rather than that the reviewer declined to write -- a different fault, said
+        # differently, because the two want different investigations.
+        print("::error::findings.json is missing entirely; it is seeded before the "
+              "reviewer runs, so something removed it")
+        return 1
+
+    raw_text = findings_file.read_text(encoding="utf-8")
+    seed_digest = manifest.get("findings_seed_sha256")
+    if seed_digest and hashlib.sha256(raw_text.encode("utf-8")).hexdigest() == seed_digest:
+        # Distinguished from "found nothing", which is a legitimate empty result the
+        # reviewer states deliberately. An untouched seed means the reviewer ran and
+        # never wrote its one required output, so there is no review to validate and
+        # nothing to learn from validating it. Named precisely so the run's log says
+        # which of the two happened.
+        print("::error::the reviewer did not write findings.json — the file is still "
+              "byte-identical to the seed. The Review step's own result is the place "
+              "to look: it reports success even when the model produced no output.")
         return 1
 
     try:

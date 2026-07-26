@@ -43,6 +43,12 @@ a change assumes actually exists. Remember that `.claude/`, `CLAUDE.md` and `.mc
 there are the base branch's versions; the diff is the authority on what this change does
 to them.
 
+`.prose-review/findings.json` **already exists**, seeded as `{"summary": "", "findings":
+[]}`. Edit it — it is the one path you may write, and it is deliberately present so you
+never have to create it. Leaving it untouched is not a way to report "nothing found":
+that is indistinguishable from having failed, and is treated as a failed run. To report
+nothing found, write the empty `findings` array yourself with a `summary` saying why.
+
 **You do not post anything.** You write one file, `.prose-review/findings.json`, and
 a validation script decides what reaches the pull request. A finding that cites a rule
 which does not bind the file it targets is dropped before it is ever published, so

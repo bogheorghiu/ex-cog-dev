@@ -20,6 +20,7 @@ installed, and a dependency here would be one more thing that can break or be sw
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -235,9 +236,22 @@ def main() -> int:
     for rule in artifact_rules + conversation_rules:
         shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
 
+    # --- The file the reviewer is required to produce -------------------------------
+    # Seeded here, rather than left for the reviewer to create, for two reasons. The
+    # reviewer's only write permission is `Edit(.prose-review/findings.json)`, and an
+    # edit wants a file that already exists -- leaving it absent means its single
+    # required output is also the one path where it has to reach for a different tool.
+    # And a seeded file gives the validator a way to tell "the reviewer wrote nothing"
+    # apart from "the reviewer found nothing", which a missing file cannot express: the
+    # seed's digest goes in the manifest, so an untouched file is recognisable rather
+    # than being reported as a vanished one.
+    findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
+    (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
+
     manifest = {
         "pr": int(pr_number),
         "head_sha": pr.get("headRefOid"),
+        "findings_seed_sha256": hashlib.sha256(findings_seed.encode("utf-8")).hexdigest(),
         "changed_files": changed,
         "bindings": bindings,
         "artifact_rules": [r["name"] for r in artifact_rules],
