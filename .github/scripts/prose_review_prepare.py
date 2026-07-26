@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -212,6 +213,28 @@ def main() -> int:
     for warning in warnings:
         print(f"::warning::{warning}")
 
+    # --- The rules as THIS pull request defines them --------------------------------
+    # This script runs on the PR head, but the review action then restores `.claude/`
+    # from the base branch before the reviewer starts, because a PR head is untrusted
+    # and `.claude/` can carry executable config -- hooks, MCP servers, agents.
+    #
+    # Rule *text* is not executable, so reverting it buys no safety while costing
+    # correctness twice over: the reviewer would read the superseded version of every
+    # rule the PR edits, and find no file at all for a rule it adds -- which the
+    # validator downstream then reads as "cites a rule that does not exist" and drops,
+    # losing a valid finding for a reason that is not the reviewer's fault. Rule edits
+    # are a large share of this repo's pull requests, so that is precisely where the
+    # reviewer would otherwise be least reliable.
+    #
+    # So the rules are copied out here, while the PR's version is still on disk, and
+    # both the reviewer and the validator resolve rules from this snapshot instead of
+    # from the reverted checkout. `bindings` above was already derived from the same
+    # pre-revert tree, so this also stops the two from disagreeing.
+    rules_snapshot = out_dir / "rules"
+    rules_snapshot.mkdir(parents=True, exist_ok=True)
+    for rule in artifact_rules + conversation_rules:
+        shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
+
     manifest = {
         "pr": int(pr_number),
         "head_sha": pr.get("headRefOid"),
@@ -219,6 +242,9 @@ def main() -> int:
         "bindings": bindings,
         "artifact_rules": [r["name"] for r in artifact_rules],
         "conversation_rules": [r["name"] for r in conversation_rules],
+        # Where the validator resolves rule names. Carried in the manifest rather than
+        # hardcoded in both scripts, so the two cannot drift to different directories.
+        "rules_snapshot": str(rules_snapshot),
         "warnings": warnings,
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -231,6 +257,12 @@ def main() -> int:
         "Derived from each rule's own `paths:` frontmatter at run time. This is the",
         "complete and only set of rules you may cite against a changed file.",
         "",
+        "Read a rule's text from the path given below, NOT from `.claude/rules/` in the",
+        "checkout. The checkout's copy was restored from the base branch before you",
+        "started, so for any rule this pull request adds or edits it is the wrong text —",
+        "or missing entirely. The paths below are a snapshot of the rules as this pull",
+        "request defines them.",
+        "",
         "## Per changed file",
         "",
     ]
@@ -239,7 +271,7 @@ def main() -> int:
         lines.append(f"### `{file_path}`")
         if bound:
             for name in bound:
-                lines.append(f"- `{name}` — `.claude/rules/{name}.md`")
+                lines.append(f"- `{name}` — `{rules_snapshot}/{name}.md`")
         else:
             lines.append("- (no rules bind this file — do not cite any rule against it)")
         lines.append("")
@@ -254,7 +286,7 @@ def main() -> int:
         "",
     ]
     for rule in conversation_rules:
-        lines.append(f"- `{rule['name']}` — `{rule['path']}`")
+        lines.append(f"- `{rule['name']}` — `{rules_snapshot}/{rule['name']}.md`")
     if not conversation_rules:
         lines.append("- (none)")
     lines.append("")

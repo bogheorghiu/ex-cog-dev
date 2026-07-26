@@ -27,12 +27,21 @@ them; do not try to fetch anything.
 | `.prose-review/changed-files.txt` | one changed path per line |
 | `.prose-review/pr.json` | title, body, author, base branch |
 | `.prose-review/rule-bindings.md` | **which rules bind which changed file** |
+| `.prose-review/rules/` | **the full text of every rule, as this PR defines it** |
 | `.prose-review/prior-comments.json` | comments from previous review rounds |
 | `.prose-review/falsified.md` | findings previously confirmed as false positives |
 | `.prose-review/constraints.md` | **the limits your findings are held to** — read this first |
 
-You may also `Read`, `Grep` and `Glob` the repository itself — to read a rule's full
-text, or to check whether something a change assumes actually exists.
+Read rule text from `.prose-review/rules/`, never from `.claude/rules/` in the checkout.
+Before you started, the checkout's `.claude/` was restored from the base branch — a PR
+head is untrusted and that directory can carry executable config — so for any rule this
+change adds or edits, the checkout holds the superseded text or no file at all. The
+snapshot is the same pre-revert tree the bindings were derived from, so the two agree.
+
+You may also `Read`, `Grep` and `Glob` the repository itself — to check whether something
+a change assumes actually exists. Remember that `.claude/`, `CLAUDE.md` and `.mcp.json`
+there are the base branch's versions; the diff is the authority on what this change does
+to them.
 
 **You do not post anything.** You write one file, `.prose-review/findings.json`, and
 a validation script decides what reaches the pull request. A finding that cites a rule

@@ -35,6 +35,13 @@ on:
 permissions:
   contents: read # checkout only
   pull-requests: write # post the review
+  # Read-only, and solely for the falsified-findings ledger fetched below. Comments on an
+  # issue fall under the `issues` scope even though one endpoint serves both kinds, and an
+  # unlisted scope is `none` — so without this the fetch 403s the moment the operator runs
+  # the `gh variable set PROSE_REVIEW_FALSIFIED_ISSUE` step this PR's own description asks
+  # for. That is a landmine armed by following the instructions, so it is granted here and
+  # the fetch is made non-fatal besides.
+  issues: read
   # `id-token` is deliberately absent — absence means `none`. The action falls back to
   # minting a Claude App token (hardcoded contents/pull_requests/issues WRITE, and not
   # narrowable) whenever `github_token` is falsy. Without id-token that fallback throws
@@ -127,15 +134,25 @@ jobs:
           FALSIFIED_ISSUE: ${{ vars.PROSE_REVIEW_FALSIFIED_ISSUE }}
         run: |
           out="$PROSE_REVIEW_DIR/falsified.md"
+          printf '# Previously falsified findings\n\n' > "$out"
           if [ -z "$FALSIFIED_ISSUE" ]; then
-            printf '# Previously falsified findings\n\n(none recorded yet)\n' > "$out"
+            printf '(none recorded yet)\n' >> "$out"
           else
-            {
-              printf '# Previously falsified findings\n\n'
-              printf 'Patterns already confirmed as false positives. Do not raise these again.\n\n'
-              gh issue view "$FALSIFIED_ISSUE" --repo "$GITHUB_REPOSITORY" \
-                --json comments --jq '.comments[] | "- " + (.body | gsub("\n"; " ")) + "\n"'
-            } > "$out"
+            printf 'Patterns already confirmed as false positives. Do not raise these again.\n\n' >> "$out"
+            # The ledger is advisory: it suppresses repeat findings, it does not gate the
+            # review. So a failure to fetch it degrades to an empty ledger rather than
+            # failing the job -- previously `gh` was the last command of a redirected
+            # group under `bash -e`, which turned a renumbered issue, a transient API
+            # error or a missing scope into a dead review. Assigning inside `if` keeps
+            # errexit off for the fetch and writes nothing on failure, so the ledger is
+            # never half-written.
+            if ledger=$(gh issue view "$FALSIFIED_ISSUE" --repo "$GITHUB_REPOSITORY" \
+              --json comments --jq '.comments[] | "- " + (.body | gsub("\n"; " ")) + "\n"'); then
+              printf '%s\n' "$ledger" >> "$out"
+            else
+              printf '(ledger unavailable this run — treat it as empty)\n' >> "$out"
+              printf '::warning::falsified-findings ledger could not be read; continuing without it\n'
+            fi
           fi
           wc -l < "$out"
 

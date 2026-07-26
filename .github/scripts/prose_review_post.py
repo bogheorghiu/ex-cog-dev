@@ -28,8 +28,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-
 # Findings above this are worth a comment; below it they are noise. The reviewer is
 # told the same threshold, so this is a backstop against drift, not the primary filter.
 MIN_SEVERITY = {"blocking", "should-fix"}
@@ -115,6 +113,11 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
     """Split findings into (accepted, rejected-with-reason)."""
     accepted, rejected = [], []
     bindings = manifest["bindings"]
+    # Rules are resolved from the snapshot the prepare step took on the PR head, not from
+    # `.claude/rules/` in the checkout: by the time this runs the review action has
+    # restored `.claude/` from the base branch, so a rule this PR adds would look
+    # nonexistent here and every finding citing it would be dropped as uncitable.
+    rules_dir = Path(manifest["rules_snapshot"])
 
     for raw in findings:
         if not isinstance(raw, dict):
@@ -138,7 +141,16 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, f"comment is {len(text)} characters; the limit is {MAX_COMMENT_CHARS}"))
             continue
 
-        quoted = sum(1 for ln in text.splitlines() if ln.lstrip().startswith((">", "    ", "\t")))
+        # An indent has to be tested on the raw line and a blockquote marker on the
+        # stripped one. Testing both against `lstrip()` output -- as this did -- makes the
+        # indent arms unreachable, since a stripped line never begins with whitespace, so
+        # a finding quoting source as an indented code block sailed past a ceiling
+        # constraints.md advertises to the reviewer as enforced.
+        quoted = sum(
+            1
+            for ln in text.splitlines()
+            if ln.startswith(("    ", "\t")) or ln.lstrip().startswith(">")
+        )
         if quoted > MAX_QUOTED_LINES:
             rejected.append((raw, f"quotes {quoted} lines; the limit is {MAX_QUOTED_LINES}"))
             continue
@@ -163,7 +175,7 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
         # Every other check still does -- it must target a real changed file at a real
         # line in the diff.
         if rule not in RESERVED_CITATIONS:
-            if not (REPO_ROOT / ".claude" / "rules" / f"{rule}.md").is_file():
+            if not (rules_dir / f"{rule}.md").is_file():
                 rejected.append((raw, f"cites rule '{rule}', which does not exist"))
                 continue
 
