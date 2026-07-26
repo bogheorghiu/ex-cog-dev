@@ -65,3 +65,6 @@ pii-denylist.txt
 /.claude/routines
 /.claude/skills
 /.claude/worktrees/
+
+# Scratch dir the prose-review workflow assembles on the runner
+.prose-review/

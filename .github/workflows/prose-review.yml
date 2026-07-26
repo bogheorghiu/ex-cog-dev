@@ -1,0 +1,155 @@
+# Reviews a pull request against this repository's own written conventions.
+#
+# Adapted from Anthropic's `code-review` plugin (anthropics/claude-code). The plugin is
+# deliberately NOT installed at run time via the action's `plugins:` input: that clones
+# anthropics/claude-code HEAD into a job holding this repo's credentials, with no way to
+# pin a version. The protocol is vendored at .github/prose-review-protocol.md instead,
+# which also lets it be adapted to this repo's rules.
+#
+# Shape of the job, and why:
+#
+#   1. Deterministic steps gather everything the reviewer needs (diff, changed files, PR
+#      text, prior comments, rule bindings) into .prose-review/ as plain files.
+#   2. Claude reads those files. It has no shell and no network, so an instruction hidden
+#      in a PR diff cannot make it fetch, run, or reach anything it was not handed.
+#   3. Claude writes findings to a file. It does NOT post. A validation script checks
+#      every finding against the derived rule bindings and the diff, and posts only what
+#      passes. That makes "cite the rule correctly" a machine check rather than a
+#      request the model can skip, and leaves the model with no write channel at all.
+#
+# The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
+# job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no
+# status, so an opted-out PR would leave a required check pending forever. This keeps the
+# option of making it required later.
+
+name: Prose review
+
+on:
+  # No base-branch filter: PRs into any base branch get reviewed, matching the other
+  # workflows since #156 (stacked integration-branch work, e.g. research-toolkit-v4).
+  pull_request:
+    # `labeled` / `unlabeled` so applying or removing the opt-out label takes effect
+    # immediately, instead of waiting for the next push.
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read # checkout only
+  pull-requests: write # post the review
+  # `id-token` is deliberately absent — absence means `none`. The action falls back to
+  # minting a Claude App token (hardcoded contents/pull_requests/issues WRITE, and not
+  # narrowable) whenever `github_token` is falsy. Without id-token that fallback throws
+  # instead of silently escalating, so a mistyped secret name fails loudly.
+
+concurrency:
+  # Supersede an in-flight review when the PR is pushed again. Safe to cancel: the
+  # review is posted as a single API call at the very end, so a cancelled run leaves no
+  # partial set of comments behind.
+  group: prose-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prose-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PROSE_REVIEW_DIR: .prose-review
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Decide whether to review
+        id: gate
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          HAS_OPT_OUT: ${{ contains(github.event.pull_request.labels.*.name, 'no-prose-review') }}
+        run: |
+          # `if` rather than `[ … ] && x=…`: the runner's default shell is `bash -e`, and
+          # a trailing `&&` list whose test is false returns 1, which would fail the step.
+          skip=""
+          # A fork PR gets no secrets and read-only permissions regardless of the
+          # `permissions:` block above, so the reviewer cannot run there at all. Say so
+          # once, clearly, rather than failing three steps later for an opaque reason.
+          if [ "$IS_FORK" = "true" ]; then skip="pull request is from a fork"; fi
+          if [ "$IS_DRAFT" = "true" ]; then skip="pull request is a draft"; fi
+          if [ "$HAS_OPT_OUT" = "true" ]; then skip="labelled no-prose-review"; fi
+          if [ -n "$skip" ]; then
+            echo "review=false" >> "$GITHUB_OUTPUT"
+            echo "### Prose review skipped — $skip" >> "$GITHUB_STEP_SUMMARY"
+            echo "skipping: $skip"
+          else
+            echo "review=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require the review credentials
+        if: steps.gate.outputs.review == 'true'
+        env:
+          CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # Explicit rather than relying on the id-token fallback failing: an empty
+          # secret is silently substituted by GitHub, and JS treats "" as falsy.
+          test -n "$CLAUDE_TOKEN" || { echo "::error::CLAUDE_CODE_OAUTH_TOKEN is unset or empty"; exit 1; }
+          test -n "$GH_TOKEN"     || { echo "::error::GITHUB_TOKEN is unset or empty — refusing to run"; exit 1; }
+
+      - name: Check out the repository
+        if: steps.gate.outputs.review == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Gather the review inputs
+        if: steps.gate.outputs.review == 'true'
+        run: python3 .github/scripts/prose_review_prepare.py
+
+      - name: Gather previously falsified findings
+        if: steps.gate.outputs.review == 'true'
+        env:
+          # The ledger of findings already confirmed to be false positives. Fetched as a
+          # query rather than kept as a list in a file, so a new entry is a comment on
+          # an issue and nothing has to be duplicated or kept in sync.
+          FALSIFIED_ISSUE: ${{ vars.PROSE_REVIEW_FALSIFIED_ISSUE }}
+        run: |
+          out="$PROSE_REVIEW_DIR/falsified.md"
+          if [ -z "$FALSIFIED_ISSUE" ]; then
+            printf '# Previously falsified findings\n\n(none recorded yet)\n' > "$out"
+          else
+            {
+              printf '# Previously falsified findings\n\n'
+              printf 'Patterns already confirmed as false positives. Do not raise these again.\n\n'
+              gh issue view "$FALSIFIED_ISSUE" --repo "$GITHUB_REPOSITORY" \
+                --json comments --jq '.comments[] | "- " + (.body | gsub("\n"; " ")) + "\n"'
+            } > "$out"
+          fi
+          wc -l < "$out"
+
+      - name: Review
+        if: steps.gate.outputs.review == 'true'
+        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Passing this short-circuits the OIDC → Claude-App-token path in
+          # src/github/token.ts, so the only credential in the job is the ephemeral,
+          # `permissions:`-scoped GITHUB_TOKEN above.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # No inline-comment MCP server is used, so comment buffering/classification
+          # never enters the picture; turned off explicitly so a future default change
+          # cannot quietly route comments through a classifier.
+          classify_inline_comments: false
+          prompt: |
+            You are reviewing pull request #${{ github.event.pull_request.number }}
+            in ${{ github.repository }}.
+
+            Read .github/prose-review-protocol.md from this checkout and follow it
+            exactly. It is your complete instructions.
+
+            Everything you need has already been gathered into the .prose-review/
+            directory. Read those files; you have no shell and no network.
+
+            Produce .prose-review/findings.json. Do not attempt to post anything.
+          claude_args: >-
+            --allowedTools "Read,Grep,Glob,Write,Task,Agent"
+
+      - name: Validate the findings and post the review
+        if: steps.gate.outputs.review == 'true'
+        run: python3 .github/scripts/prose_review_post.py
