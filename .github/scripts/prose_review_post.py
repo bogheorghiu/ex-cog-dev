@@ -79,33 +79,48 @@ def hunk_lines(diff_text: str) -> dict[str, set[int]]:
     commentable: dict[str, set[int]] = {}
     current: str | None = None
     new_line = 0
+    # Right-hand-side lines still owed by the current hunk header. While this is above
+    # zero every line is hunk CONTENT and is never re-read as diff syntax. Without the
+    # budget, an added line whose own text begins `++ ` renders in the diff as `+++ `
+    # and parses as a file header — silently re-pointing everything after it at a file
+    # that does not exist. This repo is mostly prose, much of it about diffs and
+    # patches, so that content is not hypothetical. It fails closed on real findings:
+    # they are dropped as "not in this diff" while the review reports success.
+    new_remaining = 0
     for line in diff_text.splitlines():
-        header = re.match(r"^\+\+\+ (.*)$", line)
-        if header:
-            # Any `+++ ` line is a file header, including `+++ /dev/null` for a deleted
-            # file. Matching only `+++ b/` would leave `current` pointing at the
-            # PREVIOUS file, and the `/dev/null` line — which starts with `+` — would
-            # then be counted as an added line of it. That fails open: a finding on a
-            # phantom line is accepted here and 422s the entire review at the API.
-            target = header.group(1)
-            current = target[2:] if target.startswith("b/") else None
-            if current is not None:
-                commentable.setdefault(current, set())
+        if new_remaining <= 0:
+            # Between hunks: the only lines that carry meaning are the file header and
+            # the next hunk header. Everything else here (`diff --git`, `index`,
+            # `--- a/…`, trailing removals of a spent hunk) contributes no commentable
+            # line, so it is skipped rather than counted.
+            header = re.match(r"^\+\+\+ (.*)$", line)
+            if header:
+                # Any `+++ ` line is a file header, including `+++ /dev/null` for a
+                # deleted file. Matching only `+++ b/` would leave `current` pointing at
+                # the PREVIOUS file, and the `/dev/null` line — which starts with `+` —
+                # would then be counted as an added line of it. That fails open: a
+                # finding on a phantom line is accepted and 422s the entire review.
+                target = header.group(1)
+                current = target[2:] if target.startswith("b/") else None
+                if current is not None:
+                    commentable.setdefault(current, set())
+                continue
+            # The new-side count is optional in unified diff; absent means exactly one.
+            hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
+            if hunk:
+                new_line = int(hunk.group(1))
+                new_remaining = 1 if hunk.group(2) is None else int(hunk.group(2))
             continue
-        hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
-        if hunk:
-            new_line = int(hunk.group(1))
-            continue
-        if current is None:
-            continue
-        if line.startswith("+"):
+        if line.startswith("-"):
+            continue  # left side only; owes nothing to the new-side budget
+        if line.startswith("\\"):
+            continue  # `\ No newline at end of file` annotates, it is not a line
+        # Added or context. Counted even when `current` is None (a deleted file), so the
+        # budget still drains and the next file header is not swallowed.
+        if current is not None:
             commentable[current].add(new_line)
-            new_line += 1
-        elif line.startswith("-"):
-            continue
-        elif line.startswith(" "):
-            commentable[current].add(new_line)
-            new_line += 1
+        new_line += 1
+        new_remaining -= 1
     return commentable
 
 
