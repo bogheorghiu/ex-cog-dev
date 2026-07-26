@@ -255,6 +255,11 @@ def screen_header(summary: str) -> str:
     text = summary.strip()
     if not text:
         return NEUTRAL_HEADER
+    quoted = sum(
+        1
+        for ln in text.splitlines()
+        if ln.startswith(("    ", "\t")) or ln.lstrip().startswith(">")
+    )
     reason = None
     if any(secret in text for secret in SECRET_LITERALS):
         reason = "contains a live credential from this job"
@@ -262,6 +267,8 @@ def screen_header(summary: str) -> str:
         reason = "contains something credential-shaped"
     elif len(text) > MAX_COMMENT_CHARS:
         reason = f"is {len(text)} characters; the limit is {MAX_COMMENT_CHARS}"
+    elif quoted > MAX_QUOTED_LINES:
+        reason = f"quotes {quoted} lines; the limit is {MAX_QUOTED_LINES}"
     elif BARE_REF.search(text):
         reason = "writes a bare '#N' reference"
     if reason:

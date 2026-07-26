@@ -30,7 +30,7 @@ name: Prose review
 
 on:
   # No base-branch filter: PRs into any base branch get reviewed, matching the other
-  # workflows since #156 (stacked integration-branch work, e.g. research-toolkit-v4).
+  # workflows since PR #156 (stacked integration-branch work, e.g. research-toolkit-v4).
   pull_request:
     # `labeled` / `unlabeled` so applying or removing the opt-out label takes effect
     # immediately, instead of waiting for the next push.
@@ -61,7 +61,12 @@ concurrency:
 jobs:
   prose-review:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Sized to the measured worst case, not the typical one: a fully staged (subagent)
+    # review round has cost ~18 minutes of Review-step wall clock, and a cap it barely
+    # clears turns a slow-but-sound round into a cancelled job — the least diagnosable
+    # failure this workflow can produce. Single-pass rounds run ~6 minutes and are
+    # unaffected by the extra headroom, which costs nothing when unused.
+    timeout-minutes: 35
 
     env:
       PROSE_REVIEW_DIR: .prose-review

@@ -197,6 +197,10 @@ def test_screen_header():
           screen_header("see #182") == NEUTRAL_HEADER)
     check("a proper 'PR #N' reference passes",
           screen_header("see PR #182") == "see PR #182")
+    check("a summary over the quoted-line ceiling is replaced",
+          screen_header("\n".join("> quoted" for _ in range(7))) == NEUTRAL_HEADER)
+    check("a summary within the quoted-line ceiling passes",
+          screen_header("intro\n> one quoted line") == "intro\n> one quoted line")
 
 
 def main():
