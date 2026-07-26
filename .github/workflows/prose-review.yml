@@ -97,6 +97,11 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
+          # By default checkout writes the base64 GITHUB_TOKEN into .git/config, which
+          # the reviewer could Read and echo into a finding — and findings become a
+          # public comment. Nothing downstream needs git auth: both scripts reach the
+          # API via GH_TOKEN in the environment.
+          persist-credentials: false
 
       - name: Gather the review inputs
         if: steps.gate.outputs.review == 'true'
@@ -147,8 +152,12 @@ jobs:
             directory. Read those files; you have no shell and no network.
 
             Produce .prose-review/findings.json. Do not attempt to post anything.
+          # Write is scoped to the one file the reviewer produces. Unscoped, it could
+          # rewrite the validator's own inputs — forging manifest.json's bindings, or
+          # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
+          # which would route around every check that makes citation enforceable.
           claude_args: >-
-            --allowedTools "Read,Grep,Glob,Write,Task,Agent"
+            --allowedTools "Read,Grep,Glob,Write(.prose-review/findings.json),Task,Agent"
 
       - name: Validate the findings and post the review
         if: steps.gate.outputs.review == 'true'

@@ -4,7 +4,7 @@
 Why the reviewer does not post its own comments: a protocol line saying "verify your
 citation before posting" is a request, and nothing notices when it is skipped. Moving
 the pen here turns three requirements into machine checks that a finding cannot route
-around --
+around —
 
   1. the rule it cites exists;
   2. that rule actually binds the file it is commenting on (per the same derived
@@ -36,6 +36,13 @@ MIN_SEVERITY = {"blocking", "should-fix"}
 
 REQUIRED_FIELDS = ("file", "line", "rule", "severity", "summary", "detail")
 
+# A finding becomes a public comment, so its text is an output channel. The reviewer has
+# no reason to ever quote a credential, and the job environment is readable from inside
+# the runner (/proc/self/environ), so anything token-shaped in a finding is either an
+# injection succeeding or a mistake. Cheap screen, not a guarantee: it catches known
+# prefixes, not an encoded or reworded secret.
+SECRET_SHAPES = re.compile(r"gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9-]{16,}")
+
 
 def hunk_lines(diff_text: str) -> dict[str, set[int]]:
     """Map each file in the diff to the new-file line numbers a comment may target.
@@ -48,10 +55,17 @@ def hunk_lines(diff_text: str) -> dict[str, set[int]]:
     current: str | None = None
     new_line = 0
     for line in diff_text.splitlines():
-        header = re.match(r"^\+\+\+ b/(.*)$", line)
+        header = re.match(r"^\+\+\+ (.*)$", line)
         if header:
-            current = header.group(1)
-            commentable.setdefault(current, set())
+            # Any `+++ ` line is a file header, including `+++ /dev/null` for a deleted
+            # file. Matching only `+++ b/` would leave `current` pointing at the
+            # PREVIOUS file, and the `/dev/null` line — which starts with `+` — would
+            # then be counted as an added line of it. That fails open: a finding on a
+            # phantom line is accepted here and 422s the entire review at the API.
+            target = header.group(1)
+            current = target[2:] if target.startswith("b/") else None
+            if current is not None:
+                commentable.setdefault(current, set())
             continue
         hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
         if hunk:
@@ -83,6 +97,12 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
         missing = [f for f in REQUIRED_FIELDS if not raw.get(f)]
         if missing:
             rejected.append((raw, f"missing required field(s): {', '.join(missing)}"))
+            continue
+
+        blob = f"{raw['summary']} {raw['detail']}"
+        if SECRET_SHAPES.search(blob):
+            # Deliberately does not echo the match.
+            rejected.append((raw, "finding text contains something credential-shaped"))
             continue
 
         severity = str(raw["severity"]).lower()
