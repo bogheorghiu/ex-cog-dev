@@ -329,8 +329,11 @@ jobs:
             finding was probably wrong, not merely misfiled.
 
             This is your only repair pass.
-          # Same disallow list as the Review step, same reason: leaving a tool off the
-          # allow list does not remove it, and this pass reads the same untrusted diff.
+          # The Review step's disallow list PLUS the two subagent tools, deliberately:
+          # repair is a single fix pass over rejected.json, so it must not delegate —
+          # and since leaving a tool off the allow list removes nothing, these two
+          # entries are what actually withholds delegation here. The lists differ on
+          # purpose and in this direction only; do not "sync" them.
           claude_args: >-
             --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"

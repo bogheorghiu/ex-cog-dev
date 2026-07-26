@@ -48,11 +48,10 @@ to them.
 never have to create it.
 
 **Every path through this protocol ends by writing that file** — including skipping the
-review at stage 1, finding nothing, and deciding at stage 4 that the review has
-converged. None of those is an early exit; each is a result, and a result is something
-you write down. Leaving the file untouched is not a way to say "nothing to report": it
-is byte-identical to what a crashed run leaves behind, so it is detected and reported as
-a failed run.
+review at stage 1, finding nothing, and finding nothing new at stage 4. None of those is
+an early exit; each is a result, and a result is something you write down. Leaving the
+file untouched is not a way to say "nothing to report": it is byte-identical to what a
+crashed run leaves behind, so it is detected and reported as a failed run.
 
 ## You get exactly one turn
 
@@ -146,15 +145,19 @@ Now read `prior-comments.json`.
   can state what changed** — a new commit touching that line, or new information. Put
   that statement in the finding's `detail`.
 - A finding already raised where the code has since changed: re-evaluate from scratch.
-- If this round produces no finding that is new or that cites a change, say so in the
-  summary. **Two consecutive rounds with no new evidence ends the review**; one genuine
-  new finding resets that count.
-- **Ending the review is still an outcome you write down.** Write `findings.json` with an
-  empty `findings` array and a summary saying the review has converged and why. "Ends the
-  review" means you stop *reviewing*, not that you stop before producing your output —
-  there is no exit from this protocol that leaves `findings.json` untouched. A run that
-  ends without writing is indistinguishable from a run that crashed, and is reported as a
-  failure.
+- If this round produces no finding that is new or that cites a change, write
+  `findings.json` with an empty `findings` array and a summary saying so. A quiet round
+  is a result like any other — there is no exit from this protocol that leaves the file
+  untouched, and a run that ends without writing is indistinguishable from one that
+  crashed.
+- **When the review loop ends is the operator's decision, not yours.** You could not
+  decide it even if asked: nothing carries one round's summary into the next —
+  `prior-comments.json` holds only inline comments, so a quiet round leaves no artefact
+  a later round could count. An earlier version of this protocol told you "two
+  consecutive quiet rounds ends the review" anyway; that was a rule you had no way to
+  evaluate, and a termination rule that cannot fire reads as a control that exists when
+  it does not. The operator reads consecutive quiet rounds from the run history and
+  stops pushing; your whole job is this round's honest verdict.
 - If the same finding has recurred across five or more rounds, stop re-raising it and
   instead record it in the summary as a **rule-ambiguity candidate**: the rule text is
   not deciding the case, which is a defect in the rule, not in the change.

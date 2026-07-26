@@ -44,7 +44,10 @@ automatically when comments land.
 
 ## The point of the exercise
 
-The reviewer's findings measure the change. The reviewer's **errors** measure the rules.
-A false positive means the reviewer applied the rule text faithfully and still got the
-wrong answer, which makes the text the defect. That is the only signal in this loop that
-improves the rules rather than the code, so it is worth the extra step to capture.
+The reviewer's findings measure the change. The reviewer's **errors** measure the rules —
+but the two error kinds measure differently, which is why step 5 routes them apart. A
+false positive is the reviewer getting the change wrong on its own terms; its *pattern*
+goes to the falsified-findings ledger so it is not re-raised. A rule gap is the reviewer
+applying the rule text faithfully and still reaching the wrong answer, which makes the
+text the defect and earns a rule edit. That second signal is the only one in this loop
+that improves the rules rather than the code, so it is worth the extra step to capture.
