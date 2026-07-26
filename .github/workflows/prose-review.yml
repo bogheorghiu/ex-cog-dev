@@ -202,6 +202,56 @@ jobs:
             --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
 
+      # What the reviewer actually DID. The action's own log reports `is_error: false` and
+      # a turn count and nothing else, which is uninformative in the one case that
+      # matters: the model finishing without producing its output. Three rounds were spent
+      # guessing at that from the outside. This prints the tool calls and any permission
+      # denial from the execution log the action leaves in the runner temp dir, so the
+      # next occurrence is read rather than inferred.
+      #
+      # Deliberately narrow: tool names, the paths of file-writing calls, denial messages,
+      # and the model's closing text. Not the full transcript -- this job's logs are
+      # publicly readable, and the transcript contains whatever the reviewer read.
+      - name: What the reviewer did
+        if: steps.gate.outputs.review == 'true'
+        continue-on-error: true
+        run: |
+          log=$(find "${RUNNER_TEMP}" -name 'claude-execution-output.json' -print -quit 2>/dev/null || true)
+          if [ -z "$log" ]; then echo "no execution log found under RUNNER_TEMP"; exit 0; fi
+          python3 - "$log" <<'PY'
+          import json, sys
+          try:
+              entries = json.load(open(sys.argv[1], encoding="utf-8"))
+          except Exception as exc:
+              print(f"could not parse execution log: {exc}")
+              raise SystemExit(0)
+          if isinstance(entries, dict):
+              entries = entries.get("messages", [])
+          calls, denials, last_text = [], [], ""
+          for e in entries if isinstance(entries, list) else []:
+              msg = e.get("message") if isinstance(e, dict) else None
+              for block in (msg or {}).get("content", []) if isinstance(msg, dict) else []:
+                  if not isinstance(block, dict):
+                      continue
+                  if block.get("type") == "tool_use":
+                      name = block.get("name", "?")
+                      inp = block.get("input") or {}
+                      path = inp.get("file_path") or inp.get("path") or ""
+                      calls.append(f"{name} {path}".strip())
+                  elif block.get("type") == "text":
+                      last_text = block.get("text", "") or last_text
+                  if "denied" in json.dumps(block)[:4000].lower():
+                      denials.append(json.dumps(block)[:400])
+          print(f"tool calls ({len(calls)}):")
+          for c in calls:
+              print(f"  - {c}")
+          print(f"\npermission denials seen in content ({len(denials)}):")
+          for d in denials[:5]:
+              print(f"  ! {d}")
+          print("\nreviewer's closing text (truncated):")
+          print(last_text[:1500] or "  (none)")
+          PY
+
       - name: Validate the findings
         id: validate
         if: steps.gate.outputs.review == 'true'
