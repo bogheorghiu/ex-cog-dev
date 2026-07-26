@@ -61,12 +61,30 @@ MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
 # strict form is what actually serves the reader here.
 BARE_REF = re.compile(r"(?<!issue )(?<!PR )(?<![\w/])#\d+")
 
-# A finding becomes a public comment, so its text is an output channel. The reviewer has
-# no reason to ever quote a credential, and the job environment is readable from inside
-# the runner (/proc/self/environ), so anything token-shaped in a finding is either an
-# injection succeeding or a mistake. Cheap screen, not a guarantee: it catches known
-# prefixes, not an encoded or reworded secret.
+# A finding becomes a public comment, so its text is the one output channel out of this
+# job — and the job holds two live tokens. The reviewer is given `Read` without a path
+# scope (it has to be able to read the repo it reviews), which means /proc/self/environ
+# is reachable to it, so this is a real channel and not a theoretical one. The reviewer
+# has no legitimate reason to ever quote a credential, so anything matching here is
+# either an injection succeeding or a mistake, and both should stop at the same gate.
+#
+# Shape matching alone is a weak screen: it knows today's prefixes and nothing else.
 SECRET_SHAPES = re.compile(r"gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9-]{16,}")
+
+# So the primary check is the literal one: the actual secret values this job was handed,
+# matched exactly. That does not care what a token looks like, whether the provider
+# changes its prefix, or whether the reviewer paraphrased around the shape -- it only
+# cares whether the bytes are the ones we hold. It cannot catch an *encoded* secret, so
+# the shape screen above stays as the second layer rather than being replaced.
+#
+# The 12-character floor keeps a short or empty variable from matching most findings and
+# rejecting the entire review. Values are read once, at import, and never logged.
+SECRET_ENV_VARS = ("GH_TOKEN", "GITHUB_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")
+SECRET_LITERALS = tuple(
+    value
+    for value in (os.environ.get(name, "").strip() for name in SECRET_ENV_VARS)
+    if len(value) >= 12
+)
 
 
 def hunk_lines(diff_text: str) -> dict[str, set[int]]:
@@ -145,8 +163,12 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             continue
 
         blob = f"{raw['summary']} {raw['detail']}"
+        # Neither branch echoes what it matched, and the literal check is deliberately
+        # first: it is the one that is certain rather than heuristic.
+        if any(secret in blob for secret in SECRET_LITERALS):
+            rejected.append((raw, "finding text contains a live credential from this job"))
+            continue
         if SECRET_SHAPES.search(blob):
-            # Deliberately does not echo the match.
             rejected.append((raw, "finding text contains something credential-shaped"))
             continue
 

@@ -124,8 +124,40 @@ def test_secret_shapes():
           not SECRET_SHAPES.search("the token is read from the environment"))
 
 
+def test_secret_literals():
+    print("\n6. literal credential screen — the actual values this job holds")
+    # SECRET_LITERALS is read from the environment at import, so this needs a fresh load
+    # of the module with the variables set.
+    import importlib
+
+    fake = "s3cret-" + "V" * 24
+    saved = {k: os.environ.get(k) for k in ("GH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN")}
+    os.environ["GH_TOKEN"] = fake
+    os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = "short"  # below the floor, must be ignored
+    try:
+        import prose_review_post as mod
+
+        mod = importlib.reload(mod)
+        check("a live token value is picked up", fake in mod.SECRET_LITERALS)
+        check("a value under the 12-char floor is ignored",
+              "short" not in mod.SECRET_LITERALS)
+        check("a finding quoting the live token would be caught",
+              any(s in f"leaked: {fake}" for s in mod.SECRET_LITERALS))
+        check("ordinary prose is unaffected",
+              not any(s in "a normal finding about a rule" for s in mod.SECRET_LITERALS))
+        check("the token does not have to look like a token",
+              not mod.SECRET_SHAPES.search(fake))
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        importlib.reload(mod)
+
+
 def test_quoted_line_counting():
-    print("\n6. quoted-line counting covers every quoting form")
+    print("\n7. quoted-line counting covers every quoting form")
     # Mirrors the expression in validate(). Kept here rather than imported because it is
     # an inline sum there; if that changes shape, this test should be updated with it.
     def quoted(text):
@@ -149,6 +181,7 @@ def main():
     test_hunk_lines_content_resembling_a_header()
     test_bare_reference_rule()
     test_secret_shapes()
+    test_secret_literals()
     test_quoted_line_counting()
 
     print()
