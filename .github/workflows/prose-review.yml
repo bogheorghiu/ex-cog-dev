@@ -247,8 +247,13 @@ jobs:
       # Deliberately narrow: tool names, the paths of file-writing calls, denial messages,
       # and the model's closing text. Not the full transcript -- this job's logs are
       # publicly readable, and the transcript contains whatever the reviewer read.
+      # `always()`, not the default `success()`: this step exists for the runs that go
+      # wrong, and the default skips it in exactly that case. It did — run 30217117484's
+      # Review step failed and took the diagnostic down with it, leaving nothing to read
+      # about the one failure that had a new shape. A diagnostic gated on the success of
+      # the thing it diagnoses is not a diagnostic.
       - name: What the reviewer did
-        if: steps.gate.outputs.review == 'true'
+        if: always() && steps.gate.outputs.review == 'true'
         continue-on-error: true
         run: |
           log=$(find "${RUNNER_TEMP}" -name 'claude-execution-output.json' -print -quit 2>/dev/null || true)
