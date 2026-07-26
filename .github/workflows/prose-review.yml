@@ -165,7 +165,13 @@ jobs:
           # Both `Task` and `Agent` are listed because the SDK refers to the
           # subagent-spawn tool under both names; whichever the runtime registers, one
           # matches, so the staged review cannot silently collapse to a single agent.
+          #
+          # `--model opus` is not decoration: the orchestrator runs stage-4 reconciliation
+          # and writes findings.json itself, so leaving it on the action's default would
+          # put a Sonnet-class model on exactly the judgement work this design
+          # deliberately keeps off Sonnet. Per-stage subagents override it themselves.
           claude_args: >-
+            --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
 
       - name: Validate the findings and post the review

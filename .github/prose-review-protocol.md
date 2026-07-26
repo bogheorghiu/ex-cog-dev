@@ -66,10 +66,16 @@ For each candidate finding, record the file, the line, the specific rule, and th
 quotation from that rule which the change contradicts. A finding you cannot tie to a
 quoted line of a bound rule is not a finding.
 
-Two things are in scope beyond rule compliance, because they are cheap to check while
-you are already reading: **actual bugs** in changed code, and **claims in the diff that
-the diff itself contradicts** (a comment describing behaviour the code does not have, a
-doc stating a default that the code sets differently).
+One thing is in scope beyond rule compliance: **a change that contradicts itself** — a
+comment describing behaviour the code does not have, a doc stating a default the code
+sets differently. That is worth reporting and cites no rule, because the change is wrong
+on its own terms rather than against a convention. Cite it as
+`"rule": "self-contradiction"`, the one reserved value the validator accepts without a
+rule file.
+
+General bug-hunting is **not** in scope. A bug finding cites no rule, so nothing bounds
+it, and unbounded findings are the noise the don't-flag list exists to prevent — the
+tests and the deterministic guards already cover code correctness on this PR.
 
 ## Stage 3 — Validate, independently
 

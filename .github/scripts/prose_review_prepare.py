@@ -178,7 +178,12 @@ def main() -> int:
     diff = run("gh", "pr", "diff", pr_number, "--repo", repo)
     (out_dir / "diff.patch").write_text(diff, encoding="utf-8")
 
+    # `gh pr view --json files` caps at 100 files. The largest PR in this repo's history
+    # is well under that, so this is a note rather than a fix -- but a >100-file PR would
+    # be under-reviewed silently, so say so in the log rather than let it pass unseen.
     changed = [f["path"] for f in pr.get("files", [])]
+    if len(changed) >= 100:
+        print("::warning::100-file cap reached; some changed files were not reviewed")
     (out_dir / "changed-files.txt").write_text("\n".join(changed) + "\n", encoding="utf-8")
 
     # --- What previous rounds already said ----------------------------------------

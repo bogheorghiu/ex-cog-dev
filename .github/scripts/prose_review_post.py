@@ -36,6 +36,14 @@ MIN_SEVERITY = {"blocking", "should-fix"}
 
 REQUIRED_FIELDS = ("file", "line", "rule", "severity", "summary", "detail")
 
+# The one citation that is not a rule file. A change whose own text contradicts itself —
+# a doc stating a default the code sets differently, a comment describing behaviour the
+# code does not have — is worth reporting and cites no rule, because it is wrong on its
+# own terms rather than against a convention. Without this the protocol would invite such
+# findings and the validator would silently drop every one, which is the worst shape a
+# disagreement between two components can take.
+SELF_CONTRADICTION = "self-contradiction"
+
 # A finding becomes a public comment, so its text is an output channel. The reviewer has
 # no reason to ever quote a credential, and the job environment is readable from inside
 # the runner (/proc/self/environ), so anything token-shaped in a finding is either an
@@ -116,16 +124,20 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, f"'{file_path}' is not a file changed by this PR"))
             continue
 
-        if not (REPO_ROOT / ".claude" / "rules" / f"{rule}.md").is_file():
-            rejected.append((raw, f"cites rule '{rule}', which does not exist"))
-            continue
+        # The reserved citation cites no rule, so the two rule checks do not apply to it.
+        # Every other check still does -- it must target a real changed file at a real
+        # line in the diff.
+        if rule != SELF_CONTRADICTION:
+            if not (REPO_ROOT / ".claude" / "rules" / f"{rule}.md").is_file():
+                rejected.append((raw, f"cites rule '{rule}', which does not exist"))
+                continue
 
-        if rule not in bindings[file_path]:
-            bound = ", ".join(bindings[file_path]) or "none"
-            rejected.append(
-                (raw, f"rule '{rule}' does not bind '{file_path}' (bound rules: {bound})")
-            )
-            continue
+            if rule not in bindings[file_path]:
+                bound = ", ".join(bindings[file_path]) or "none"
+                rejected.append(
+                    (raw, f"rule '{rule}' does not bind '{file_path}' (bound rules: {bound})")
+                )
+                continue
 
         try:
             line_no = int(raw["line"])
@@ -144,11 +156,15 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
 
 def comment_body(finding: dict, repo: str, head_sha: str) -> str:
     rule = finding["rule"]
-    link = f"https://github.com/{repo}/blob/{head_sha}/.claude/rules/{rule}.md"
+    if rule == SELF_CONTRADICTION:
+        cite = "_The change contradicts itself; no rule is cited._"
+    else:
+        link = f"https://github.com/{repo}/blob/{head_sha}/.claude/rules/{rule}.md"
+        cite = f"Rule: [`{rule}`]({link})"
     return (
         f"**{finding['summary']}**\n\n"
         f"{finding['detail']}\n\n"
-        f"Rule: [`{rule}`]({link})\n"
+        f"{cite}\n"
         f"<!-- prose-review:{rule} -->"
     )
 
