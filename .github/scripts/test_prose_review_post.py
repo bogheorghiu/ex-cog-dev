@@ -19,7 +19,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from prose_review_post import hunk_lines, BARE_REF, SECRET_SHAPES  # noqa: E402
+from prose_review_post import (  # noqa: E402
+    hunk_lines,
+    screen_header,
+    BARE_REF,
+    NEUTRAL_HEADER,
+    SECRET_SHAPES,
+)
 
 failures = []
 
@@ -174,6 +180,25 @@ def test_quoted_line_counting():
     check("ordinary prose does not count", quoted("plain\nlines\nhere") == 0)
 
 
+def test_screen_header():
+    print("\n8. screen_header — the summary gets the same screens a finding gets")
+    # The summary reaches the public review body without passing through validate(),
+    # so it needs its own gate; these mirror the finding-text checks one for one.
+    check("an ordinary summary passes through unchanged",
+          screen_header("Checked the workflow and both scripts.")
+          == "Checked the workflow and both scripts.")
+    check("an empty summary falls back to the neutral header",
+          screen_header("   ") == NEUTRAL_HEADER)
+    check("a credential-shaped summary is replaced",
+          screen_header("saw ghp_" + "A" * 32) == NEUTRAL_HEADER)
+    check("an over-long summary is replaced",
+          screen_header("x" * 5000) == NEUTRAL_HEADER)
+    check("a bare issue/PR reference is replaced",
+          screen_header("see #182") == NEUTRAL_HEADER)
+    check("a proper 'PR #N' reference passes",
+          screen_header("see PR #182") == "see PR #182")
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -183,6 +208,7 @@ def main():
     test_secret_shapes()
     test_secret_literals()
     test_quoted_line_counting()
+    test_screen_header()
 
     print()
     if failures:

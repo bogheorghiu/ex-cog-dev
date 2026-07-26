@@ -117,6 +117,27 @@ def glob_to_regex(pattern: str) -> re.Pattern[str]:
     return re.compile("".join(out))
 
 
+def paths_globs(value: object) -> list[str]:
+    """Normalise a frontmatter `paths:` value to a list of glob strings.
+
+    The parser returns a list for the block-sequence form, but the scalar form
+    (`paths: "**/skills/**"`) and the bracketed inline form (`paths: [a, b]`) are
+    equally valid YAML and arrive as a plain string. Iterating that string directly
+    treats every CHARACTER as a glob — and a lone `*` matches any top-level path —
+    so the rule would silently bind every changed root file and none of its intended
+    targets. Silently is the operative defect: nothing warned, and this module's own
+    comments call a rule that quietly stops being enforced the worse outcome.
+    """
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("[") and text.endswith("]"):
+            return [p.strip().strip("\"'") for p in text[1:-1].split(",") if p.strip()]
+        return [text] if text else []
+    if isinstance(value, list):
+        return [g for g in value if isinstance(g, str)]
+    return []
+
+
 def load_rules() -> tuple[list[dict], list[dict], list[str]]:
     """Return (artifact_rules, conversation_rules, warnings).
 
@@ -130,7 +151,7 @@ def load_rules() -> tuple[list[dict], list[dict], list[str]]:
     for path in sorted(RULES_DIR.glob("*.md")):
         meta = parse_frontmatter(path.read_text(encoding="utf-8"))
         scope = meta.get("scope")
-        globs = [g for g in meta.get("paths", []) if isinstance(g, str)]
+        globs = paths_globs(meta.get("paths", []))
         entry = {
             "name": path.stem,
             "path": str(path.relative_to(REPO_ROOT)),

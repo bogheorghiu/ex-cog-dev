@@ -239,6 +239,37 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
     return accepted, rejected
 
 
+# What the review body opens with when the model-written summary cannot be used.
+NEUTRAL_HEADER = "Reviewed against this repository's own conventions."
+
+
+def screen_header(summary: str) -> str:
+    """Hold the top-level summary to the same screens every finding's text gets.
+
+    The summary is model-written and lands verbatim in the posted review body — the
+    same public surface as a finding, reached without passing through validate(). A
+    summary that trips a screen is replaced with the neutral header rather than
+    repaired: unlike a finding there is no repair round for it, and the failure is
+    logged, so nothing is silently rewritten.
+    """
+    text = summary.strip()
+    if not text:
+        return NEUTRAL_HEADER
+    reason = None
+    if any(secret in text for secret in SECRET_LITERALS):
+        reason = "contains a live credential from this job"
+    elif SECRET_SHAPES.search(text):
+        reason = "contains something credential-shaped"
+    elif len(text) > MAX_COMMENT_CHARS:
+        reason = f"is {len(text)} characters; the limit is {MAX_COMMENT_CHARS}"
+    elif BARE_REF.search(text):
+        reason = "writes a bare '#N' reference"
+    if reason:
+        print(f"::warning::review summary dropped — it {reason}; using the neutral header")
+        return NEUTRAL_HEADER
+    return text
+
+
 def comment_body(finding: dict, repo: str, head_sha: str) -> str:
     rule = finding["rule"]
     if rule == SELF_CONTRADICTION:
@@ -324,7 +355,7 @@ def main() -> int:
         print(f"nothing to post; {len(rejected)} finding(s) dropped in validation")
         return 0
 
-    header = summary.strip() or "Reviewed against this repository's own conventions."
+    header = screen_header(summary)
     body = (
         f"{header}\n\n"
         f"{len(accepted)} comment(s) posted"

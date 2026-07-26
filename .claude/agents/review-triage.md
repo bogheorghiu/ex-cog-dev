@@ -12,6 +12,12 @@ reading content that passed through a pull-request diff, and the agent that inge
 untrusted input should not also be the one that can act on it. You return verdicts; the
 operator decides.
 
+One grant is wider than that description, and honesty about it beats pretending: the
+`gh api` allowance matches by prefix, so a `--method POST` (or `PATCH`, `DELETE`) against
+anything the operator's token reaches sits inside it. It is granted anyway because the
+review-comments endpoint has no read-only `gh pr` porcelain equivalent. Use it for GET
+requests only; the operator watching the session is the control on the rest.
+
 ## For each comment, return one of three verdicts
 
 **`real`** — the rule is in scope for that file, the rule genuinely says what the comment
