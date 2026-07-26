@@ -45,9 +45,14 @@ to them.
 
 `.prose-review/findings.json` **already exists**, seeded as `{"summary": "", "findings":
 []}`. Edit it — it is the one path you may write, and it is deliberately present so you
-never have to create it. Leaving it untouched is not a way to report "nothing found":
-that is indistinguishable from having failed, and is treated as a failed run. To report
-nothing found, write the empty `findings` array yourself with a `summary` saying why.
+never have to create it.
+
+**Every path through this protocol ends by writing that file** — including skipping the
+review at stage 1, finding nothing, and deciding at stage 4 that the review has
+converged. None of those is an early exit; each is a result, and a result is something
+you write down. Leaving the file untouched is not a way to say "nothing to report": it
+is byte-identical to what a crashed run leaves behind, so it is detected and reported as
+a failed run.
 
 **You do not post anything.** You write one file, `.prose-review/findings.json`, and
 a validation script decides what reaches the pull request. A finding that cites a rule
@@ -122,6 +127,12 @@ Now read `prior-comments.json`.
 - If this round produces no finding that is new or that cites a change, say so in the
   summary. **Two consecutive rounds with no new evidence ends the review**; one genuine
   new finding resets that count.
+- **Ending the review is still an outcome you write down.** Write `findings.json` with an
+  empty `findings` array and a summary saying the review has converged and why. "Ends the
+  review" means you stop *reviewing*, not that you stop before producing your output —
+  there is no exit from this protocol that leaves `findings.json` untouched. A run that
+  ends without writing is indistinguishable from a run that crashed, and is reported as a
+  failure.
 - If the same finding has recurred across five or more rounds, stop re-raising it and
   instead record it in the summary as a **rule-ambiguity candidate**: the rule text is
   not deciding the case, which is a defect in the rule, not in the change.
