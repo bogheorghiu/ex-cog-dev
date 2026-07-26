@@ -187,6 +187,13 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    if not accepted:
+        # Nothing to say. Posting "0 comments" on every push is pure noise: a required
+        # check reads the JOB's conclusion, not a posted review, so the empty post buys
+        # nothing. Rejections are already in the log and in rejected.json.
+        print(f"nothing to post; {len(rejected)} finding(s) dropped in validation")
+        return 0
+
     header = summary.strip() or "Reviewed against this repository's own conventions."
     body = (
         f"{header}\n\n"

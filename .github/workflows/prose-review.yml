@@ -152,12 +152,21 @@ jobs:
             directory. Read those files; you have no shell and no network.
 
             Produce .prose-review/findings.json. Do not attempt to post anything.
-          # Write is scoped to the one file the reviewer produces. Unscoped, it could
+          # Writing is scoped to the one file the reviewer produces. Unscoped, it could
           # rewrite the validator's own inputs — forging manifest.json's bindings, or
           # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
           # which would route around every check that makes citation enforceable.
+          #
+          # It must be `Edit(path)`, not `Write(path)`: the CLI rejects the latter with
+          # "not matched by file permission checks — only Edit(path) rules are", and an
+          # Edit rule covers every file-editing tool including Write. Probed both ways:
+          # the reviewer can write findings.json and is refused any other path.
+          #
+          # Both `Task` and `Agent` are listed because the SDK refers to the
+          # subagent-spawn tool under both names; whichever the runtime registers, one
+          # matches, so the staged review cannot silently collapse to a single agent.
           claude_args: >-
-            --allowedTools "Read,Grep,Glob,Write(.prose-review/findings.json),Task,Agent"
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
 
       - name: Validate the findings and post the review
         if: steps.gate.outputs.review == 'true'

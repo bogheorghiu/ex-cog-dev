@@ -35,8 +35,10 @@ that a failure of (1) is survivable rather than catastrophic.
   looks at the diff.
 - **Do not add a `pull_request_target` or `workflow_run` workflow** to review external
   code. Both run with the base repository's secrets while checking out the contributor's
-  code — the exact combination condition (2) exists to prevent. `actions/checkout` v7
-  now refuses this by default, which is a useful backstop but not a reason to try.
+  code — the exact combination condition (2) exists to prevent. `actions/checkout`
+  refuses this by default from **v4.4.0** onward (backported from v7), which is the
+  version pinned here — so the backstop is already active, and opting out of it would
+  take an explicit `allow-unsafe-pr-checkout: true`. A backstop, not a reason to try.
 
 ## If the posture ever changes
 
