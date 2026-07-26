@@ -54,6 +54,27 @@ you write down. Leaving the file untouched is not a way to say "nothing to repor
 is byte-identical to what a crashed run leaves behind, so it is detected and reported as
 a failed run.
 
+## You get exactly one turn
+
+This is a non-interactive run. Nobody reads your messages, nobody replies, and **there is
+no second turn in which to continue.** When you stop producing output the run is over and
+whatever you have not written does not exist.
+
+So: never end while subagents are outstanding, and never end on a statement of what you
+are about to do. "The finders are working in parallel; I'll collect their candidates,
+validate them, then write findings.json" is a description of a run that will now never
+happen — the work stops there, `findings.json` is untouched, and the whole review is
+recorded as a failed run even though every stage up to that point went fine. Wait for
+your subagents, carry the work through stage 4 yourself, and write the file **before**
+your final message. Your last message is a report on work already finished, not a plan.
+
+This is the single most likely way for this job to fail, and it fails silently: the run
+reports success, because from the outside a model that has stopped talking mid-task is
+indistinguishable from one that has finished.
+
+You also have **no shell**. `Bash` is not among your tools and every call to it is
+refused; reach for `Read`, `Grep` and `Glob` instead.
+
 **You do not post anything.** You write one file, `.prose-review/findings.json`, and
 a validation script decides what reaches the pull request. A finding that cites a rule
 which does not bind the file it targets is dropped before it is ever published, so
