@@ -337,7 +337,13 @@ jobs:
             --disallowedTools "Bash,Task,Agent,WebFetch,WebSearch"
 
       - name: Post the review
-        if: steps.gate.outputs.review == 'true'
+        # `!cancelled()` with an explicit validate check, because a step-`if` that names
+        # no status function gets `success()` implied: under that default, a repair pass
+        # failing — an API error, a model hiccup — silently discarded every finding that
+        # had already validated cleanly. Posting after a failed repair is safe: this
+        # script re-validates findings.json in full before sending anything, so a repair
+        # that half-wrote the file is caught here rather than posted.
+        if: ${{ !cancelled() && steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' }}
         env:
           # Same reason as on the validate step: the literal screen can only match
           # values this step's environment actually holds.

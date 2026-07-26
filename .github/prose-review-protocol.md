@@ -113,8 +113,8 @@ One thing is in scope beyond rule compliance: **a change that contradicts itself
 comment describing behaviour the code does not have, a doc stating a default the code
 sets differently. That is worth reporting and cites no rule, because the change is wrong
 on its own terms rather than against a convention. Cite it as
-`"rule": "self-contradiction"`, the one reserved value the validator accepts without a
-rule file.
+`"rule": "self-contradiction"`, one of the two reserved values the validator accepts
+without a rule file — the next paragraph introduces the other.
 
 **A genuine defect in changed code** is also in scope, cited as `"rule": "bug"`. It is a
 separate reserved value from `self-contradiction` because the two route differently when

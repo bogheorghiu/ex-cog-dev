@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from prose_review_post import (  # noqa: E402
     hunk_lines,
+    quoted_line_count,
     screen_header,
     BARE_REF,
     NEUTRAL_HEADER,
@@ -110,12 +111,21 @@ def test_hunk_lines_content_resembling_a_header():
 
 
 def test_bare_reference_rule():
-    print("\n4. BARE_REF — `issue #N` / `PR #N`, never a bare `#N`")
+    print("\n4. BARE_REF — name the kind, in any of its honest spellings")
     check("bare reference is caught", bool(BARE_REF.search("see #182 for context")))
     check("`issue #N` is allowed", not BARE_REF.search("see issue #182"))
     check("`PR #N` is allowed", not BARE_REF.search("see PR #182"))
     check("a URL fragment is not a bare reference",
           not BARE_REF.search("https://example.com/x/#182"))
+    # The check enforces "name the kind", not one spelling of it: the capitalised and
+    # spelled-out forms name the kind just as plainly, and the capitalised form appears
+    # in the worked example of a rule the reviewer applies to its own writing.
+    check("`Issue #N` (capitalised) is allowed", not BARE_REF.search("See Issue #182"))
+    check("`pull request #N` (spelled out) is allowed",
+          not BARE_REF.search("the pull request #182 adds it"))
+    check("`Pr #N` mixed case is allowed", not BARE_REF.search("in Pr #182"))
+    check("a bare number after unrelated words is still caught",
+          bool(BARE_REF.search("the fix landed in #182")))
 
 
 def test_secret_shapes():
@@ -163,21 +173,24 @@ def test_secret_literals():
 
 
 def test_quoted_line_counting():
-    print("\n7. quoted-line counting covers every quoting form")
-    # Mirrors the expression in validate(). Kept here rather than imported because it is
-    # an inline sum there; if that changes shape, this test should be updated with it.
-    def quoted(text):
-        return sum(
-            1
-            for ln in text.splitlines()
-            if ln.startswith(("    ", "\t")) or ln.lstrip().startswith(">")
-        )
+    print("\n7. quoted_line_count covers every quoting form, fences included")
+    quoted = quoted_line_count
 
     check("blockquote lines count", quoted("> a\n> b\n> c") == 3)
     check("four-space indented lines count", quoted("    a\n    b\n    c") == 3)
     check("tab-indented lines count", quoted("\ta\n\tb\n\tc") == 3)
     check("an indented blockquote counts once, not twice", quoted("  > a") == 1)
     check("ordinary prose does not count", quoted("plain\nlines\nhere") == 0)
+    # The fence form: its content lines carry no per-line marker, so a per-line test
+    # counted a 22-line fenced block as zero against a ceiling of six.
+    check("fenced block content counts, markers included",
+          quoted("```\na\nb\nc\n```") == 5)
+    check("a long fenced block is not free",
+          quoted("```python\n" + "\n".join("x" for _ in range(22)) + "\n```") == 24)
+    check("prose after a closed fence does not count",
+          quoted("```\na\n```\nplain prose") == 3)
+    check("a language tag on the fence changes nothing",
+          quoted("```yaml\nkey: value\n```") == 3)
 
 
 def test_screen_header():

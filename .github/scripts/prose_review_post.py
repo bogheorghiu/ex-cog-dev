@@ -35,12 +35,13 @@ MIN_SEVERITY = {"blocking", "should-fix"}
 
 REQUIRED_FIELDS = ("file", "line", "rule", "severity", "summary", "detail")
 
-# The one citation that is not a rule file. A change whose own text contradicts itself —
-# a doc stating a default the code sets differently, a comment describing behaviour the
-# code does not have — is worth reporting and cites no rule, because it is wrong on its
-# own terms rather than against a convention. Without this the protocol would invite such
-# findings and the validator would silently drop every one, which is the worst shape a
-# disagreement between two components can take.
+# One of the two citations that are not rule files (`BUG` below is the other). A change
+# whose own text contradicts itself — a doc stating a default the code sets differently,
+# a comment describing behaviour the code does not have — is worth reporting and cites
+# no rule, because it is wrong on its own terms rather than against a convention.
+# Without this the protocol would invite such findings and the validator would silently
+# drop every one, which is the worst shape a disagreement between two components can
+# take.
 SELF_CONTRADICTION = "self-contradiction"
 
 # A change that is simply wrong, citing no convention. Kept as its own category rather
@@ -60,7 +61,13 @@ MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
 # on the web, which is why the repo's rule permits it in issue bodies -- but review
 # comments also arrive as plain-text email, where no icon or preview exists, so the
 # strict form is what actually serves the reader here.
-BARE_REF = re.compile(r"(?<!issue )(?<!PR )(?<![\w/])#\d+")
+#
+# IGNORECASE and the `request ` lookbehind, because the check enforces "name the kind",
+# not one exact spelling of it: without them `See Issue #182` and `pull request #182`
+# were rejected even though both name the kind -- and the capitalised form is the one
+# `explain-changes`, which the reviewer is told to apply to its own writing, uses in
+# its own worked example.
+BARE_REF = re.compile(r"(?<!issue )(?<!request )(?<!PR )(?<![\w/])#\d+", re.IGNORECASE)
 
 # A finding becomes a public comment, so its text is the one output channel out of this
 # job — and the job holds two live tokens. The reviewer is given `Read` without a path
@@ -86,6 +93,35 @@ SECRET_LITERALS = tuple(
     for value in (os.environ.get(name, "").strip() for name in SECRET_ENV_VARS)
     if len(value) >= 12
 )
+
+
+def quoted_line_count(text: str) -> int:
+    """Count the lines of quoted source in model-written text.
+
+    Three quoting forms count: blockquotes, indented code blocks, and fenced code
+    blocks. The fence form needs a toggle because its content lines carry no marker of
+    their own — testing lines one at a time missed every line between the backticks,
+    which let a 22-line fenced block through a six-line ceiling. Fence markers count
+    too: they are part of the quoted block, and counting them keeps the ceiling from
+    reading an empty fence as free.
+
+    An indent is tested on the raw line and a blockquote marker on the stripped one;
+    testing both on `lstrip()` output once made the indent arms unreachable, since a
+    stripped line never begins with whitespace.
+
+    One function, used by the finding check and the summary check both, so the two
+    ceilings cannot drift apart the way duplicated inline sums already did once.
+    """
+    count = 0
+    in_fence = False
+    for ln in text.splitlines():
+        stripped = ln.lstrip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            count += 1
+        elif in_fence or ln.startswith(("    ", "\t")) or stripped.startswith(">"):
+            count += 1
+    return count
 
 
 def hunk_lines(diff_text: str) -> dict[str, set[int]]:
@@ -179,16 +215,7 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, f"comment is {len(text)} characters; the limit is {MAX_COMMENT_CHARS}"))
             continue
 
-        # An indent has to be tested on the raw line and a blockquote marker on the
-        # stripped one. Testing both against `lstrip()` output -- as this did -- makes the
-        # indent arms unreachable, since a stripped line never begins with whitespace, so
-        # a finding quoting source as an indented code block sailed past a ceiling
-        # constraints.md advertises to the reviewer as enforced.
-        quoted = sum(
-            1
-            for ln in text.splitlines()
-            if ln.startswith(("    ", "\t")) or ln.lstrip().startswith(">")
-        )
+        quoted = quoted_line_count(text)
         if quoted > MAX_QUOTED_LINES:
             rejected.append((raw, f"quotes {quoted} lines; the limit is {MAX_QUOTED_LINES}"))
             continue
@@ -255,11 +282,7 @@ def screen_header(summary: str) -> str:
     text = summary.strip()
     if not text:
         return NEUTRAL_HEADER
-    quoted = sum(
-        1
-        for ln in text.splitlines()
-        if ln.startswith(("    ", "\t")) or ln.lstrip().startswith(">")
-    )
+    quoted = quoted_line_count(text)
     reason = None
     if any(secret in text for secret in SECRET_LITERALS):
         reason = "contains a live credential from this job"
