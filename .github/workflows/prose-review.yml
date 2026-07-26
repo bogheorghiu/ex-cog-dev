@@ -59,10 +59,12 @@ jobs:
       # model's idea of the rules and their enforcement cannot drift apart.
       PROSE_REVIEW_MAX_COMMENT_CHARS: "1200"
       PROSE_REVIEW_MAX_QUOTED_LINES: "6"
-      # How many chances a rejected finding gets to be fixed before it is dropped.
-      # Actions cannot loop steps, so raising this past 1 means adding another repair
-      # step below; the value is what the reviewer is told, so keep the two in step.
-      PROSE_REVIEW_REPAIR_ROUNDS: "1"
+      # Whether a rejected finding gets one chance to be fixed before it is dropped.
+      # A boolean, not a count, because Actions cannot loop steps: a repair round is a
+      # literal step in the YAML, so "how many" is not a value this can express. Naming
+      # it as a count would promise configurability that does not exist. Issue #185 has
+      # the design for a real variable count (drive the CLI directly inside a bash loop).
+      PROSE_REVIEW_REPAIR_ENABLED: "true"
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -195,7 +197,7 @@ jobs:
       # silently wastes work the reviewer already did and teaches nothing, so it gets
       # told exactly what failed and one pass to correct it.
       - name: Repair rejected findings
-        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ROUNDS != '0'
+        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
         uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

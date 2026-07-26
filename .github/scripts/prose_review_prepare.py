@@ -268,7 +268,7 @@ def main() -> int:
     limits = {
         "max_comment_chars": int(os.environ.get("PROSE_REVIEW_MAX_COMMENT_CHARS", "1200")),
         "max_quoted_lines": int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6")),
-        "repair_rounds": int(os.environ.get("PROSE_REVIEW_REPAIR_ROUNDS", "1")),
+        "repair": os.environ.get("PROSE_REVIEW_REPAIR_ENABLED", "true") == "true",
     }
     (out_dir / "constraints.md").write_text(
         "# Constraints your findings are held to\n\n"
@@ -282,9 +282,15 @@ def main() -> int:
         f"- **Issue and PR references**: write `issue #N` or `PR #N`, never a bare `#N`.\n"
         f"  GitHub renders a hovercard for a bare number on the web, but review comments\n"
         f"  also arrive as plain-text email, where there is no icon and no preview.\n"
-        f"- **Repair rounds**: **{limits['repair_rounds']}**. If findings are rejected you\n"
-        f"  get that many chances to fix and resubmit them, then whatever still fails is\n"
-        f"  dropped. Rejections come back with the exact reason for each.\n",
+        + (
+            "- **Repair**: if findings are rejected you get **one** pass to fix and\n"
+            "  resubmit them, with the exact reason for each; whatever still fails after\n"
+            "  that is dropped. Spend it on findings that were genuinely misfiled, not on\n"
+            "  arguing a rejection.\n"
+            if limits["repair"] else
+            "- **Repair**: none. A rejected finding is dropped immediately, so get it\n"
+            "  right the first time.\n"
+        ),
         encoding="utf-8")
 
     print(f"prepared {len(changed)} changed files, "
