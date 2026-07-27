@@ -1,3 +1,10 @@
+---
+# Not a `paths:` scope: this rule governs conversational output, so it still loads
+# every session. `scope:` marks it as binding on prose written TO the operator, not on
+# artifacts in a diff — read by the prose-review tooling, inert to Claude Code itself.
+scope: conversation
+---
+
 # Verify your own claims — draft until re-read
 
 Guidance for my own conversational output: the claims I make to you mid-answer.
@@ -6,7 +13,9 @@ one is whether its claims are *sound* before it ships. A heuristic with trade-of
 not a mandate.
 
 (No `paths:` frontmatter on purpose — this applies to every consequential turn, not
-a file type, so it loads every session, like `explain-changes.md`.)
+a file type, so it loads every session, like `explain-changes.md`. The `scope:` key it
+*does* carry changes nothing about loading; it tells the prose-review tooling that this
+rule binds the prose I write to you, so a diff is never checked against it.)
 
 ## The discipline
 

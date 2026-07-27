@@ -59,9 +59,15 @@ pii-denylist.txt
 # …but deliberate, reviewed dev agents are source (same status as .claude/rules/):
 !/.claude/agents/probe-writer.md
 !/.claude/agents/restricted-domain-reader.md
-/.claude/commands
+!/.claude/agents/review-triage.md
+/.claude/commands/*
+# …same for reviewed dev commands:
+!/.claude/commands/review-triage.md
 /.claude/hooks
 /.claude/launch.json
 /.claude/routines
 /.claude/skills
 /.claude/worktrees/
+
+# Scratch dir the prose-review workflow assembles on the runner
+.prose-review/
