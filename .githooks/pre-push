@@ -37,8 +37,11 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     commits=$(git rev-list "$remote_sha..$local_sha")
   fi
   [ -z "$commits" ] && continue
-  # -q so the matched line (which contains the name) is never printed; report the ref only.
-  if git log -p --no-color -U0 $commits 2>/dev/null | grep -I -i -F -q -f "$DENY"; then
+  # grep output goes to /dev/null so the matched line (which contains the name) is never
+  # printed; report the ref only. NOT grep -q: its early exit can SIGPIPE git log, and under
+  # pipefail the pipeline then reports failure — a MATCH would read as "no match" and the
+  # push would slip through.
+  if git log -p --no-color -U0 $commits 2>/dev/null | grep -I -i -F -f "$DENY" >/dev/null; then
     echo "pre-push BLOCKED ($local_ref): a denylisted personal name is in the commits being pushed." >&2
     echo "  Remove it — and amend/rebase it out of history — before pushing. Denylist: $DENY" >&2
     rc=1
