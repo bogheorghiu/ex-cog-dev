@@ -33,3 +33,7 @@ htmlcov/
 *.swp
 .idea/
 .vscode/
+
+# PII denylist — personal names, never committed (read by .githooks/pre-push and the CI PII gate)
+pii-denylist.local
+pii-denylist.txt
