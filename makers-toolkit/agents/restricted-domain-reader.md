@@ -46,19 +46,44 @@ Maintain a persistent legend mapping **each real identifier → one stable token
 untracked, writable path**, resolved in this order: (1) **`$REDACTION_CODEC_LEGEND`** if set — a
 dedicated variable the operator points at their existing legend file, so no machine-specific path is
 baked into this agent; (2) else **`$CLAUDE_PLUGIN_DATA/redaction-codec/legend.md`** if set — the
-plugin's persistent per-machine data dir (survives updates, removed on uninstall); (3) else any
-machine-local, untracked scratch path. **Always state which path you used** in your manifest. Never a
-vault/guarded path (access guards rightly block agents there), and never a tracked or shared location,
-because the legend holds the real strings. **Read it first; reuse existing tokens; append only
-genuinely new ones.** Same entity → same token, every time,
+plugin's persistent per-machine data dir (survives updates, removed on uninstall); (3) else
+**`${TMPDIR:-/tmp}/redaction-codec-legend.md`** — scratch, therefore **session-local by nature**: say so
+in the manifest and warn that the next spawn must not assume token continuity. **Always state which path
+you used.**
+
+**You never choose the location, and that is deliberate.** This file holds the **real strings** — it is
+the one artifact in the codec whose leak would actually matter. Tiers 1 and 2 are paths the *operator or
+the harness* supplied and vetted; tier 3 is a scratch directory, disposable by definition. A free-form
+"pick a sensible writable path" instruction would delegate a judgement that cannot be made safely from
+inside a session: the plausible-looking candidates include a **git working tree** (which gets committed)
+and a **cloud-synced folder** (which leaves the machine). So write the legend **only** to those three,
+and never to a tracked, shared, synced, or **sensitive private** location — a vault or personal store the
+operator keeps off-limits to agents. An access guard firing there means **stop**, not *find another path*.
+
+**Read it first; reuse existing tokens; append only genuinely new ones.** Same entity → same token, every time,
 across spawns and across files. Why this is load-bearing: without it, two redactions of the same
 material invent different tokens for the same thing, and the caller can no longer tell that
 `[REDACTED:term-3]` here and `[REDACTED:term-9]` there are one entity — cross-referencing dies, and
 the caller's analysis silently fragments.
 
-**If the legend cannot be read or written** (blocked, missing, first run): proceed with session-local
-tokens, say so explicitly in the manifest, and warn that the next spawn must not assume token
-continuity. A blocked legend degrades consistency; it never licenses skipping the redaction itself.
+**Missing is not the same as blocked — and conflating them is why the legend never bootstraps.**
+
+- **Missing / first run at tier 1 or 2** (the path resolves but no file is there yet): **create it.** An
+  absent file is not a failure — it is the normal first run, and it is the *only* state from which a
+  persistent legend can ever come into existence. Write a header, append your entries, and carry on
+  normally. **Do not degrade to session-local for this.**
+- **Blocked** (the write is actually refused — permissions, an access guard, a read-only mount): proceed
+  with session-local tokens, say so explicitly in the manifest, and warn that the next spawn must not
+  assume token continuity. **Never respond to a block by relocating** to a path outside the three above.
+
+*Why this distinction is spelled out:* the earlier wording lumped "blocked, missing, first run" together
+and sent all three down the degrade path. The result was a legend that could never create itself — every
+spawn found no file, treated that as failure, and fell back to session-local tokens, so **no two spawns
+ever shared a token** and the cross-referencing this whole section exists to protect never once worked.
+The bug was one word in a parenthesis.
+
+Either way, a legend problem **never licenses skipping the redaction itself** — it degrades consistency
+across spawns, nothing more.
 
 **The in-reply legend is category-only.** Any legend you include in your reply maps
 **token → generic category** (`[REDACTED:person] — person (role)`), never token → real string. Real
