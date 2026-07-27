@@ -379,9 +379,15 @@ def main() -> int:
         return 0
 
     if not accepted:
-        # Nothing to say. Posting "0 comments" on every push is pure noise: a required
-        # check reads the JOB's conclusion, not a posted review, so the empty post buys
-        # nothing. Rejections are already in the log and in rejected.json.
+        # Nothing to say, and the job stays green. Two outcomes are being kept apart
+        # here, because conflating them is what made four broken rounds look fine:
+        # "the reviewer never wrote its file" is a FAULT and fails above, on the seed
+        # digest; "the reviewer ran and found nothing" is a RESULT and passes here.
+        # Seeding findings.json exists to make that distinction machine-checkable
+        # rather than inferred, so it would be self-defeating to fail on both.
+        # No "found nothing" comment either: posting "0 comments" on every clean push
+        # is pure noise, a required check reads the JOB's conclusion rather than a
+        # posted review, and rejections are already in the log and in rejected.json.
         print(f"nothing to post; {len(rejected)} finding(s) dropped in validation")
         return 0
 
@@ -390,8 +396,10 @@ def main() -> int:
         f"{header}\n\n"
         f"{len(accepted)} comment(s) posted"
         + (f"; {len(rejected)} finding(s) dropped in validation." if rejected else ".")
-        + "\n\n<sub>Adapted from Anthropic's `code-review` plugin. Advisory only — "
-        "reply or apply the `no-prose-review` label to opt out.</sub>"
+        + "\n\n<sub>Adapted from Anthropic's `code-review` plugin. These comments are "
+        "advisory: none of them blocks a merge. A red check on this job means the "
+        "reviewer failed to produce a review at all, which is a different thing and "
+        "worth looking at. Reply, or apply the `no-prose-review` label to opt out.</sub>"
     )
 
     review = {
