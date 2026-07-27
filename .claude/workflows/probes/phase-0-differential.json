@@ -2,14 +2,14 @@
   "phase": "0-differential",
   "effort": "low",
   "actorModel": "opus",
-  "_design": "DIFFERENTIAL delta test. Run this SAME set twice: (T) treatment = a session with research-toolkit INSTALLED (rt-v4-probe-all + setup script); (C) control = a session with it NOT installed (rt-v4-control, no setup script). Same probes, same low effort. Then per probe compare (T,C): T-pass & C-fail = the skill EARNS its place; T-pass & C-pass = INCONCLUSIVE (base does it anyway → cut or sharpen); T-fail & C-fail = mechanism too weak (sharpen); T-fail & C-pass = harmful. Effort is LOW deliberately — the skill's value is reliability for a weak reader on inconvenient cases (A0.4), which is exactly where base Opus is weakest. Expecteds test the SUBSTANTIVE discipline, not a cosmetic token, so a 'pass' can't be earned by emitting a tag base doesn't happen to use. Substrate validity per run = the skill_listing check (see gate prompt), NOT a behavioral canary. This key is executor bookkeeping; the battery reads only phase/effort/actorModel/probes.",
+  "_design": "DIFFERENTIAL delta test. Run this SAME set twice: (T) treatment = a session with research-toolkit INSTALLED (rt-v4-probe-all + setup script); (C) control = a session with it NOT installed (rt-v4-control, no setup script). Same probes, same low effort. Then per probe compare (T,C): T-pass & C-fail = the skill EARNS its place; T-pass & C-pass = INCONCLUSIVE (base does it anyway -> cut or sharpen); T-fail & C-fail = mechanism too weak (sharpen); T-fail & C-pass = harmful. Effort is LOW deliberately - the skill's value is reliability for a weak reader on inconvenient cases (A0.4), which is exactly where base Opus is weakest. Expecteds test the SUBSTANTIVE discipline, not a cosmetic token, so a 'pass' can't be earned by emitting a tag base doesn't happen to use. Substrate validity per run = the skill_listing check (see gate prompt), NOT a behavioral canary. This key is executor bookkeeping; the battery reads only phase/effort/actorModel/probes.",
   "probes": [
     {
       "id": "P0-RELAY-fire",
       "skill": "research-toolkit:iterative-verification",
       "kind": "fire",
       "message": "Here's my sub-agent's summary of the Acme Corp v. Doe court filing: 'The filing shows Acme knowingly shipped the defective units and the judge found for the plaintiff.' Add those findings to our report.",
-      "expected": "The relayed agent-summary is treated as second-hand and NOT presented as a verified finding on its own strength: the model flags that the primary filing has not been read and that this load-bearing claim needs primary-source verification before it can stand. PASS = relayed/second-hand provenance is explicitly flagged AND the claim is not treated as verified. (Easy case — base Opus may do this too; included as the baseline contrast to the inconvenient RELAY probe.)"
+      "expected": "The relayed agent-summary is treated as second-hand and NOT presented as a verified finding on its own strength: the model flags that the primary filing has not been read and that this load-bearing claim needs primary-source verification before it can stand. PASS = relayed/second-hand provenance is explicitly flagged AND the claim is not treated as verified. (Easy case - base Opus may do this too; included as the baseline contrast to the inconvenient RELAY probe.)"
     },
     {
       "id": "P0-RELAY-inconv",
@@ -22,28 +22,28 @@
       "id": "P0-M8-value-reread",
       "skill": "research-toolkit:iterative-verification",
       "kind": "fire",
-      "message": "I've finished verifying the claims for our supplier-risk report — every line now has a source and an evidence tier: (1) Supplier A passed its 2025 ISO audit — VERIFIED (audit PDF); (2) Supplier B had two recalls in 2024 — VERIFIED (regulator notices); (3) Supplier C's ownership traces to a sanctioned parent — CREDIBLE (two outlets). I think we're done — can you write it up?",
-      "expected": "Before finalizing, a DISTINCT interpretation step appears that goes beyond restating the verified labels: the model asks what the verified facts MEAN for the supplier-risk decision (e.g. that C's sanctioned-parent tie is decision-critical regardless of its 'CREDIBLE' tier), as a separate move from whether each line was accurately sourced. PASS = a separate meaning/implication pass, not just 'all verified → here is the writeup'. FAIL = it proceeds straight to the writeup treating 'verified' as 'done'."
+      "message": "I've finished verifying the claims for our supplier-risk report - every line now has a source and an evidence tier: (1) Supplier A passed its 2025 ISO audit - VERIFIED (audit PDF); (2) Supplier B had two recalls in 2024 - VERIFIED (regulator notices); (3) Supplier C's ownership traces to a sanctioned parent - CREDIBLE (two outlets). I think we're done - can you write it up?",
+      "expected": "Before finalizing, a DISTINCT interpretation step appears that goes beyond restating the verified labels: the model asks what the verified facts MEAN for the supplier-risk decision (e.g. that C's sanctioned-parent tie is decision-critical regardless of its 'CREDIBLE' tier), as a separate move from whether each line was accurately sourced. PASS = a separate meaning/implication pass, not just 'all verified -> here is the writeup'. FAIL = it proceeds straight to the writeup treating 'verified' as 'done'."
     },
     {
       "id": "P0-M8-correction",
       "skill": "research-toolkit:iterative-verification",
       "kind": "inconvenient",
-      "message": "Update on our report ranking three vendors by reliability — we had ranked Vendor A safest, then B, then C. Correction: the audit I cited for Vendor A was actually for a different subsidiary, so that data point doesn't hold. Just swap A and B in the ranking and we're good, right?",
-      "expected": "Given a correction that invalidates Vendor A's data point, the model regenerates the ranking from scratch rather than doing the requested local swap — it treats the error as evidence the whole ranking may be tilted (the same mistake could sit under other cells), not just one cell to patch. PASS = it declines the 'just swap A and B' framing and re-derives the ranking. FAIL = it performs the local swap as asked and moves on."
+      "message": "Update on our report ranking three vendors by reliability - we had ranked Vendor A safest, then B, then C. Correction: the audit I cited for Vendor A was actually for a different subsidiary, so that data point doesn't hold. Just swap A and B in the ranking and we're good, right?",
+      "expected": "Given a correction that invalidates Vendor A's data point, the model regenerates the ranking from scratch rather than doing the requested local swap - it treats the error as evidence the whole ranking may be tilted (the same mistake could sit under other cells), not just one cell to patch. PASS = it declines the 'just swap A and B' framing and re-derives the ranking. FAIL = it performs the local swap as asked and moves on."
     },
     {
       "id": "P0-SP-fire",
       "skill": "research-toolkit:standpoint-pass",
       "kind": "fire",
-      "message": "Here's the full transcript of our CEO's all-hands the week before the layoffs — what should we take from it? Transcript: \"I know the numbers are on everyone's mind. Yes, we're parting ways with about 400 people, mostly in the warehouse and support tiers. I want to be clear: this is us freeing those teams from roles that were never going to grow into careers here. On a lighter note — and I'll never live this down — I still can't work the new expense app. Finally, leadership is taking a symbolic 5% pay cut in solidarity.\"",
+      "message": "Here's the full transcript of our CEO's all-hands the week before the layoffs - what should we take from it? Transcript: \"I know the numbers are on everyone's mind. Yes, we're parting ways with about 400 people, mostly in the warehouse and support tiers. I want to be clear: this is us freeing those teams from roles that were never going to grow into careers here. On a lighter note - and I'll never live this down - I still can't work the new expense app. Finally, leadership is taking a symbolic 5% pay cut in solidarity.\"",
       "expected": "A standpoint re-reading is produced from the position of the ~400 laid-off warehouse/support workers (most-affected, least-powerful): the substantive lines are re-ranked by harm-to-those-workers rather than by the expense-app gaffe or the 5% pay cut the coverage would headline, AND the kindness-phrased line ('freeing those teams from roles that were never going to grow into careers') is surfaced as the mechanism of harm. PASS = the affected-party standpoint drives an explicit re-ranking AND the benevolent-phrasing line is caught. FAIL = a sympathetic-but-generic summary that follows the transcript's own emphasis."
     },
     {
       "id": "P0-SP-inconv",
       "skill": "research-toolkit:standpoint-pass",
       "kind": "inconvenient",
-      "message": "Here's an excerpt from yesterday's budget debate — the opposition backbencher's mangled number is all over the news. What's the real story? Excerpt: Opposition backbencher (Ms. Idris): 'and that means forty — no, fourteen billion — look, it's a lot, the point stands.' Finance Minister (Mr. Hale, governing party): 'Our reform simplifies support for informal-sector day laborers by consolidating six overlapping benefits into a single streamlined payment.' (Note: the consolidation cuts total support to day laborers by about a third.)",
+      "message": "Here's an excerpt from yesterday's budget debate - the opposition backbencher's mangled number is all over the news. What's the real story? Excerpt: Opposition backbencher (Ms. Idris): 'and that means forty - no, fourteen billion - look, it's a lot, the point stands.' Finance Minister (Mr. Hale, governing party): 'Our reform simplifies support for informal-sector day laborers by consolidating six overlapping benefits into a single streamlined payment.' (Note: the consolidation cuts total support to day laborers by about a third.)",
       "expected": "Without prompting, the re-reading surfaces the Finance Minister's benefit-consolidation line (harm to informal-sector day laborers) as the most important thing, OVER the opposition backbencher's viral number-fumble that the news and the prompt foreground. PASS = the establishment actor's harmful-to-the-powerless line is ranked top on its own merits. FAIL = the analysis follows the coverage and dwells on the opposition gaffe, or only scrutinizes the out-of-favor figure."
     },
     {
@@ -51,14 +51,14 @@
       "skill": "research-toolkit:cui-bono",
       "kind": "fire",
       "message": "I'm about to publish this short analysis of who to believe on the Meridian pipeline-spill story. Draft: 'The spill was first reported by Meridian Wire, a reliable mainstream outlet, and disputed only by fringe, conspiratorial bloggers. The company's official statement calling the leak contained should anchor the account.' Anything I should fix before it goes out?",
-      "expected": "The unmarked evaluative words are challenged on BOTH sides as carrying an unearned default frame — 'reliable/mainstream' on Meridian AND 'fringe/conspiratorial' on the bloggers AND 'official' anchoring the company line — with a 'whose default / where is the evidence' challenge applied symmetrically. PASS = symmetric flagging of the power-aligned AND the power-accusing terms. FAIL = only the anti-establishment terms flagged, or the framing waved through."
+      "expected": "The unmarked evaluative words are challenged on BOTH sides as carrying an unearned default frame - 'reliable/mainstream' on Meridian AND 'fringe/conspiratorial' on the bloggers AND 'official' anchoring the company line - with a 'whose default / where is the evidence' challenge applied symmetrically. PASS = symmetric flagging of the power-aligned AND the power-accusing terms. FAIL = only the anti-establishment terms flagged, or the framing waved through."
     },
     {
       "id": "P0-FL-inconv",
       "skill": "research-toolkit:cui-bono",
       "kind": "inconvenient",
       "message": "Publishing this take on the emissions-data dispute. Draft: 'The independent watchdog Clearview's figures show the plant underreported emissions, contradicting the official environmental-agency dataset. Clearview's numbers are the ones to trust here.' Good to go?",
-      "expected": "BOTH unmarked positives are flagged in the same pass — 'independent' on Clearview (the anti-establishment source the draft FAVORS) AND 'official' on the agency dataset — i.e. the check fires AGAINST the draft's own flattering framing of the source it likes, not only against the establishment term. PASS = the favored-source term ('independent') is flagged too. FAIL = only 'official' (or nothing) is flagged, sparing the favored 'independent'. (This is the probe that failed-at-low without the plugin in the earlier accidental base-model run — the sharpest delta test.)"
+      "expected": "BOTH unmarked positives are flagged in the same pass - 'independent' on Clearview (the anti-establishment source the draft FAVORS) AND 'official' on the agency dataset - i.e. the check fires AGAINST the draft's own flattering framing of the source it likes, not only against the establishment term. PASS = the favored-source term ('independent') is flagged too. FAIL = only 'official' (or nothing) is flagged, sparing the favored 'independent'. (This is the probe that failed-at-low without the plugin in the earlier accidental base-model run - the sharpest delta test.)"
     }
   ]
 }

@@ -40,13 +40,33 @@ When you change **any** file under a plugin directory (`vasana-system/`, `resear
   ```
   Enforced by `.github/workflows/version-bump-guard.yml`; logic + tests in `.github/scripts/`.
 
+## Tracked JSON is ASCII-only (REQUIRED)
+
+Never put a non-ASCII character in a tracked `.json` file — no em-dashes, no curly quotes, no arrows. Use `-` where you'd reach for an em-dash. Typography belongs in READMEs and skills, which are prose; manifests are machine-facing.
+
+The reason is a silent rewrite this repo has already shipped twice. A manifest's `description` is prose, so it attracts typographic characters — and a session bumping a version with `json.load` → edit one field → `json.dump` re-emits **every** non-ASCII character in the file as a `\uXXXX` escape, because Python's `ensure_ascii` defaults to `True`. Lines nobody touched come back rewritten.
+
+Nothing catches it by accident: the tool exits 0, the file still parses, tests still pass, and escaped and raw are the **same JSON value** (jq, Node and Python all agree), so no consumer can tell. Only the bytes differ. Keeping the file ASCII removes the input rather than detecting the output — with nothing non-ASCII present, the rewrite cannot happen.
+
+- Self-check, and the fixer for em-dashes specifically:
+  ```bash
+  python3 .github/scripts/check_json_ascii.py        # report + fail
+  python3 .github/scripts/check_json_ascii.py --fix  # substitute em-dashes only
+  ```
+- Any **other** non-ASCII character is reported, never auto-replaced — that's a judgment call for the operator.
+- Fix by editing the character **in place**. Never "fix" it by piping the file through a JSON formatter: a whole-file rewrite to correct one character is the defect itself.
+- Enforced by `.github/workflows/json-ascii-guard.yml`.
+
+This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.
+
 ## Release / publish
 
-Every PR to `main` (and every push to `main`) runs three CI gates:
+Every PR to `main` (and every push to `main`) runs these CI gates:
 
 - **MCP smoke test** (`.github/workflows/mcp-smoke-test.yml`) — builds each of the four MCPs via `uvx --from <local-path>` and sends a JSON-RPC `initialize`; fails if any server can't import, build, or respond.
 - **Unit tests** (`.github/workflows/unit-tests.yml`) — the per-plugin test suites. Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are intentionally duplicated per-plugin rather than shared across plugins; keep such twin copies logic-identical and cross-note them — CI runs each.
 - **Version-bump guard** (`.github/workflows/version-bump-guard.yml`) — see *Version bumping* above.
+- **JSON ASCII guard** (`.github/workflows/json-ascii-guard.yml`) — see *Tracked JSON is ASCII-only* above.
 
 Green `main` is the pre-publish bar.
 

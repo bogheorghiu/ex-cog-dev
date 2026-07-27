@@ -1,0 +1,53 @@
+name: JSON ASCII guard
+
+# Keeps tracked JSON files pure ASCII, with no \uXXXX escape sequences.
+#
+# The failure this prevents, concretely: a session bumping a plugin version with
+# `json.load` -> edit one field -> `json.dump` re-emits EVERY non-ASCII character in
+# the file as an escape, because Python's `ensure_ascii` defaults to True. Lines
+# nobody was editing come back rewritten. It happened twice here (June 2026); one
+# instance reached main and sat there over a month before anyone noticed.
+#
+# It is invisible to every check that existed at the time, and that is the point:
+# the tool exits 0, the file still parses, the tests still pass, and escaped and raw
+# are the SAME JSON value - three independent parsers (jq, Node, Python) agree - so
+# no consumer can tell. Only the bytes differ. A byte check is the only thing that
+# can see it, and it is the only kind of check that could have.
+#
+# Why ASCII-only rather than "no escape sequences": removing the input beats
+# detecting the output. With no non-ASCII character in the file there is nothing to
+# re-encode, so the rewrite cannot happen at all. It also gives a blunter rule that
+# needs no interpretation. The cost is one character of typography in a marketplace
+# description; the benefit is that a whole class of silent rewrite stops existing.
+#
+# Deliberately NOT repo-wide. Markdown here carries ~1700 em-dashes as house style,
+# nothing parses and re-serialises Markdown, and this failure has never occurred
+# there - so a repo-wide ban would be ~1700 edits to prevent zero occurrences, and
+# would make every future prose edit argue with a linter.
+#
+# This job never writes. It reports and fails; fixing is a local, surgical step
+# (`--fix` substitutes the offending bytes and nothing else). Auto-fixing from CI
+# would put an unreviewed whole-file write on the publish path - which is the very
+# defect being guarded against.
+
+on:
+  push:
+    branches: [main]
+  # No base-branch filter on PRs: run on PRs into ANY base branch so integration-branch
+  # work (e.g. research-toolkit-v4) is gated too. Matches the other guards here.
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  json-ascii-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check tracked JSON is ASCII-only
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/check_json_ascii.py
