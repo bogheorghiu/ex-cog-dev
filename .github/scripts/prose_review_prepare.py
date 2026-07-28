@@ -257,15 +257,19 @@ def main() -> int:
     for rule in artifact_rules + conversation_rules:
         shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
 
-    # --- The file the reviewer is required to produce -------------------------------
-    # Seeded here, rather than left for the reviewer to create, for two reasons. The
-    # reviewer's only write permission is `Edit(.prose-review/findings.json)`, and an
-    # edit wants a file that already exists -- leaving it absent means its single
-    # required output is also the one path where it has to reach for a different tool.
-    # And a seeded file gives the validator a way to tell "the reviewer wrote nothing"
-    # apart from "the reviewer found nothing", which a missing file cannot express: the
-    # seed's digest goes in the manifest, so an untouched file is recognisable rather
-    # than being reported as a vanished one.
+    # --- One of the two files the reviewer is required to produce --------------------
+    # Seeded here, rather than left for the reviewer to create, so the validator can tell
+    # "the reviewer wrote nothing" apart from "the reviewer found nothing" -- which a
+    # missing file cannot express, since both arrive as an absence. The seed's digest goes
+    # in the manifest, so an untouched file is recognisable as untouched rather than being
+    # reported as a vanished one.
+    #
+    # That distinction is the whole reason, and deliberately the only one. An earlier
+    # version of this comment also claimed a seed was needed because an Edit rule wants a
+    # file that already exists; run 30352689105 disproves it -- the reviewer created
+    # refuted.json, which nothing seeds, under the same kind of rule. refuted.json stays
+    # unseeded because no validator decision turns on telling its silence from its
+    # absence, so a seed would buy it nothing.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
 

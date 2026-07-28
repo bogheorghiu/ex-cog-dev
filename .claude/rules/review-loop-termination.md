@@ -11,10 +11,12 @@ claim about your own work rather than a result.
 ## Why this lives here and not in the reviewer's instructions
 
 It used to be in them, and it had to be removed: every round is a separate CI job, so
-nothing carries one round's outcome into the next. The reviewer has no way to know whether
-the previous round was quiet — it cannot see a previous round at all. A rule its reader
-cannot evaluate is worse than no rule, because it reads as a live control while being
-inert.
+nothing carries one round's *outcome* into the next. The reviewer is handed each previous
+round's posted comments — that is what its reconcile stage reads — but a list of what was
+posted cannot express a round that posted nothing. So it can see the previous rounds and
+still has no way to know whether one of them was quiet, which is the only fact this
+criterion turns on. A rule its reader cannot evaluate is worse than no rule, because it
+reads as a live control while being inert.
 
 You *can* evaluate it: you have the run history in front of you. So the criterion is real
 here and was fiction there.
