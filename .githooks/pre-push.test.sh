@@ -8,6 +8,7 @@
 #
 # Tests cover:
 # - Baseline: a name in the outgoing commits blocks; clean commits pass
+# - A name in a commit MESSAGE, not only in file content
 # - Log safety: the matched term is NEVER echoed, including when it is in the ref name
 # - Fail-closed when git cannot determine the push range
 # - Fail-closed when the denylist exists but cannot be read (the hook's own precheck)
@@ -22,13 +23,14 @@
 # - A path marked -diff in .gitattributes must not hide a name from the diff
 # - The COMMITTER identity, which the default log format does not print
 # - The all-zeros sentinel at SHA-256 width (64 chars), not just SHA-1's 40
-# - Annotated tags: a name in the tag's own message
+# - Annotated tags: a name in the tag's own message; an unreadable tag object blocks
 # - Push-range scoping: already-pushed history is not re-scanned
 # - Second remote: commits already on origin still get scanned
 # - Denylist normalization: CRLF, '|' separators, indented entries, comment-only and blank-only files
 # - Both accepted denylist filenames (.local and .txt, which .gitignore has always covered)
 # - An empty PII_DENYLIST must not mask a valid local denylist
 # - Linked worktrees resolve the denylist to the main clone's root
+# - Bare repos resolve the denylist to the common git dir itself, which IS the repo root there
 # - Staleness: a private copy that has drifted from the tracked hook warns
 #
 # A synthetic term is used throughout — this suite contains no personal data.
@@ -143,6 +145,17 @@ echo "written by $TERM_STR" > b.txt; git add .; git commit -qm c2
 run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
 expect_block   "name in outgoing commits blocks the push"
 expect_no_leak "matched term is not echoed"
+
+# The term in the commit MESSAGE rather than in any file. This is the most obvious leak vector of
+# all and it was the one case the suite never asserted — it works because `git log -p` prints the
+# message above the diff, which is exactly the kind of incidental coverage a later flag change can
+# remove without any test going red.
+newrepo commitmsg
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo y > b.txt; git add .; git commit -qm "thanks to $TERM_STR for the fix"
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block   "a name in a commit MESSAGE blocks"
+expect_no_leak "the commit-message match is not echoed"
 
 newrepo clean
 echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
@@ -324,6 +337,22 @@ run_hook "$R" origin "refs/tags/v1 $(git rev-parse v1) refs/tags/v1 $Z"
 expect_block   "a name in an annotated tag message blocks"
 expect_no_leak "tag-message match is not echoed"
 
+# An object git cannot read is "could not check", not "not a tag". While the type probe ended in
+# `|| true`, a failed cat-file produced an empty string, which simply is not "tag" — so the
+# annotation scan was skipped in silence and only the commit scan ran.
+#
+# Asserting only "blocks" would NOT discriminate here, and that is worth spelling out: the old code
+# also blocked this input, because the same missing object then failed `git log` and tripped the
+# push-range guard. It reached the right outcome through a branch that says nothing about tags — so
+# the assertion is on the tag-specific message, which is the only evidence the annotation path
+# itself failed closed. Verified: the old hook passes the block check and fails this one.
+newrepo tagunreadable
+echo x > a.txt; git add .; git commit -qm c1
+run_hook "$R" origin "refs/tags/v9 deadbeefdeadbeefdeadbeefdeadbeefdeadbeef refs/tags/v9 $Z"
+expect_block "an unreadable tag object blocks instead of skipping the annotation scan"
+expect_out   "the unreadable-tag block names the tag object, not the commit range" \
+             "object for this tag could not be read"
+
 # A path marked `-diff` in .gitattributes makes git print "Binary files ... differ" in place of the
 # content, so the scan has nothing to match — and .gitattributes is IN the repo, so this needs no
 # unusual local config to arrive. `--text` is what overrides it; --no-ext-diff/--no-textconv close
@@ -468,6 +497,24 @@ echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
 git worktree add -q "$TEST_TMP/wt-linked" -b feat >/dev/null 2>&1
 run_hook "$TEST_TMP/wt-linked" origin "refs/heads/feat $(git -C "$TEST_TMP/wt-linked" rev-parse HEAD) refs/heads/feat $BASE"
 expect_block "a linked worktree finds the main clone's denylist"
+
+echo ""
+echo -e "${YELLOW}--- Bare repositories ---${NC}"
+
+# A bare repo has NO work tree, so --show-toplevel is empty and the common git dir IS the repo.
+# Taking only that dir's PARENT therefore looked in whatever unrelated directory happens to contain
+# the repo. Measured before the fix: a denylist in the bare repo's own root was never found, the
+# hook announced itself INACTIVE, and a commit carrying the term was allowed out.
+newrepo baresrc
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+SHA=$(git rev-parse HEAD)
+git clone -q --bare "$R" "$TEST_TMP/bare-target.git"
+# The parent dir deliberately holds NO denylist, so only the bare root's own file can satisfy this.
+printf '%s\n' "$TERM_STR" > "$TEST_TMP/bare-target.git/pii-denylist.local"
+run_hook "$TEST_TMP/bare-target.git" origin "refs/heads/main $SHA refs/heads/main $BASE"
+expect_block   "a bare repo finds the denylist in its own root"
+expect_not_out "a bare repo does not report the gate INACTIVE" "INACTIVE"
 
 echo ""
 echo -e "${YELLOW}--- Staleness of a cp-installed copy ---${NC}"

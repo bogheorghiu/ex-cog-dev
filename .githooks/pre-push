@@ -85,9 +85,19 @@ fi
 # ever read — so a contributor who followed the ignore hint saw their denylist correctly ignored
 # and reasonably believed the gate was armed by it. Reading both is the fail-safe direction;
 # removing the ignore entry instead would leave a file full of real names committable.
-COMMON_PARENT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo /nonexistent/_)")"
+#
+# Three directories are searched, because "where the repo root is" has three different answers.
+# For an ordinary clone the denylist sits at $TOP. For a LINKED WORKTREE the untracked file only
+# exists at the MAIN clone's root, which is the parent of the common git dir. For a BARE repo
+# there is no work tree at all: $TOP is empty and the common dir IS the repo, so its parent is the
+# unrelated directory that happens to contain it — measured, a denylist placed in a bare repo's own
+# root was never found and the gate reported itself INACTIVE while a denylisted name went out. The
+# common dir is therefore searched too, and BEFORE its parent so the bare case cannot be answered
+# by a stray file one level up.
+COMMON_DIR="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo /nonexistent/_)"
+COMMON_PARENT="$(dirname "$COMMON_DIR")"
 FILE_SRC=""
-for d in "$TOP" "$COMMON_PARENT"; do
+for d in "$TOP" "$COMMON_DIR" "$COMMON_PARENT"; do
   [ -n "$d" ] || continue
   for n in pii-denylist.local pii-denylist.txt; do
     if [ -f "$d/$n" ]; then FILE_SRC="$d/$n"; break 2; fi
@@ -221,7 +231,18 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   # for a name to reach the remote inside a tag annotation.
   case "$local_ref" in
     refs/tags/*)
-      if [ "$(git cat-file -t "$local_sha" 2>/dev/null || true)" = "tag" ]; then
+      # `|| true` here swallowed a cat-file FAILURE into an empty string, which is simply "not a
+      # tag object" — so an object git could not read skipped the annotation scan silently and fell
+      # through to the commit scan. That is the same could-not-check-reads-as-clean shape the rest
+      # of this file blocks on. A lightweight tag legitimately reports "commit"; only a non-zero
+      # status is the unreadable case.
+      tag_type="$(git cat-file -t "$local_sha" 2>/dev/null)" || {
+        echo "pre-push BLOCKED ($ref_label): the object for this tag could not be read, so its" >&2
+        echo "  message was not scanned and this push cannot be verified. Fetch and retry." >&2
+        rc=1
+        continue
+      }
+      if [ "$tag_type" = "tag" ]; then
         git cat-file -p "$local_sha" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
         scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the annotated tag object"
         if [ "$SCAN_RESULT" = match ]; then
