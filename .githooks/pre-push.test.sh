@@ -9,9 +9,11 @@
 # Tests cover:
 # - Baseline: a name in the outgoing commits blocks; clean commits pass
 # - Log safety: the matched term is NEVER echoed, including when it is in the ref name
-# - Fail-closed on an errored scan (grep's own status, not the pipeline's, under pipefail)
 # - Fail-closed when git cannot determine the push range
-# - Fail-closed when the denylist exists but cannot be read
+# - Fail-closed when the denylist exists but cannot be read (the hook's own precheck)
+# - Fail-closed when grep itself errors (its own status, not the pipeline's, under pipefail) —
+#   covered for both pattern-file call sites: the ref-name check and the commit scan
+# - Fail-closed when mktemp fails, rather than reporting the gate INACTIVE
 # - Binary/NUL bytes in one commit must not blind the scan of another
 # - Merge commits: a name added only in a conflict resolution
 # - Annotated tags: a name in the tag's own message
@@ -34,6 +36,13 @@ HOOK="$SCRIPT_DIR/pre-push"
 TEST_TMP="$(mktemp -d)"
 trap 'chmod -R u+rwX "$TEST_TMP" 2>/dev/null; rm -rf "$TEST_TMP"' EXIT
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+# PII_DENYLIST is the hook's highest-precedence input, and the activation route its own header
+# documents first. run_hook calls `env` without -i, so an exported denylist would otherwise reach
+# the hook: the scratch repo's file would never be opened, the synthetic term would not be a
+# pattern, and every content test would fail while `blankline` passed vacuously. CI sets no such
+# variable, so this only bites a maintainer running the suite locally — loudly, but pointlessly.
+# The two tests that need the variable inject it explicitly through run_hook.
+unset PII_DENYLIST
 # The hook's own staleness warning is about the developer's install, not about these scratch
 # repos; individual staleness tests re-enable it.
 export EXCOG_PREPUSH_NO_STALE_CHECK=1
@@ -149,7 +158,9 @@ echo x > a.txt; git add .; git commit -qm c1
 run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 expect_block "an undeterminable push range blocks"
 
-# grep's own error (exit 2) must not be mistaken for its no-match (exit 1).
+# An unreadable denylist is caught by the hook's own readability precheck, BEFORE grep runs — so
+# this covers that precheck, not grep's error status. The grep-error branch is covered separately
+# below, and the mktemp branch by `tmpfail`.
 newrepo unreadable
 echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
 echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
@@ -162,6 +173,50 @@ else
     expect_block "an unreadable denylist blocks"
 fi
 chmod 644 "$R/pii-denylist.local"
+
+# grep's OWN error status (>=2) must not be mistaken for its no-match status (1). Reaching that
+# branch needs grep itself to fail while the denylist is readable, so a stub earlier on PATH fails
+# only on the SECOND pattern-file call: the first is the hook's ref-name check, which must still
+# succeed, and the second is the outgoing-commits scan, which must block.
+newrepo greperror
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "nothing interesting" > b.txt; git add .; git commit -qm c2
+mkdir -p "$R/stub"
+cat > "$R/stub/grep" <<'STUB'
+#!/bin/bash
+for a in "$@"; do
+  if [ "$a" = "-f" ]; then
+    n=$(( $(cat "$STUB_COUNT" 2>/dev/null || echo 0) + 1 ))
+    echo "$n" > "$STUB_COUNT"
+    [ "$n" -ge 2 ] && exit 2
+    break
+  fi
+done
+for g in /usr/bin/grep /bin/grep; do [ -x "$g" ] && exec "$g" "$@"; done
+exit 2
+STUB
+chmod +x "$R/stub/grep"
+: > "$R/stub-count"
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" \
+    "PATH=$R/stub:$PATH" "STUB_COUNT=$R/stub-count"
+expect_block "a grep that errors blocks instead of reading as clean"
+expect_out   "the grep-error block names the scan failure" "scan itself failed"
+
+# The same guarantee for the very first pattern-file call, which is the ref-name check.
+: > "$R/stub-count"; echo 1 > "$R/stub-count"
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" \
+    "PATH=$R/stub:$PATH" "STUB_COUNT=$R/stub-count"
+expect_block "a grep error during the ref-name check also blocks"
+
+# A failed mktemp must not leave the gate silently disarmed. TMPDIR points at a non-writable path,
+# so mktemp fails while a valid denylist is present — the hook must block, not report INACTIVE.
+newrepo tmpfail
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" \
+    "TMPDIR=$R/definitely-not-a-writable-dir"
+expect_block   "a failed mktemp blocks rather than reporting INACTIVE"
+expect_not_out "a failed mktemp does not claim INACTIVE" "INACTIVE"
 
 echo ""
 echo -e "${YELLOW}--- Content the scan used to miss ---${NC}"

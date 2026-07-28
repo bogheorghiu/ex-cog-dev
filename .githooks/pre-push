@@ -14,10 +14,16 @@
 # silently does not reach it. If you installed that way, re-copy after every pull; the staleness
 # check below warns you when the running copy has drifted from the tracked one.
 #
-# FAIL-CLOSED PRINCIPLE. Every way the scan can fail to run — an unreadable or unusable denylist,
-# a git failure, a push range that cannot be determined, a grep error — BLOCKS the push. "I could
-# not check" must never be reported as "there is nothing to find", which is the whole class of bug
-# this gate keeps producing.
+# FAIL-CLOSED PRINCIPLE. Every way a scan that WAS armed can fail to run — an unreadable denylist,
+# an absent temp file, a git failure, a push range that cannot be determined, a grep error — BLOCKS
+# the push. "I could not check" must never be reported as "there is nothing to find", which is the
+# whole class of bug this gate keeps producing.
+#
+# Not to be confused with NOT BEING ARMED, which is a different state and deliberately passes: if
+# no denylist terms exist at all (no env var, no file, or a file holding only comments and blanks)
+# the hook says INACTIVE out loud and exits 0, because there is nothing to match against and the CI
+# denylist gate still applies. The distinction that matters is armed-but-broken (block) versus
+# never-armed-and-says-so (pass) — a placeholder denylist is the latter, so it does NOT guard you.
 #
 # LOG SAFETY. A matched line contains the name, so grep's stdout is always discarded and only the
 # FACT of a match is reported. Ref names travel to the remote and get echoed on a block, so they
@@ -68,7 +74,15 @@ for d in "$TOP" "$COMMON_PARENT"; do
   if [ -f "$d/pii-denylist.local" ]; then FILE_SRC="$d/pii-denylist.local"; break; fi
 done
 
-DENY="$(mktemp)"; CLEANUP="$DENY"
+# A failed mktemp would leave DENY empty, both redirections below would fail unchecked (there is
+# no -e), and `[ ! -s "$DENY" ]` would then report INACTIVE — a broken or full TMPDIR silently
+# disarming the gate. This runs on EVERY push now, not only the env-var path, so it is checked.
+DENY="$(mktemp)" || {
+  echo "pre-push BLOCKED: could not create a temporary file, so this push cannot be verified." >&2
+  echo "  Check that TMPDIR exists, is writable and has free space, then retry." >&2
+  exit 1
+}
+CLEANUP="$DENY"
 DENY_SRC="none"
 if [ -n "${PII_DENYLIST:-}" ]; then
   printf '%s\n' "${PII_DENYLIST}" | norm > "$DENY"
