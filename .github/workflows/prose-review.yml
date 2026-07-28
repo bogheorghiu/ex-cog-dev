@@ -378,9 +378,11 @@ jobs:
       # live tokens, and the findings screen guards only the first one. `rejected.json`
       # stores each rejected finding in full -- including one rejected precisely FOR
       # containing a credential -- and `refuted.json` is model-written and screened by
-      # nothing. Same condition as the upload it guards, so there is no path on which one
-      # runs and the other does not.
+      # nothing. The upload below runs only if this step SUCCEEDS, so the screen cannot be
+      # bypassed by crashing: a bug here costs one round's archive, which is the cheaper
+      # of the two ways to be wrong.
       - name: Screen the artifact before publishing it
+        id: scrub
         if: always() && steps.prepare.outcome == 'success'
         env:
           PROSE_REVIEW_SCRUB: "1"
@@ -395,10 +397,13 @@ jobs:
       # someone went back for exactly these numbers.
       #
       # `always()` because a round that FAILS is the one whose inputs you most want, and
-      # the condition names the step that creates the directory rather than the gate, so
-      # that the directory exists whenever this step runs. A failure of `prepare` itself
-      # is the one round deliberately not kept: it has produced no inputs yet, and what
-      # went wrong is the traceback in the log, not a half-written directory.
+      # the condition names the SCREENING step rather than the gate. That chains: the
+      # screen already runs only when `prepare` succeeded, so naming it carries the "the
+      # directory exists" guarantee AND adds "it has been screened", which naming
+      # `prepare` here would not. Two rounds are deliberately not kept, for the same
+      # reason in both cases -- there is nothing safe to publish: a failure of `prepare`,
+      # which has produced no inputs yet, and a failure of the screen, whose output has
+      # not been cleared for publication.
       #
       # `include-hidden-files: true` is what makes it actually upload. The directory is
       # dot-named, and upload-artifact has excluded hidden paths by default since v4.4.0
@@ -409,7 +414,7 @@ jobs:
       # warning; dropping it is what surfaced the bug. Left at the default `warn` on
       # purpose, so the same silence cannot come back.
       - name: Keep the round's inputs and reasoning
-        if: always() && steps.prepare.outcome == 'success'
+        if: always() && steps.scrub.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}

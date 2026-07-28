@@ -336,9 +336,16 @@ def scrub(work: Path) -> int:
     and whenever it appeared. A new output is covered on the day it is invented rather
     than on the day someone remembers to add it here.
 
-    Redacts rather than failing the job, because this runs under `always()` on the path
-    that preserves a FAILED round: refusing to publish would destroy exactly the evidence
-    the artifact exists to keep. A match is loud -- an error annotation -- but not fatal.
+    Redacts rather than failing on a match, because redacting is the only thing that
+    changes what gets published. A match is not an error condition here: it is the screen
+    doing its job, on material that is going to be archived either way. So it is loud --
+    an error annotation naming the file -- but not fatal, and the round is kept with the
+    credential removed rather than discarded whole.
+
+    A crash is the opposite case and is handled the opposite way: the upload step runs
+    only when THIS step succeeded, so an unexpected failure here withholds the artifact
+    instead of publishing it unscreened. A screen that can be bypassed by crashing is not
+    a screen, and losing one round's archive is the cheaper of the two ways to be wrong.
     """
     hits = 0
     for path in sorted(p for p in work.rglob("*") if p.is_file()):
