@@ -44,8 +44,7 @@ there are the base branch's versions; the diff is the authority on what this cha
 to them.
 
 `.prose-review/findings.json` **already exists**, seeded as `{"summary": "", "findings":
-[]}`. Edit it — it is the one path you may write, and it is deliberately present so you
-never have to create it.
+[]}`. Edit it — it is deliberately present so you never have to create it.
 
 **Every path through this protocol ends by writing that file** — including skipping the
 review at stage 1, finding nothing, and finding nothing new at stage 4. None of those is
