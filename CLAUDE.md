@@ -56,9 +56,13 @@ Nothing catches it by accident: the tool exits 0, the file still parses, tests s
 
 This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.
 
-## Duplicated test utilities are deliberate
+## Duplicated test utilities are deliberate — but check before you propagate
 
-Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are intentionally duplicated per-plugin rather than shared across plugins. Keep such twin copies logic-identical and cross-note each from the other, because CI runs every copy: fix one and not its twin and you leave a gate passing on stale logic, in a plugin nobody thought they had changed.
+Some plugins carry their own copy of a structural linter for their skills (`skills/test_skill_structure.py`). The duplication is intentional rather than an oversight: a plugin is installed on its own, and each plugin defines its own skill conventions, so the linter ships inside the plugin it lints.
+
+**Do not assume the copies are interchangeable — read the copy's own docstring first.** Some are true twins, identical apart from the plugin name in a printed banner, and a logic fix belongs in every one of them. At least one is a deliberate fork, calibrated to conventions its own plugin has and the others don't; propagating a change into it blindly would silently delete checks. Each copy's docstring states which it is and why.
+
+CI runs every copy, so the failure cuts both ways: fix one twin and not the other and a gate keeps passing on stale logic in a plugin nobody thought they had touched; overwrite a fork with its "twin" and you drop the checks that fork exists for.
 
 ## Release / publish
 
