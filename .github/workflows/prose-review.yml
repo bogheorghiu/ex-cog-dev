@@ -374,6 +374,20 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: python3 .github/scripts/prose_review_post.py
 
+      # Publishing the directory adds a second public channel out of a job that holds two
+      # live tokens, and the findings screen guards only the first one. `rejected.json`
+      # stores each rejected finding in full -- including one rejected precisely FOR
+      # containing a credential -- and `refuted.json` is model-written and screened by
+      # nothing. Same condition as the upload it guards, so there is no path on which one
+      # runs and the other does not.
+      - name: Screen the artifact before publishing it
+        if: always() && steps.prepare.outcome == 'success'
+        env:
+          PROSE_REVIEW_SCRUB: "1"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python3 .github/scripts/prose_review_post.py
+
       # The round's reasoning outlives the round only if something stores it. Two rounds
       # produced nine candidate findings and argued all nine down; five of those arguments
       # survive anywhere at all, and only because they fit inside a log line. Run logs are

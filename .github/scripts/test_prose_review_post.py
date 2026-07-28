@@ -10,16 +10,26 @@ dropping a valid finding or letting one through a limit the reviewer had been to
 enforced. A green run is not evidence here, because every one of these bugs coexisted
 with a green run.
 
-Pure-function tests — no git, no network, no filesystem. Run directly:
+No git and no network. Every test but the last is a pure function over strings; the
+artifact scrub necessarily writes files, so it runs against a temporary directory it
+creates and removes itself. Run directly:
     python3 .github/scripts/test_prose_review_post.py
 """
 
+import io
 import os
+import shutil
 import sys
+import tempfile
+from contextlib import redirect_stdout
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import prose_review_post  # noqa: E402
 from prose_review_post import (  # noqa: E402
+    scrub,
+    REDACTED,
     hunk_lines,
     quoted_line_count,
     screen_header,
@@ -216,6 +226,54 @@ def test_screen_header():
           screen_header("intro\n> one quoted line") == "intro\n> one quoted line")
 
 
+def test_artifact_scrub():
+    print("\n9. scrub() over the directory that becomes a public artifact")
+    secret = "ghp_" + "A" * 30            # shaped like a token; never a real one
+    literal = "s3cr3t-literal-value-xyz"  # stands in for a live env credential
+
+    work = Path(tempfile.mkdtemp(prefix="scrub-test-"))
+    try:
+        # Written by the validator, never screened before this change.
+        (work / "rejected.json").write_text(
+            '[{"finding": {"detail": "token is ' + literal + '"}, "reason": "cred"}]',
+            encoding="utf-8")
+        # Written by the model under an Edit rule, screened by nothing.
+        (work / "refuted.json").write_text(
+            '[{"refutation": "quotes ' + secret + ' verbatim"}]', encoding="utf-8")
+        # Nested, to prove the walk recurses rather than listing one level.
+        (work / "rules").mkdir()
+        (work / "rules" / "r.md").write_text("leaks " + literal + " too\n", encoding="utf-8")
+        clean = "nothing to see here\n"
+        (work / "diff.patch").write_text(clean, encoding="utf-8")
+        (work / "blob.bin").write_bytes(b"\xff\xfe\x00binary")
+
+        prose_review_post.SECRET_LITERALS = (literal,)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = scrub(work)
+        out = buf.getvalue()
+
+        check("returns 0 so a failed round is still archived", rc == 0)
+        check("literal credential is gone from rejected.json",
+              literal not in (work / "rejected.json").read_text(encoding="utf-8"))
+        check("credential-shaped token is gone from refuted.json",
+              secret not in (work / "refuted.json").read_text(encoding="utf-8"))
+        check("nested files are covered, not just the top level",
+              literal not in (work / "rules" / "r.md").read_text(encoding="utf-8"))
+        check("a redaction marker is left in place of the match",
+              REDACTED in (work / "refuted.json").read_text(encoding="utf-8"))
+        check("a clean file is left byte-identical",
+              (work / "diff.patch").read_text(encoding="utf-8") == clean)
+        check("an undecodable file is skipped rather than crashing",
+              (work / "blob.bin").read_bytes() == b"\xff\xfe\x00binary")
+        check("three files reported as redacted", "scrub: 3 file(s) redacted" in out)
+        check("the log names paths and never echoes the match",
+              literal not in out and secret not in out)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        prose_review_post.SECRET_LITERALS = ()
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -226,6 +284,7 @@ def main():
     test_secret_literals()
     test_quoted_line_counting()
     test_screen_header()
+    test_artifact_scrub()
 
     print()
     if failures:

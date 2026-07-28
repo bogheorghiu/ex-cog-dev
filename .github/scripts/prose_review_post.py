@@ -317,10 +317,61 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
     )
 
 
+REDACTED = "[REDACTED-CREDENTIAL]"
+
+
+def scrub(work: Path) -> int:
+    """Redact credential material from every file that is about to be published.
+
+    The findings screen guards the review comment, which used to be the only thing
+    leaving this job. Uploading the work directory as an artifact adds a second public
+    channel, and two of the files in it never pass that screen: `rejected.json` records
+    each rejected finding IN FULL -- including one rejected precisely for containing a
+    live credential -- and `refuted.json` is model-written under an Edit rule and read by
+    nothing.
+
+    Screening those two by name would be the wrong shape. This branch's own history is a
+    claim about which files exist going stale as files were added, so the guard is a choke
+    point over the directory instead: every file that will be uploaded, whatever wrote it
+    and whenever it appeared. A new output is covered on the day it is invented rather
+    than on the day someone remembers to add it here.
+
+    Redacts rather than failing the job, because this runs under `always()` on the path
+    that preserves a FAILED round: refusing to publish would destroy exactly the evidence
+    the artifact exists to keep. A match is loud -- an error annotation -- but not fatal.
+    """
+    hits = 0
+    for path in sorted(p for p in work.rglob("*") if p.is_file()):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            # Not text this screen can reason about. Skipped deliberately: it matches
+            # exact bytes and known shapes, and neither applies to what it cannot decode.
+            continue
+        redacted = text
+        for secret in SECRET_LITERALS:
+            redacted = redacted.replace(secret, REDACTED)
+        redacted = SECRET_SHAPES.sub(REDACTED, redacted)
+        if redacted != text:
+            path.write_text(redacted, encoding="utf-8")
+            hits += 1
+            # The path, never the match: echoing what matched would republish the secret
+            # in the run log, the same mistake one channel further along.
+            print(f"::error::redacted credential material from "
+                  f"{path.relative_to(work)} before upload")
+    print(f"scrub: {hits} file(s) redacted")
+    return 0
+
+
 def main() -> int:
+    work = Path(os.environ["PROSE_REVIEW_DIR"])
+    if os.environ.get("PROSE_REVIEW_SCRUB") == "1":
+        # Returns before anything below reads the PR: this path also runs after a failed
+        # round, where the manifest and the diff may not exist.
+        return scrub(work)
+
     repo = os.environ["GITHUB_REPOSITORY"]
     pr_number = os.environ["PR_NUMBER"]
-    work = Path(os.environ["PROSE_REVIEW_DIR"])
 
     manifest = json.loads((work / "manifest.json").read_text(encoding="utf-8"))
     commentable = hunk_lines((work / "diff.patch").read_text(encoding="utf-8"))
