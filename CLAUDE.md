@@ -52,6 +52,7 @@ Nothing catches it by accident: the tool exits 0, the file still parses, tests s
   ```
 - Any **other** non-ASCII character is reported, never auto-replaced — that's a judgment call for the operator.
 - Fix by editing the character **in place**. Never "fix" it by piping the file through a JSON formatter: a whole-file rewrite to correct one character is the defect itself.
+- **One exemption: probe fixtures under `.claude/workflows/probes/`**, which do contain non-ASCII today and are skipped by both the guard and the self-check. There the bytes *are* the payload: those files hold pre-registered probe stimuli for batteries that have already run, so "fixing" a character silently changes a completed experiment's input and makes before/after results non-comparable — a worse outcome than the typography. They are also not manifests, so nothing load-modify-redumps them and the failure mode can't reach them. **Don't tidy them, and don't widen the exemption to anything that isn't a frozen experimental input.**
 - Enforced by `.github/workflows/json-ascii-guard.yml`.
 
 This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.

@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from check_json_ascii import scan  # noqa: E402
+from check_json_ascii import replace_escaped_em_dash, scan  # noqa: E402
 
 failures = []
 
@@ -88,6 +88,39 @@ def test_non_control_escape_still_flagged():
     check("U+0020 (space) is not a control char, so it is flagged", len(escapes) == 1)
 
 
+def test_fix_respects_backslash_parity():
+    print("\n9. REGRESSION: --fix must not corrupt a file the scanner deliberately ignores")
+    # Escaped backslash then the literal text u2014 - NOT an escape (see case 5).
+    # A substring replace would match from the second backslash and emit `\-`,
+    # which is not a legal JSON escape, so the file would stop parsing.
+    data = b'{"d": "a \\\\u2014 b"}'
+    out = replace_escaped_em_dash(data)
+    check("left untouched", out == data)
+    try:
+        json.loads(out.decode())
+        check("still parses as JSON", True)
+    except ValueError:
+        check("still parses as JSON", False)
+
+
+def test_fix_replaces_real_escape():
+    print("\n10. --fix does replace a genuine escaped em-dash")
+    out = replace_escaped_em_dash(('{"d": "a ' + ESC + ' b"}').encode())
+    check("escape became a hyphen", out == b'{"d": "a - b"}')
+
+
+def test_fix_preserves_leading_escaped_backslash():
+    print("\n11. --fix keeps an escaped backslash that precedes a real escape")
+    # `\\` (an escaped backslash) followed by a genuine escaped em-dash.
+    out = replace_escaped_em_dash(b'{"d": "a \\\\\\u2014 b"}')
+    check("backslash pair preserved, escape replaced", out == b'{"d": "a \\\\- b"}')
+    try:
+        json.loads(out.decode())
+        check("still parses as JSON", True)
+    except ValueError:
+        check("still parses as JSON", False)
+
+
 def test_line_numbers():
     print("\n8. findings carry the right line number")
     non_ascii, _ = scan('{\n  "a": 1,\n  "d": "—"\n}'.encode())
@@ -103,6 +136,9 @@ for fn in (
     test_control_escapes_allowed,
     test_non_control_escape_still_flagged,
     test_line_numbers,
+    test_fix_respects_backslash_parity,
+    test_fix_replaces_real_escape,
+    test_fix_preserves_leading_escaped_backslash,
 ):
     fn()
 

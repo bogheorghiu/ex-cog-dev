@@ -55,10 +55,11 @@ from pathlib import Path
 EM_DASH = "—".encode()
 EM_DASH_REPLACEMENT = b"-"
 
-# Both spellings of that same character get fixed, because the round trip produces
-# the escaped one and an operator told to run --fix on "an em-dash" should not have
-# to care which form is on disk.
-EM_DASH_ESCAPED = b"\\" + b"u2014"  # built from pieces; see the note in main()
+# The code point --fix knows how to substitute, in its escaped spelling. Compared
+# numerically against a parsed escape rather than matched as a byte string: a plain
+# substring search is blind to backslash parity and would corrupt a valid file (see
+# replace_escaped_em_dash).
+EM_DASH_CODE_POINT = 0x2014
 
 # Experiment fixtures are excluded, and the reason is the opposite of the usual one:
 # their bytes are the point. These files hold pre-registered probe stimuli for
@@ -117,6 +118,33 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
 
 def line_of(data: bytes, index: int) -> int:
     return data.count(b"\n", 0, index) + 1
+
+
+def replace_escaped_em_dash(data: bytes) -> bytes:
+    """Replace genuine escaped em-dashes with '-', respecting backslash parity.
+
+    Both spellings of the character are fixed - raw and escaped - because the bad
+    round trip emits the escaped one, and an operator told to run --fix on "an
+    em-dash" should not have to care which form is on disk.
+
+    It must go through the same regex the scanner uses, NOT a substring replace.
+    A substring search for the six bytes of the escape also matches the tail of an
+    escaped backslash followed by the literal text `u2014` - which is not an escape
+    at all - starting the match at the second backslash. Replacing there emits a
+    lone backslash followed by '-', which is not a legal JSON escape, so a valid
+    file stops parsing. That is the same "a tool rewrote bytes it did not
+    understand" failure this whole guard exists to prevent, so the fixer must not
+    commit it.
+    """
+
+    def substitute(match: re.Match[bytes]) -> bytes:
+        token = match.group()
+        if int(token[-4:], 16) != EM_DASH_CODE_POINT:
+            return token
+        # Keep any leading escaped-backslash pairs; only the escape itself goes.
+        return token[:-6] + EM_DASH_REPLACEMENT
+
+    return ESCAPE_RE.sub(substitute, data)
 
 
 def scan(data: bytes) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
@@ -183,16 +211,15 @@ def main() -> int:
     for path in files:
         data = path.read_bytes()
 
-        if args.fix and (EM_DASH in data or EM_DASH_ESCAPED in data):
-            # Both spellings, because the round trip emits the escaped one and the
-            # operator reading "escape sequence" in the report is looking at an
-            # em-dash either way.
-            fixed = data.replace(EM_DASH, EM_DASH_REPLACEMENT)
-            fixed = fixed.replace(EM_DASH_ESCAPED, EM_DASH_REPLACEMENT)
-            path.write_bytes(fixed)
-            data = path.read_bytes()
-            fixed_files += 1
-            print(f"fixed (em-dash -> '-'): {path.relative_to(repo_root)}")
+        if args.fix:
+            fixed = replace_escaped_em_dash(data.replace(EM_DASH, EM_DASH_REPLACEMENT))
+            # Gate the write on an actual change, not on a substring test. The old
+            # gate could fire on a file with nothing to fix and rewrite it anyway.
+            if fixed != data:
+                path.write_bytes(fixed)
+                data = fixed
+                fixed_files += 1
+                print(f"fixed (em-dash -> '-'): {path.relative_to(repo_root)}")
 
         non_ascii, escapes = scan(data)
         rel = path.relative_to(repo_root)
