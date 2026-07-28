@@ -378,12 +378,23 @@ jobs:
       #
       # `always()` because a round that FAILS is the one whose inputs you most want, and
       # the condition names the step that creates the directory rather than the gate, so
-      # that "there is something to upload" holds by construction and needs no
-      # if-no-files-found excuse: prepare succeeded => the directory exists.
+      # that the directory exists whenever this step runs. A failure of `prepare` itself
+      # is the one round deliberately not kept: it has produced no inputs yet, and what
+      # went wrong is the traceback in the log, not a half-written directory.
+      #
+      # `include-hidden-files: true` is what makes it actually upload. The directory is
+      # dot-named, and upload-artifact has excluded hidden paths by default since v4.4.0
+      # -- including a dot-named root passed directly as `path:`, not merely hidden files
+      # under it. Run 30350716136 uploaded nothing and said so: "No files were found with
+      # the provided path: .prose-review". Two rounds had already passed green while
+      # storing nothing, because the earlier `if-no-files-found: ignore` suppressed that
+      # warning; dropping it is what surfaced the bug. Left at the default `warn` on
+      # purpose, so the same silence cannot come back.
       - name: Keep the round's inputs and reasoning
         if: always() && steps.prepare.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.PROSE_REVIEW_DIR }}
+          include-hidden-files: true
           retention-days: 30
