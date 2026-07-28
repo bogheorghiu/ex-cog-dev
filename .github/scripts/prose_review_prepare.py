@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Gather every input the prose reviewer needs, deterministically, before it runs.
 
-Why this exists: the reviewer is given no shell and no network. It reads files and
-writes one findings file. Everything it needs to see -- the diff, which files changed,
+Why this exists: the reviewer is given no shell and no network. It reads files and writes
+files, and does nothing else. Everything it needs to see -- the diff, which files changed,
 the PR's own text, what previous rounds already said, and which of this repo's rules
 bind which file -- is assembled here, by code, and handed over as plain files.
 
