@@ -203,7 +203,8 @@ jobs:
             when you stop, the run stops, and anything unwritten is lost. Wait for your
             subagents, finish the reconciliation yourself, and write findings.json
             BEFORE your final message.
-          # Writing is scoped to the one file the reviewer produces. Unscoped, it could
+          # Writing is scoped to the two files the reviewer produces — the findings it
+          # wants published, and the record of what it argued down. Unscoped, it could
           # rewrite the validator's own inputs — forging manifest.json's bindings, or
           # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
           # which would route around every check that makes citation enforceable.
@@ -235,7 +236,7 @@ jobs:
           # it themselves.
           claude_args: >-
             --model opus
-            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Edit(.prose-review/refuted.json),Task,Agent"
             --disallowedTools "Bash,WebFetch,WebSearch"
 
       # What the reviewer actually DID. The action's own log reports `is_error: false` and
@@ -281,16 +282,29 @@ jobs:
                       calls.append(f"{name} {path}".strip())
                   elif block.get("type") == "text":
                       last_text = block.get("text", "") or last_text
-                  if "denied" in json.dumps(block)[:4000].lower():
-                      denials.append(json.dumps(block)[:400])
+                  # A refusal is an ERRORED tool_result that names the permission system,
+                  # not any block containing the word. Matching the bare substring counted
+                  # diff text, subagent prompts, and -- twice -- the reviewer grepping this
+                  # repository for `denied` while reading this very line. The authoritative
+                  # figure is `permission_denials_count` in the action's own result object
+                  # printed by the step above; this list exists to say WHICH calls, so it
+                  # must not disagree with that count.
+                  if block.get("type") == "tool_result" and block.get("is_error"):
+                      detail = json.dumps(block.get("content", ""))[:4000].lower()
+                      if "permission" in detail or "denied" in detail:
+                          denials.append(json.dumps(block)[:400])
           print(f"tool calls ({len(calls)}):")
           for c in calls:
               print(f"  - {c}")
-          print(f"\npermission denials seen in content ({len(denials)}):")
+          print(f"\nrefused tool calls ({len(denials)}); compare against "
+                f"permission_denials_count in the result object above:")
           for d in denials[:5]:
               print(f"  ! {d}")
-          print("\nreviewer's closing text (truncated):")
-          print(last_text[:1500] or "  (none)")
+          # Printed whole. At 1500 characters this cut the reviewer's account of its own
+          # round mid-sentence, and on a round that posts nothing that account is the ONLY
+          # surviving record of what was found and argued down.
+          print("\nreviewer's closing text:")
+          print(last_text or "  (none)")
           PY
 
       - name: Validate the findings
@@ -352,3 +366,21 @@ jobs:
           # values this step's environment actually holds.
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: python3 .github/scripts/prose_review_post.py
+
+      # The round's reasoning outlives the round only if something stores it. Two rounds
+      # produced nine candidate findings and argued all nine down; five of those arguments
+      # survive anywhere at all, and only because they fit inside a log line. Run logs are
+      # not the answer either -- a run's log was already unreadable a day later when
+      # someone went back for exactly these numbers.
+      #
+      # `always()` because a round that fails is the one whose inputs you most want, and
+      # `if-no-files-found: ignore` because a run gated off before the prepare step has no
+      # directory to upload and that is not an error.
+      - name: Keep the round's inputs and reasoning
+        if: always() && steps.gate.outputs.review == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.PROSE_REVIEW_DIR }}
+          if-no-files-found: ignore
+          retention-days: 30

@@ -75,8 +75,10 @@ You also have **no shell and no network**. `Bash`, `WebFetch` and `WebSearch` ar
 explicitly disallowed, and every call to them is refused; reach for `Read`, `Grep` and
 `Glob` instead.
 
-**You do not post anything.** You write one file, `.prose-review/findings.json`, and
-a validation script decides what reaches the pull request. A finding that cites a rule
+**You do not post anything.** You write two files and neither of them reaches anyone
+directly: `.prose-review/findings.json`, which a validation script screens before
+anything reaches the pull request, and `.prose-review/refuted.json`, which is kept as a
+record and never posted at all. A finding that cites a rule
 which does not bind the file it targets is dropped before it is ever published, so
 inventing a rule scope wastes the finding rather than landing it.
 
@@ -130,6 +132,17 @@ the finding, the rule text, and the file. Its only question:
 > Is this rule actually in scope for this file, and is it actually violated?
 
 It answers yes or no with its reasoning. A finding that fails validation is discarded.
+
+**Write down what you discarded.** Every candidate that does not survive this stage goes
+into `.prose-review/refuted.json`, as a JSON array of objects with `file`, `line`,
+`claim` (the finding as stage 2 put it) and `refutation` (the validator's argument, in
+its own words, not summarised). Write the file even when the array is empty.
+
+This is not for you and you never read it back — each round finds blind, which is the
+point. It is for the person reading afterwards, and it is the only way anyone can tell a
+well-calibrated filter from a reflexively harsh one. A round that posts nothing currently
+looks identical whether it found nothing or refuted everything it found, and those are
+opposite facts about the change under review.
 
 This is a distinct agent on purpose. The stage-2 agent has already committed to the
 finding, and asking it to check its own work is the same confirmation bias that stage 2
@@ -208,7 +221,8 @@ the minimum quotation needed — this job's logs are publicly readable.
 
 ## Output
 
-Write `.prose-review/findings.json` and nothing else:
+Write `.prose-review/findings.json`, and `.prose-review/refuted.json` as described in
+stage 3. Nothing else:
 
 ```json
 {
