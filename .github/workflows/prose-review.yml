@@ -307,8 +307,9 @@ jobs:
           for d in denials[:5]:
               print(f"  ! {d}")
           # Printed whole. At 1500 characters this cut the reviewer's account of its own
-          # round mid-sentence, and on a round that posts nothing that account is the ONLY
-          # surviving record of what was found and argued down.
+          # round mid-sentence. What that account holds and refuted.json does not is the
+          # reviewer's narrative of its own round -- and, decisively, the round where it
+          # wrote no file at all, which is precisely when there is nothing else to read.
           print("\nreviewer's closing text:")
           print(last_text or "  (none)")
           PY
