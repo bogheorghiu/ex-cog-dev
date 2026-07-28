@@ -1,49 +1,189 @@
 #!/usr/bin/env bash
 # pre-push PII guard — blocks a push whose commits contain a denylisted personal name.
 #
-# This file carries NO names, so it is safe to commit. The names are read at push time from,
-# in order: the PII_DENYLIST env var (cloud env-vars field, same name as the CI secret), else the
-# gitignored file pii-denylist.local at the repo root (.gitignore keeps it out of the repo).
+# This file carries NO names, so it is safe to commit. The names are read at push time from, in
+# order: the PII_DENYLIST env var (cloud env-vars field, same name as the CI secret), else the
+# gitignored file pii-denylist.local (looked up in BOTH this working tree's root AND the main
+# clone's root — a linked worktree does not have the untracked file at its own top level).
 #
-# Activate per clone (one of):
-#     cp .githooks/pre-push "$(git rev-parse --git-path hooks)/pre-push"   # simplest, no side effects
-#     git config core.hooksPath .githooks                                  # cleaner, but overrides .git/hooks/*
-# With no denylist file present the hook is inert (the CI pii-denylist-guard still applies).
+# Activate per clone — PREFER core.hooksPath:
+#     git config core.hooksPath .githooks
+# It reads the tracked file, so a fix pulled into .githooks/ takes effect immediately. The
+# alternative — cp .githooks/pre-push "$(git rev-parse --git-path hooks)/pre-push" — makes a
+# PRIVATE copy under .git/hooks/ that `git pull` never updates, so a security fix to this file
+# silently does not reach it. If you installed that way, re-copy after every pull; the staleness
+# check below warns you when the running copy has drifted from the tracked one.
+#
+# FAIL-CLOSED PRINCIPLE. Every way the scan can fail to run — an unreadable or unusable denylist,
+# a git failure, a push range that cannot be determined, a grep error — BLOCKS the push. "I could
+# not check" must never be reported as "there is nothing to find", which is the whole class of bug
+# this gate keeps producing.
+#
+# LOG SAFETY. A matched line contains the name, so grep's stdout is always discarded and only the
+# FACT of a match is reported. Ref names travel to the remote and get echoed on a block, so they
+# are denylist-checked themselves and withheld from the message when they match.
 set -uo pipefail
 
-# Denylist source, in order: the PII_DENYLIST env var (cloud env-vars field / same name as the CI
-# secret, newline-separated), else the uncommittable local file. Names never live in this hook.
+REMOTE_NAME="${1:-}"        # git passes the target remote's name (or URL) as $1
+
 CLEANUP=""
 trap '[ -n "$CLEANUP" ] && rm -f "$CLEANUP"' EXIT
+
+# Normalize a denylist stream: '|' is a separator (single-line env fields use it, and the CI
+# workflow accepts it too), CRs are stripped (a CRLF-saved file otherwise leaves every pattern
+# ending in \r, which matches NOTHING while the file still looks non-empty), trailing blanks are
+# trimmed, and comment/blank lines are dropped. A blank line handed raw to `grep -f` is an EMPTY
+# pattern that matches EVERY line. Both sources go through this, so one denylist behaves the same
+# however it arrives.
+norm() {
+  tr '|' '\n' \
+    | tr -d '\r' \
+    | sed 's/[[:space:]]*$//' \
+    | { grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' || true; }
+}
+
+TOP="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+
+# --- Staleness check ---
+# A cp-installed copy under .git/hooks/ is private and `git pull` never updates it, so a security
+# fix to the tracked file can silently fail to reach the hook that actually runs. Warn whenever
+# the running script differs from the tracked one. Warn rather than block: a divergent private
+# copy can be deliberate, and locking the operator out of every push is a worse failure than
+# telling them loudly. Set EXCOG_PREPUSH_NO_STALE_CHECK=1 to silence it.
+if [ -z "${EXCOG_PREPUSH_NO_STALE_CHECK:-}" ] && [ -n "$TOP" ] && [ -f "$TOP/.githooks/pre-push" ]; then
+  self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)"
+  if [ "$self_dir/$(basename "${BASH_SOURCE[0]}")" != "$TOP/.githooks/pre-push" ] \
+     && ! cmp -s "${BASH_SOURCE[0]}" "$TOP/.githooks/pre-push"; then
+    echo "pre-push WARNING: the hook now running is a PRIVATE COPY and it DIFFERS from the repo's" >&2
+    echo "  tracked .githooks/pre-push — a pulled fix has not reached it. Re-copy it, or run" >&2
+    echo "  'git config core.hooksPath .githooks' so the tracked file executes directly." >&2
+  fi
+fi
+
+# --- Resolve the denylist into a file WE own, so grep never opens an unreadable path ---
+COMMON_PARENT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo /nonexistent/_)")"
+FILE_SRC=""
+for d in "$TOP" "$COMMON_PARENT"; do
+  [ -n "$d" ] || continue
+  if [ -f "$d/pii-denylist.local" ]; then FILE_SRC="$d/pii-denylist.local"; break; fi
+done
+
+DENY="$(mktemp)"; CLEANUP="$DENY"
+DENY_SRC="none"
 if [ -n "${PII_DENYLIST:-}" ]; then
-  DENY="$(mktemp)"; CLEANUP="$DENY"
-  # accept '|'-separated (single-line env fields) OR newline-separated
-  printf '%s\n' "${PII_DENYLIST}" | tr '|' '\n' | grep -v '^[[:space:]]*$' > "$DENY" || true
-else
-  DENY="$(git rev-parse --show-toplevel)/pii-denylist.local"   # gitignored; never committed
+  printf '%s\n' "${PII_DENYLIST}" | norm > "$DENY"
+  [ -s "$DENY" ] && DENY_SRC="the PII_DENYLIST env var"
+fi
+if [ ! -s "$DENY" ] && [ -n "$FILE_SRC" ]; then
+  # Env var absent, or set but normalizing to zero patterns — fall through to the file rather than
+  # letting a stray empty env var mask a valid local denylist.
+  if [ ! -r "$FILE_SRC" ]; then
+    echo "pre-push BLOCKED: the denylist file exists but cannot be read, so this push cannot be verified." >&2
+    echo "  Fix its permissions (or set PII_DENYLIST) and retry. Path: $FILE_SRC" >&2
+    exit 1
+  fi
+  norm < "$FILE_SRC" > "$DENY"
+  [ -s "$DENY" ] && DENY_SRC="$FILE_SRC"
 fi
 if [ ! -s "$DENY" ]; then
-  echo "pre-push: no PII_DENYLIST env var and no denylist file — PII pre-push guard INACTIVE (CI gate still applies)." >&2
+  # Honest inactive: no terms survived normalization from either source. A comments-only or
+  # blank-only file lands here instead of masquerading as an armed gate that matches nothing.
+  echo "pre-push: no usable denylist terms — env var and local file are absent, or hold only" >&2
+  echo "  comments/blanks. PII pre-push guard INACTIVE (the CI denylist gate still applies)." >&2
   exit 0
 fi
+
+# scan_eval <status-of-git> <status-of-grep> <what> — sets SCAN_RESULT=match|clean, or blocks.
+# grep 0 = matched, 1 = clean, >=2 = its own error. A git failure is never "clean".
+# Sets a global rather than echoing: called in a command substitution, its `exit` would kill only
+# that subshell and the hook would carry on to exit 0 — a fail-open of exactly the kind this
+# file exists to prevent. It must run in the CURRENT shell.
+SCAN_RESULT=""
+scan_eval() {
+  local gitst="$1" grepst="$2" what="$3"
+  if [ "$grepst" -ge 2 ]; then
+    echo "pre-push BLOCKED: the denylist scan itself failed (grep exit $grepst) while reading $what." >&2
+    echo "  This push cannot be verified. Denylist source: $DENY_SRC" >&2
+    exit 1
+  fi
+  # Checked AFTER grep: if grep errored early it may have SIGPIPEd git, and grep's error is the
+  # more informative report. 141 is that SIGPIPE; anything else non-zero is a real git failure.
+  if [ "$gitst" -ne 0 ] && [ "$gitst" -ne 141 ]; then
+    echo "pre-push BLOCKED: git failed (exit $gitst) while reading $what, so nothing was scanned." >&2
+    echo "  This push cannot be verified. Fetch and retry; do not bypass." >&2
+    exit 1
+  fi
+  if [ "$grepst" -eq 0 ]; then SCAN_RESULT=match; else SCAN_RESULT=clean; fi
+}
 
 z=0000000000000000000000000000000000000000
 rc=0
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$z" ] && continue                                  # ref deletion
-  if [ "$remote_sha" = "$z" ]; then
-    commits=$(git rev-list "$local_sha" --not --remotes=origin)        # new branch: only un-pushed commits
-  else
-    commits=$(git rev-list "$remote_sha..$local_sha")
+
+  # The ref NAME reaches the remote as a name, and it is echoed on a block — so check it first.
+  ref_safe=yes
+  printf '%s\n' "$local_ref" "$remote_ref" | grep -a -i -F -f "$DENY" >/dev/null
+  case "${PIPESTATUS[1]}" in
+    0) ref_safe=no ;;
+    1) ;;
+    *) echo "pre-push BLOCKED: the denylist scan itself failed while checking a ref name." >&2
+       exit 1 ;;
+  esac
+  if [ "$ref_safe" = no ]; then
+    echo "pre-push BLOCKED: a ref being pushed has a denylisted personal name in its NAME." >&2
+    echo "  (The ref is not printed here, for the same reason the matched line is not.)" >&2
+    echo "  Rename the branch/tag locally, then push the new name." >&2
+    rc=1
+    continue
   fi
-  [ -z "$commits" ] && continue
-  # grep output goes to /dev/null so the matched line (which contains the name) is never
-  # printed; report the ref only. NOT grep -q: its early exit can SIGPIPE git log, and under
-  # pipefail the pipeline then reports failure — a MATCH would read as "no match" and the
-  # push would slip through.
-  if git log -p --no-color -U0 $commits 2>/dev/null | grep -I -i -F -f "$DENY" >/dev/null; then
-    echo "pre-push BLOCKED ($local_ref): a denylisted personal name is in the commits being pushed." >&2
-    echo "  Remove it — and amend/rebase it out of history — before pushing. Denylist: $DENY" >&2
+  ref_label="$local_ref"
+
+  # Push range. Passed to `git log` AS A RANGE — never as a rev-list-produced list of SHAs, which
+  # git reads as positional "reachable from" revs and which therefore scans the WHOLE history
+  # instead of the outgoing commits (and can overflow the argument limit on a large push).
+  if [ "$remote_sha" = "$z" ]; then
+    # New ref on the TARGET remote — exclude what that same remote already has, not origin's refs.
+    # When $1 is a URL rather than a configured name there are no tracking refs to exclude, so
+    # scan everything reachable: fail closed means more scanning, never less.
+    if [ -n "$REMOTE_NAME" ] && git config --get "remote.$REMOTE_NAME.url" >/dev/null 2>&1; then
+      range=("$local_sha" --not --remotes="$REMOTE_NAME")
+    else
+      range=("$local_sha")
+    fi
+  else
+    range=("$remote_sha..$local_sha")
+  fi
+
+  # An annotated tag's own message never appears in `git log` output — the rev walk peels the tag
+  # to its commit — so scan the tag object itself. `git push --tags` is otherwise a clean route
+  # for a name to reach the remote inside a tag annotation.
+  case "$local_ref" in
+    refs/tags/*)
+      if [ "$(git cat-file -t "$local_sha" 2>/dev/null || true)" = "tag" ]; then
+        git cat-file -p "$local_sha" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
+        scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the annotated tag object"
+        if [ "$SCAN_RESULT" = match ]; then
+          echo "pre-push BLOCKED ($ref_label): a denylisted personal name is in the tag's message." >&2
+          echo "  Re-create the tag with a clean message before pushing. Denylist source: $DENY_SRC" >&2
+          rc=1
+          continue
+        fi
+      fi
+      ;;
+  esac
+
+  # -a (not -I): -I declares the WHOLE stream binary at the first NUL byte and abandons it, so one
+  #   generated file with a NUL in the push would hide a name in any other commit. -a forces text.
+  # -m: without it `git log -p` prints NO diff for a merge commit, so a name introduced only in a
+  #   conflict resolution is never scanned.
+  # Statuses are read from PIPESTATUS, not from the pipeline: under pipefail a non-zero `git log`
+  #   overrides grep's verdict, which is exactly how a MATCH can read as "no match".
+  git log -p -m --no-color -U0 "${range[@]}" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
+  scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the outgoing commits"
+  if [ "$SCAN_RESULT" = match ]; then
+    echo "pre-push BLOCKED ($ref_label): a denylisted personal name is in the commits being pushed." >&2
+    echo "  Remove it — and amend/rebase it out of history — before pushing. Denylist source: $DENY_SRC" >&2
     rc=1
   fi
 done
