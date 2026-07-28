@@ -19,18 +19,15 @@ ship — the discipline `.claude/rules/verify-claims.md` builds on.
 
 ## What's here
 
-Four Claude Code plugins distributed via the `ex-cog-dev` marketplace:
+Claude Code plugins distributed via the `ex-cog-dev` marketplace. Each plugin is a top-level directory containing a `.claude-plugin/plugin.json`; `.claude-plugin/marketplace.json` is the manifest of what ships.
 
-- `vasana-system/` — pattern-recognition skills, plus two MCP servers (`relational-memory`, `edge-graph`)
-- `research-toolkit/` — research/analysis skills, plus two MCP servers (`financial-mcp`, `transparency-mcp`)
-- `makers-toolkit/` — build-discipline skills (`system-pilot`, `intrinsic-prompt-design`); no MCP servers
-- `security-toolkit/` — threat-detection and dangerous-action-blocking hooks; no MCP servers
+**Read those, not a list here.** This file used to carry an inventory of the plugins with their skills and MCP servers, and it drifted — a hand-kept catalog of what exists has no way to notice when the tree moves past it, so it goes stale silently while still reading as authoritative. The directory listing cannot rot this way; it *is* the thing.
 
-The four MCP servers are launched by consumers via `uvx --from git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=<path> <command>` URLs in each plugin's `.mcp.json`. That means every uvx cold-start fetches the latest source from this repo. A bad commit propagates to all consumers within ~24h (uvx cache TTL).
+Some plugins ship MCP servers, launched by consumers via `uvx --from git+https://github.com/bogheorghiu/ex-cog-dev#subdirectory=<path> <command>` URLs in that plugin's `.mcp.json`. Every uvx cold-start fetches the latest source from this repo, so a bad commit propagates to all consumers within ~24h (uvx cache TTL).
 
 ## Version bumping (REQUIRED)
 
-When you change **any** file under a plugin directory (`vasana-system/`, `research-toolkit/`, `makers-toolkit/`, `security-toolkit/`), you **must** bump that plugin's `.claude-plugin/plugin.json` `version` in the same change, before committing. That version is what `claude plugin update` keys on — a change shipped without a bump is silently skipped by installs (this has regressed before).
+When you change **any** file under **any** plugin directory (a top-level directory with a `.claude-plugin/plugin.json`), you **must** bump that plugin's `.claude-plugin/plugin.json` `version` in the same change, before committing. That version is what `claude plugin update` keys on — a change shipped without a bump is silently skipped by installs (this has regressed before).
 
 - Patch (`x.y.Z+1`) for fixes/docs, minor (`x.Y+1.0`) for new features — your judgment.
 - Genuine no-op (e.g. a typo in an unshipped note)? Bypass with `[skip-version-bump]` in the PR title or the `skip-version-bump` label.
@@ -59,14 +56,15 @@ Nothing catches it by accident: the tool exits 0, the file still parses, tests s
 
 This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.
 
+## Duplicated test utilities are deliberate
+
+Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are intentionally duplicated per-plugin rather than shared across plugins. Keep such twin copies logic-identical and cross-note each from the other, because CI runs every copy: fix one and not its twin and you leave a gate passing on stale logic, in a plugin nobody thought they had changed.
+
 ## Release / publish
 
-Every PR to `main` (and every push to `main`) runs these CI gates:
+Every PR to `main`, and every push to `main`, runs the guards in `.github/workflows/`.
 
-- **MCP smoke test** (`.github/workflows/mcp-smoke-test.yml`) — builds each of the four MCPs via `uvx --from <local-path>` and sends a JSON-RPC `initialize`; fails if any server can't import, build, or respond.
-- **Unit tests** (`.github/workflows/unit-tests.yml`) — the per-plugin test suites. Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are intentionally duplicated per-plugin rather than shared across plugins; keep such twin copies logic-identical and cross-note them — CI runs each.
-- **Version-bump guard** (`.github/workflows/version-bump-guard.yml`) — see *Version bumping* above.
-- **JSON ASCII guard** (`.github/workflows/json-ascii-guard.yml`) — see *Tracked JSON is ASCII-only* above.
+**They are not listed here, deliberately.** The directory is the list, and each workflow opens with a header comment saying what it catches and why it exists — so the tree already answers both "which gates run?" and "what is this one for?". A second copy in this file could only drift out of step with it, and did: it claimed "three" while six were running. Where a gate carries a convention you must follow *before* pushing, that convention lives in its own section above, next to the rule it enforces, with the local self-check command.
 
 Green `main` is the pre-publish bar.
 
