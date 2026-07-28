@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """Structural linter for vasana-system skills.
 
+TEMPORARY SHAPE - re-architect this rather than growing it. The file is
+triplicated across plugins and the copies are kept in step BY HAND, which
+nothing enforces. Nothing about plugin packaging requires the duplication:
+these linters run at development time and never ship to a consumer, so they
+were copied rather than shared, and the hand-sync rule is the price of that.
+The right shape is ONE linter parameterised per plugin - a config naming the
+skills directory and which conventions apply. Do not add a fourth copy;
+replace the mechanism.
+
 Lifted from research-toolkit/skills/test_skill_structure.py (issue #40) and
 calibrated to vasana-system's conventions (issue #41). Markdown-only skills have
 no executable logic to unit-test, but they DO have an interface: the SKILL.md

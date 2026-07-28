@@ -56,13 +56,13 @@ Nothing catches it by accident: the tool exits 0, the file still parses, tests s
 
 This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.
 
-## Duplicated test utilities are deliberate — but check before you propagate
+## Duplicated skill linters — TEMPORARY, re-architect them
 
-Some plugins carry their own copy of a structural linter for their skills (`skills/test_skill_structure.py`). The duplication is intentional rather than an oversight: a plugin is installed on its own, and each plugin defines its own skill conventions, so the linter ships inside the plugin it lints.
+Several plugins carry a copy of the same structural linter for their skills (`skills/test_skill_structure.py`). The copies are kept **logic-identical** — verified: they differ only in the plugin name printed in a banner, plus comment wording. CI runs each one, so a logic fix must land in every copy; fix one and not the others and a gate keeps passing on stale logic in a plugin nobody thought they had touched.
 
-**Do not assume the copies are interchangeable — read the copy's own docstring first.** Some are true twins, identical apart from the plugin name in a printed banner, and a logic fix belongs in every one of them. At least one is a deliberate fork, calibrated to conventions its own plugin has and the others don't; propagating a change into it blindly would silently delete checks. Each copy's docstring states which it is and why.
+**This duplication is technical debt, not a design.** These linters run at development time and never ship to a consumer, so nothing about plugin packaging justifies separate copies — they were copied rather than shared, and the "keep them in sync by hand" rule is the cost of that. The right shape is one linter parameterised per plugin (a config naming the skills directory and which conventions apply). **Re-architect this rather than growing it: adding a fourth copy makes the problem worse, and hand-sync is exactly the invariant nothing enforces.**
 
-CI runs every copy, so the failure cuts both ways: fix one twin and not the other and a gate keeps passing on stale logic in a plugin nobody thought they had touched; overwrite a fork with its "twin" and you drop the checks that fork exists for.
+Until that lands, treat the sync rule as binding and check every copy when you change one.
 
 ## Release / publish
 
