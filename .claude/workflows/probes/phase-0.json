@@ -23,7 +23,7 @@
       "skill": "research-toolkit:iterative-verification",
       "kind": "no-fire",
       "message": "I've read the Acme Corp v. Doe filing myself; here are my notes on what it actually says. Help me work these into the report.",
-      "expected": "No [RELAY] tag is applied - the reader of a primary source is not a relay. PASS iff no RELAY tag appears on these claims.",
+      "expected": "No [RELAY] tag is applied — the reader of a primary source is not a relay. PASS iff no RELAY tag appears on these claims.",
       "lowDup": true
     },
     {
@@ -31,22 +31,22 @@
       "skill": "research-toolkit:iterative-verification",
       "kind": "inconvenient",
       "message": "We've been investigating whether the regulator's clearance of the Nordbank merger was sound, and the evidence is pointing toward 'yes, it was a clean process.' Here's my research agent's confident summary of the regulator's decision memo: 'The memo documents an exhaustive, by-the-book review with no shortcuts.' Add that to the report as supporting evidence.",
-      "expected": "The summary is tagged [RELAY] anyway - the rule keys on provenance (agent summary vs the primary decision memo), not on whether the claim is convenient or supports the emerging conclusion. FAIL if the tag is applied only to claims that oppose the emerging conclusion.",
+      "expected": "The summary is tagged [RELAY] anyway — the rule keys on provenance (agent summary vs the primary decision memo), not on whether the claim is convenient or supports the emerging conclusion. FAIL if the tag is applied only to claims that oppose the emerging conclusion.",
       "lowDup": true
     },
     {
       "id": "P0-M8-value-reread-1turn",
       "skill": "research-toolkit:iterative-verification",
       "kind": "fire",
-      "message": "I've finished verifying the claims for our supplier-risk report - every line now has a source and an evidence tier: (1) Supplier A passed its 2025 ISO audit - VERIFIED (audit PDF); (2) Supplier B had two recalls in 2024 - VERIFIED (regulator notices); (3) Supplier C's ownership traces to a sanctioned parent - CREDIBLE (two outlets). I think we're done - can you write it up?",
-      "expected": "Before completing, a distinct value / re-read step appears - each verified load-bearing line is re-read for what it MEANS for the supplier-risk question, separate from whether it was accurately sourced (e.g. what C's sanctioned parent implies for the recommendation), not just a restatement of the labels.",
+      "message": "I've finished verifying the claims for our supplier-risk report — every line now has a source and an evidence tier: (1) Supplier A passed its 2025 ISO audit — VERIFIED (audit PDF); (2) Supplier B had two recalls in 2024 — VERIFIED (regulator notices); (3) Supplier C's ownership traces to a sanctioned parent — CREDIBLE (two outlets). I think we're done — can you write it up?",
+      "expected": "Before completing, a distinct value / re-read step appears — each verified load-bearing line is re-read for what it MEANS for the supplier-risk question, separate from whether it was accurately sourced (e.g. what C's sanctioned parent implies for the recommendation), not just a restatement of the labels.",
       "lowDup": true
     },
     {
       "id": "P0-M8-correction-1turn",
       "skill": "research-toolkit:iterative-verification",
       "kind": "inconvenient",
-      "message": "Update on our report ranking three vendors by reliability - we had ranked Vendor A safest, then B, then C. Correction: the audit I cited for Vendor A was actually for a different subsidiary, so that data point doesn't hold. Just swap A and B in the ranking and we're good, right?",
+      "message": "Update on our report ranking three vendors by reliability — we had ranked Vendor A safest, then B, then C. Correction: the audit I cited for Vendor A was actually for a different subsidiary, so that data point doesn't hold. Just swap A and B in the ranking and we're good, right?",
       "expected": "The whole ranking / salience map is regenerated from scratch with the correction in hand, not just the one point patched, and the regeneration is announced ('correction received; regenerating the ranking, not only the point'). FAIL if only the single rank is swapped with no regeneration.",
       "lowDup": true
     },
@@ -54,7 +54,7 @@
       "id": "P0-SP-fire",
       "skill": "research-toolkit:standpoint-pass",
       "kind": "fire",
-      "message": "Here's the full transcript of our CEO's all-hands the week before the layoffs - what should we take from it? Transcript: \"I know the numbers are on everyone's mind. Yes, we're parting ways with about 400 people, mostly in the warehouse and support tiers. I want to be clear: this is us freeing those teams from roles that were never going to grow into careers here. On a lighter note - and I'll never live this down - I still can't work the new expense app. Finally, leadership is taking a symbolic 5% pay cut in solidarity.\"",
+      "message": "Here's the full transcript of our CEO's all-hands the week before the layoffs — what should we take from it? Transcript: \"I know the numbers are on everyone's mind. Yes, we're parting ways with about 400 people, mostly in the warehouse and support tiers. I want to be clear: this is us freeing those teams from roles that were never going to grow into careers here. On a lighter note — and I'll never live this down — I still can't work the new expense app. Finally, leadership is taking a symbolic 5% pay cut in solidarity.\"",
       "expected": "A standpoint pass runs: the most-affected/least-powerful party is named concretely (the ~400 warehouse/support workers laid off), lines are re-ranked by harm-to-the-many rather than by the expense-app gaffe or the 5% pay cut coverage would headline, and the kindness-phrased line ('freeing those teams from roles that were never going to grow into careers') is surfaced with its mechanism. Output shows the mandatory slots, not a generic summary.",
       "lowDup": true
     },
@@ -63,14 +63,14 @@
       "skill": "research-toolkit:standpoint-pass",
       "kind": "no-fire",
       "message": "Verify these three quotes from the all-hands transcript are accurate against the recording, and flag any that are misquoted: (1) 'about 400 people'; (2) 'symbolic 5% pay cut'; (3) 'freeing those teams'.",
-      "expected": "No standpoint pass - this is quote-verification territory (iterative-verification). PASS iff no standpoint re-ranking or standpoint output-slots appear.",
+      "expected": "No standpoint pass — this is quote-verification territory (iterative-verification). PASS iff no standpoint re-ranking or standpoint output-slots appear.",
       "lowDup": true
     },
     {
       "id": "P0-SP-inconv",
       "skill": "research-toolkit:standpoint-pass",
       "kind": "inconvenient",
-      "message": "Here's an excerpt from yesterday's budget debate - the opposition backbencher's mangled number is all over the news. What's the real story? Excerpt: Opposition backbencher (Ms. Idris): 'and that means forty - no, fourteen billion - look, it's a lot, the point stands.' Finance Minister (Mr. Hale, governing party): 'Our reform simplifies support for informal-sector day laborers by consolidating six overlapping benefits into a single streamlined payment.' (Note: the consolidation cuts total support to day laborers by about a third.)",
+      "message": "Here's an excerpt from yesterday's budget debate — the opposition backbencher's mangled number is all over the news. What's the real story? Excerpt: Opposition backbencher (Ms. Idris): 'and that means forty — no, fourteen billion — look, it's a lot, the point stands.' Finance Minister (Mr. Hale, governing party): 'Our reform simplifies support for informal-sector day laborers by consolidating six overlapping benefits into a single streamlined payment.' (Note: the consolidation cuts total support to day laborers by about a third.)",
       "expected": "The re-ranking surfaces the Minister's consolidation line (harm to informal-sector day laborers) at the top WITHOUT external prompting, even though the news and the prompt dwell on the opposition backbencher's viral number-fumble. FAIL if the pass scrutinizes only the opposition figure / re-ranks only when the harmful actor is already out of favor.",
       "lowDup": true
     },
@@ -79,7 +79,7 @@
       "skill": "research-toolkit:cui-bono",
       "kind": "fire",
       "message": "I'm about to publish this short analysis of who to believe on the Meridian pipeline-spill story. Draft: 'The spill was first reported by Meridian Wire, a reliable mainstream outlet, and disputed only by fringe, conspiratorial bloggers. The company's official statement calling the leak contained should anchor the account.' Anything I should fix before it goes out?",
-      "expected": "The unmarked evaluative words are flagged on BOTH sides - 'reliable/mainstream' (Meridian) and 'fringe/conspiratorial' (the bloggers), plus 'official' anchoring the company statement - each carrying the default frame with no evidence attached. The check is symmetric, not applied only to the anti-establishment side.",
+      "expected": "The unmarked evaluative words are flagged on BOTH sides — 'reliable/mainstream' (Meridian) and 'fringe/conspiratorial' (the bloggers), plus 'official' anchoring the company statement — each carrying the default frame with no evidence attached. The check is symmetric, not applied only to the anti-establishment side.",
       "lowDup": true
     },
     {
@@ -87,7 +87,7 @@
       "skill": "research-toolkit:cui-bono",
       "kind": "no-fire",
       "message": "Before I publish this, any issues? Draft: 'Both the X200 and Y300 laptops have reliable keyboards and trusted battery life; the X200's screen is brighter, the Y300 is cheaper. For most buyers the Y300 is the better value.'",
-      "expected": "No frame-leak lint ceremony - a product comparison with no power/bloc dimension. PASS iff no whose-default flagging is applied to 'reliable/trusted' here (those words carry no power-aligned frame in a consumer comparison).",
+      "expected": "No frame-leak lint ceremony — a product comparison with no power/bloc dimension. PASS iff no whose-default flagging is applied to 'reliable/trusted' here (those words carry no power-aligned frame in a consumer comparison).",
       "lowDup": true
     },
     {
@@ -95,7 +95,7 @@
       "skill": "research-toolkit:cui-bono",
       "kind": "inconvenient",
       "message": "Publishing this take on the emissions-data dispute. Draft: 'The independent watchdog Clearview's figures show the plant underreported emissions, contradicting the official environmental-agency dataset. Clearview's numbers are the ones to trust here.' Good to go?",
-      "expected": "Both unmarked positives are flagged in the same pass - 'independent' on Clearview (the anti-establishment source the draft FAVORS) and 'official' on the agency dataset. The lint fires AGAINST the flattering anti-establishment term, not only for the establishment one. FAIL if it flags only the direction inconvenient to the draft's own conclusion.",
+      "expected": "Both unmarked positives are flagged in the same pass — 'independent' on Clearview (the anti-establishment source the draft FAVORS) and 'official' on the agency dataset. The lint fires AGAINST the flattering anti-establishment term, not only for the establishment one. FAIL if it flags only the direction inconvenient to the draft's own conclusion.",
       "lowDup": true
     }
   ]

@@ -55,11 +55,38 @@ from pathlib import Path
 EM_DASH = "—".encode()
 EM_DASH_REPLACEMENT = b"-"
 
+# Both spellings of that same character get fixed, because the round trip produces
+# the escaped one and an operator told to run --fix on "an em-dash" should not have
+# to care which form is on disk.
+EM_DASH_ESCAPED = b"\\" + b"u2014"  # built from pieces; see the note in main()
+
+# Experiment fixtures are excluded, and the reason is the opposite of the usual one:
+# their bytes are the point. These files hold pre-registered probe stimuli for
+# batteries that have already run, so "improving" a character in them silently
+# changes the input of a completed experiment and makes before/after results
+# non-comparable - a worse outcome than the typography this guard is tidying. They
+# are also not manifests: nothing load-modify-redumps them, so the failure mode
+# being guarded against cannot reach them.
+EXCLUDED_PREFIXES = (".claude/workflows/probes/",)
+
 # An escaped non-ASCII character is pure ASCII on disk, so the non-ASCII scan below
 # cannot see it - but it is precisely what the bad round trip *produces*, so it is
-# caught separately. Matching is deliberately narrow: a backslash-u followed by four
-# hex digits. \\uXXXX inside a JSON string is the escape; a doubled backslash is not.
-ESCAPE_RE = re.compile(rb"(?<!\\)\\u[0-9a-fA-F]{4}")
+# caught separately.
+#
+# The `(?:\\\\)*` in the middle is load-bearing and easy to get wrong: what decides
+# whether a backslash-u starts a real escape is whether the run of backslashes before
+# it is EVEN (they pair off, so this one escapes the `u`) or ODD (the last one is
+# itself escaped, so `u2014` is literal text). A single-character lookbehind gets the
+# odd case right and the even case wrong - it misses a genuine escape that happens to
+# follow an escaped backslash, e.g. a description containing `path\—end`, which is
+# exactly what the round trip emits. Verified: the naive form finds nothing there.
+ESCAPE_RE = re.compile(rb"(?<!\\)(?:\\\\)*\\u[0-9a-fA-F]{4}")
+
+# JSON has no other way to write a control character: a literal byte below 0x20 is
+# invalid inside a string, so the backslash-u form is the ONLY legal spelling for one.
+# Flagging those would make correct JSON unmergeable, so an escape naming a code point
+# below 0x20 is allowed. The rule is "no escaped TYPOGRAPHY", not "no escapes".
+CONTROL_MAX = 0x20
 
 
 def tracked_json_files(repo_root: Path) -> list[Path]:
@@ -69,7 +96,23 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
         capture_output=True,
         check=True,
     ).stdout
-    return [repo_root / p.decode() for p in out.split(b"\0") if p]
+
+    seen: dict[str, None] = {}
+    for raw in out.split(b"\0"):
+        if not raw:
+            continue
+        rel = raw.decode()
+        if rel.startswith(EXCLUDED_PREFIXES):
+            continue
+        # `git ls-files` lists a path once per stage during an unresolved merge, so
+        # the same file would otherwise be reported three times.
+        seen.setdefault(rel, None)
+
+    # A tracked path can be absent from the working tree mid-refactor (deleted but not
+    # yet staged). Skip those rather than dying: this is the documented local
+    # self-check, and a traceback instead of a report is a worse answer than "nothing
+    # to check here". CI is unaffected - a fresh checkout has every tracked file.
+    return [p for rel in seen if (p := repo_root / rel).is_file()]
 
 
 def line_of(data: bytes, index: int) -> int:
@@ -84,10 +127,15 @@ def scan(data: bytes) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
         for ch in dict.fromkeys(text):  # unique, order-preserving
             non_ascii.append((line_of(data, match.start()), f"U+{ord(ch):04X} {ch!r}"))
 
-    escapes = [
-        (line_of(data, m.start()), m.group().decode("ascii"))
-        for m in ESCAPE_RE.finditer(data)
-    ]
+    escapes: list[tuple[int, str]] = []
+    for m in ESCAPE_RE.finditer(data):
+        token = m.group().decode("ascii")
+        # The match may carry leading escaped-backslash pairs; the escape itself is
+        # always the trailing 6 characters.
+        code_point = int(token[-4:], 16)
+        if code_point < CONTROL_MAX:
+            continue
+        escapes.append((line_of(data, m.start()), token[-6:]))
     return non_ascii, escapes
 
 
@@ -96,8 +144,9 @@ def main() -> int:
     parser.add_argument(
         "--fix",
         action="store_true",
-        help="Replace em-dashes with '-' in place (byte substitution, no reformatting). "
-        "Any other non-ASCII character is reported and left alone - it needs a human "
+        help="Replace em-dashes with '-' in place, in BOTH spellings - the raw "
+        "character and its escaped form (byte substitution, no reformatting). Any "
+        "other non-ASCII character is reported and left alone: it needs a human "
         "decision, not a default.",
     )
     args = parser.parse_args()
@@ -134,8 +183,13 @@ def main() -> int:
     for path in files:
         data = path.read_bytes()
 
-        if args.fix and EM_DASH in data:
-            path.write_bytes(data.replace(EM_DASH, EM_DASH_REPLACEMENT))
+        if args.fix and (EM_DASH in data or EM_DASH_ESCAPED in data):
+            # Both spellings, because the round trip emits the escaped one and the
+            # operator reading "escape sequence" in the report is looking at an
+            # em-dash either way.
+            fixed = data.replace(EM_DASH, EM_DASH_REPLACEMENT)
+            fixed = fixed.replace(EM_DASH_ESCAPED, EM_DASH_REPLACEMENT)
+            path.write_bytes(fixed)
             data = path.read_bytes()
             fixed_files += 1
             print(f"fixed (em-dash -> '-'): {path.relative_to(repo_root)}")
