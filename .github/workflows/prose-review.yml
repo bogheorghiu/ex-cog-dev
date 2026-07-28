@@ -213,7 +213,10 @@ jobs:
           # It must be `Edit(path)`, not `Write(path)`: the CLI rejects the latter with
           # "not matched by file permission checks — only Edit(path) rules are", and an
           # Edit rule covers every file-editing tool including Write. Probed both ways:
-          # the reviewer can write findings.json and is refused any other path.
+          # a path with an Edit rule is writable, a path without one is refused. Stated
+          # as the invariant rather than as the list, because the list is on the line
+          # below and a prose copy of it goes stale the moment it grows — which is what
+          # happened here when this change added the second file.
           #
           # Both `Task` and `Agent` are listed because the SDK refers to the
           # subagent-spawn tool under both names; whichever the runtime registers, one
