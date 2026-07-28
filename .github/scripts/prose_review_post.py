@@ -12,8 +12,12 @@ around —
   3. the line it targets is really in this diff.
 
 A finding failing any of these is never posted at all, rather than posted and audited
-afterwards. It also means the model has no write channel: the only thing that reaches a
-public surface is text this script chose to send.
+afterwards. So the only thing reaching the PULL REQUEST is text this script chose to
+send. That is narrower than "the only thing reaching a public surface": the workflow
+also publishes the work directory as a build artifact and prints the reviewer's closing
+text to a world-readable log, both carrying model-written bytes that these checks never
+see. `scrub()` below covers the artifact for credentials and for nothing else. Issue
+#197 carries whether that channel should exist at all.
 
 Links are generated here too, so a malformed permalink is not something the reviewer can
 get wrong.

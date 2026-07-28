@@ -19,7 +19,17 @@
 #   3. Claude writes findings to a file. It does NOT post. A validation script checks
 #      every finding against the derived rule bindings and the diff, and posts only what
 #      passes. That makes "cite the rule correctly" a machine check rather than a
-#      request the model can skip, and leaves the model with no write channel at all.
+#      request the model can skip, and leaves the model no way to reach the PULL REQUEST
+#      except through text that script chose to send.
+#      NOT the same as "no public output at all", and the difference is new: this job
+#      also publishes the work directory as a build artifact and prints the reviewer's
+#      closing text to a log, both world-readable on a public repo, and both carrying
+#      model-written bytes. Those two are screened for credentials only -- not for rule
+#      binding, line, length or severity, which are what makes the comment path safe. So
+#      the model has a low-bandwidth public channel with weak screening, and no channel
+#      to the pull request without a strong one. Issue #197 carries whether that trade is
+#      the right one; this comment's job is to stop the file asserting the older, simpler
+#      claim that it no longer earns.
 #
 # The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
 # job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no
@@ -400,10 +410,13 @@ jobs:
       # the condition names the SCREENING step rather than the gate. That chains: the
       # screen already runs only when `prepare` succeeded, so naming it carries the "the
       # directory exists" guarantee AND adds "it has been screened", which naming
-      # `prepare` here would not. Two rounds are deliberately not kept, for the same
-      # reason in both cases -- there is nothing safe to publish: a failure of `prepare`,
-      # which has produced no inputs yet, and a failure of the screen, whose output has
-      # not been cleared for publication.
+      # `prepare` here would not. Two rounds are deliberately not kept, and for ONE
+      # reason covering both: nothing has been cleared for publication. That is obvious
+      # for a failed screen. It is worth stating for a failed `prepare` because the
+      # tempting reason -- "it produced no inputs yet" -- is false: `prepare` writes
+      # pr.json, diff.patch and changed-files.txt before the API fetch that is the
+      # likeliest thing to abort it, so a failed round can be holding the whole diff.
+      # What disqualifies it is that the screen never ran over it, not that it is empty.
       #
       # `include-hidden-files: true` is what makes it actually upload. The directory is
       # dot-named, and upload-artifact has excluded hidden paths by default since v4.4.0

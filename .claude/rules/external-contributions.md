@@ -21,8 +21,18 @@ An agentic tool that runs in CI is safe to automate only when **both** hold:
 Neither alone is enough. A trusted-input tool with write access is one compromised
 account away from a problem; an untrusted-input tool with no power to act is merely
 noisy rather than dangerous. The prose-review workflow is built to satisfy (2)
-regardless — the model has no shell, no network, and no write channel — precisely so
-that a failure of (1) is survivable rather than catastrophic.
+regardless — the model has no shell, no network, and no way to reach the pull request
+except through text a validation script chose to send — precisely so that a failure of
+(1) is survivable rather than catastrophic.
+
+Stated that precisely because the precision *is* the safety argument. "No power to act"
+is a claim about what an injection could achieve, and it holds for the comment path
+because a script screens every finding against the rule bindings, the diff, and the
+limits. It does not extend to every byte the model emits: the job also publishes its work
+directory as a build artifact and prints the reviewer's closing text to a world-readable
+log, both model-written and screened for credentials only. That is a real, low-bandwidth
+public channel, and a rule governing what may be automated here has to say so rather than
+round it to zero. Whether it should exist at all is issue #197.
 
 ## What this means in practice
 
