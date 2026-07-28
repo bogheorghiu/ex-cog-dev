@@ -14,12 +14,19 @@
 # - Fail-closed when grep itself errors (its own status, not the pipeline's, under pipefail) —
 #   covered for both pattern-file call sites: the ref-name check and the commit scan
 # - Fail-closed when mktemp fails, rather than reporting the gate INACTIVE
+# - Fail-closed when mktemp SUCCEEDS but the writes into that file fail, for both denylist sources
+# - Fail-closed when the normalization grep itself errors, rather than yielding an empty denylist
+# - The denylist's own PATH is never echoed, even from a clone under a directory named after it
 # - Binary/NUL bytes in one commit must not blind the scan of another
 # - Merge commits: a name added only in a conflict resolution
+# - A path marked -diff in .gitattributes must not hide a name from the diff
+# - The COMMITTER identity, which the default log format does not print
+# - The all-zeros sentinel at SHA-256 width (64 chars), not just SHA-1's 40
 # - Annotated tags: a name in the tag's own message
 # - Push-range scoping: already-pushed history is not re-scanned
 # - Second remote: commits already on origin still get scanned
-# - Denylist normalization: CRLF, '|' separators, comment-only and blank-only files
+# - Denylist normalization: CRLF, '|' separators, indented entries, comment-only and blank-only files
+# - Both accepted denylist filenames (.local and .txt, which .gitignore has always covered)
 # - An empty PII_DENYLIST must not mask a valid local denylist
 # - Linked worktrees resolve the denylist to the main clone's root
 # - Staleness: a private copy that has drifted from the tracked hook warns
@@ -218,6 +225,74 @@ run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BAS
 expect_block   "a failed mktemp blocks rather than reporting INACTIVE"
 expect_not_out "a failed mktemp does not claim INACTIVE" "INACTIVE"
 
+# mktemp SUCCEEDING is not the same guarantee: the writes INTO that file are what build the pattern
+# list. If TMPDIR fills or remounts read-only after the temp file is named, `norm > "$DENY"` writes
+# nothing, and an empty $DENY reads as "no terms" — an armed denylist silently downgraded to
+# INACTIVE. A stub mktemp returns a path under a directory that does not exist, so mktemp exits 0
+# and ONLY the redirection fails. Both sources get a case, because each has its own redirection.
+newrepo denywrite
+mkdir -p "$R/stub"
+cat > "$R/stub/mktemp" <<STUB
+#!/bin/bash
+echo "$R/no-such-dir/deny.tmp"
+STUB
+chmod +x "$R/stub/mktemp"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" "PATH=$R/stub:$PATH"
+expect_block   "an unwritable denylist temp file blocks (file source)"
+expect_not_out "a failed denylist write does not claim INACTIVE" "INACTIVE"
+
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" \
+    "PATH=$R/stub:$PATH" "PII_DENYLIST=$TERM_STR"
+expect_block "an unwritable denylist temp file blocks (env source)"
+
+# The same silent-INACTIVE outcome through a different door: norm's own `grep -v ... || true` turned
+# a grep FAILURE into an empty $DENY. grep exits 1 when every line was a comment or a blank, which
+# is legitimate and must still pass, so only >=2 may block.
+newrepo normgreperr
+mkdir -p "$R/stub"
+cat > "$R/stub/grep" <<'STUB'
+#!/bin/bash
+for a in "$@"; do [ "$a" = "-v" ] && exit 2; done
+for g in /usr/bin/grep /bin/grep; do [ -x "$g" ] && exec "$g" "$@"; done
+exit 2
+STUB
+chmod +x "$R/stub/grep"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" "PATH=$R/stub:$PATH"
+expect_block   "a grep error inside denylist normalization blocks"
+expect_not_out "a normalization grep error does not claim INACTIVE" "INACTIVE"
+
+echo ""
+echo -e "${YELLOW}--- The denylist's own path is never echoed ---${NC}"
+
+# The block messages name where the terms came from. While that was an absolute path, a clone living
+# under a directory named after the person made the gate print the very term it withholds from the
+# matched line and from the matching ref name.
+newrepo "$TERM_STR-parent/repo"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block   "a name in the commits still blocks from a term-named directory"
+expect_no_leak "the block message does not echo the denylist's own path"
+
+# The unreadable-denylist precheck printed the path outright, and cannot denylist-check it either —
+# the denylist it would need is the file it just failed to read.
+newrepo "$TERM_STR-parent2/repo"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+chmod 000 "$R/pii-denylist.local"
+if [ -r "$R/pii-denylist.local" ]; then
+    printf "${YELLOW}SKIP${NC}  unreadable-denylist message does not echo its path (running as root)\n"
+else
+    run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+    expect_block   "an unreadable denylist in a term-named directory blocks"
+    expect_no_leak "the unreadable-denylist message does not echo its path"
+fi
+chmod 644 "$R/pii-denylist.local"
+
 echo ""
 echo -e "${YELLOW}--- Content the scan used to miss ---${NC}"
 
@@ -248,6 +323,44 @@ git tag -a v1 -m "release by $TERM_STR"
 run_hook "$R" origin "refs/tags/v1 $(git rev-parse v1) refs/tags/v1 $Z"
 expect_block   "a name in an annotated tag message blocks"
 expect_no_leak "tag-message match is not echoed"
+
+# A path marked `-diff` in .gitattributes makes git print "Binary files ... differ" in place of the
+# content, so the scan has nothing to match — and .gitattributes is IN the repo, so this needs no
+# unusual local config to arrive. `--text` is what overrides it; --no-ext-diff/--no-textconv close
+# the neighbouring config-driven routes (an external diff driver, a textconv filter).
+newrepo binattr
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+printf 'notes.md -diff\n' > .gitattributes
+echo "written by $TERM_STR" > notes.md
+git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block "a path marked -diff in .gitattributes cannot hide a name"
+
+# `git log`'s default format prints Author but NOT Commit, so a commit whose COMMITTER identity
+# carries the name travels to the remote unscanned — and an amend or a rebase is exactly where the
+# two identities diverge.
+newrepo committerident
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo y > b.txt; git add .
+GIT_COMMITTER_NAME="$TERM_STR" git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block   "a denylisted name in the COMMITTER identity blocks"
+expect_no_leak "the committer-identity block does not echo the name"
+
+echo ""
+echo -e "${YELLOW}--- The all-zeros sentinel is hash-width agnostic ---${NC}"
+
+# git pads the sentinel to the repo's hash width: 40 hex for SHA-1, 64 for SHA-256. Comparing
+# against a hardcoded 40 zeros never matches in a SHA-256 repo, so a deletion is not recognized and
+# a new branch builds its range from an object that does not exist. Both then block — fail-closed,
+# so not a leak, but every push in such a repo is bricked.
+Z64=0000000000000000000000000000000000000000000000000000000000000000
+newrepo zerowidth
+echo x > a.txt; git add .; git commit -qm c1
+run_hook "$R" origin "refs/heads/gone $Z64 refs/heads/gone $(git rev-parse HEAD)"
+expect_allow "a 64-zero deletion sentinel is recognized as a deletion"
+run_hook "$R" origin "refs/heads/new $(git rev-parse HEAD) refs/heads/new $Z64"
+expect_allow "a 64-zero new-branch sentinel scans rather than failing to resolve"
 
 echo ""
 echo -e "${YELLOW}--- Push-range scoping ---${NC}"
@@ -297,6 +410,16 @@ echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
 run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
 expect_block "a '|'-separated denylist file is normalized"
 
+# A denylist kept as an indented list normalizes to a NON-EMPTY file, so the gate reports itself
+# armed and names its source — while every pattern carries leading blanks that `grep -F` then
+# requires literally, so it matches nothing. Armed-looking and inert is the worst of both states.
+newrepo indented
+printf '  %s\n' "$TERM_STR" > "$R/pii-denylist.local"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR here" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block "an indented denylist entry still matches"
+
 newrepo blankline
 printf '\n%s\n\n' "$TERM_STR" > "$R/pii-denylist.local"
 echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
@@ -309,6 +432,18 @@ printf '# add names below\n\n' > "$R/pii-denylist.local"
 echo x > a.txt; git add .; git commit -qm c1
 run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $Z"
 expect_out "a comments-only denylist reports itself INACTIVE" "INACTIVE"
+
+# .gitignore has always ignored pii-denylist.txt as well, but only pii-denylist.local was ever read
+# — so a contributor who followed the ignore hint saw their file correctly ignored and believed the
+# gate was armed. Honoring both names is the fail-safe direction; dropping the ignore entry instead
+# would leave a file full of real names committable.
+newrepo altname
+mv "$R/pii-denylist.local" "$R/pii-denylist.txt"
+printf 'pii-denylist.local\npii-denylist.txt\n' > "$R/.gitignore"
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE"
+expect_block "a denylist named pii-denylist.txt is honored too"
 
 newrepo envmask
 echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)

@@ -27,7 +27,11 @@
 #
 # LOG SAFETY. A matched line contains the name, so grep's stdout is always discarded and only the
 # FACT of a match is reported. Ref names travel to the remote and get echoed on a block, so they
-# are denylist-checked themselves and withheld from the message when they match.
+# are denylist-checked themselves and withheld from the message when they match. The denylist's own
+# location is reported as a KIND ("the local pii-denylist file"), never as a path: a clone can live
+# under a directory named after the person, and the one branch that most needs to name the file —
+# the unreadable-denylist block — is by definition the branch with no terms to check the path
+# against. So no path is printed at all.
 set -uo pipefail
 
 REMOTE_NAME="${1:-}"        # git passes the target remote's name (or URL) as $1
@@ -37,15 +41,25 @@ trap '[ -n "$CLEANUP" ] && rm -f "$CLEANUP"' EXIT
 
 # Normalize a denylist stream: '|' is a separator (single-line env fields use it, and the CI
 # workflow accepts it too), CRs are stripped (a CRLF-saved file otherwise leaves every pattern
-# ending in \r, which matches NOTHING while the file still looks non-empty), trailing blanks are
-# trimmed, and comment/blank lines are dropped. A blank line handed raw to `grep -f` is an EMPTY
-# pattern that matches EVERY line. Both sources go through this, so one denylist behaves the same
-# however it arrives.
+# ending in \r, which matches NOTHING while the file still looks non-empty), blanks are trimmed
+# from BOTH ends, and comment/blank lines are dropped. A blank line handed raw to `grep -f` is an
+# EMPTY pattern that matches EVERY line. Both sources go through this, so one denylist behaves the
+# same however it arrives.
+#
+# Leading blanks matter as much as trailing ones: `grep -F` takes a pattern literally, so a denylist
+# kept as an indented list produces a non-empty pattern file — the gate reports itself armed, and
+# names its source — in which every pattern requires those blanks to appear in the scanned text too.
+# Armed-looking and inert.
+#
+# The final grep's status is INTERPRETED, not discarded. `|| true` swallowed a grep FAILURE into an
+# empty output, which the callers then read as "no terms" and reported as INACTIVE — the same
+# silent disarming this file exists to prevent. grep exits 1 when every line was a comment or a
+# blank, which is a legitimate empty result; only >=2 is grep's own error and must propagate.
 norm() {
   tr '|' '\n' \
     | tr -d '\r' \
-    | sed 's/[[:space:]]*$//' \
-    | { grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' || true; }
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+    | { grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#'; gs=$?; [ "$gs" -le 1 ]; }
 }
 
 TOP="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -67,25 +81,41 @@ if [ -z "${EXCOG_PREPUSH_NO_STALE_CHECK:-}" ] && [ -n "$TOP" ] && [ -f "$TOP/.gi
 fi
 
 # --- Resolve the denylist into a file WE own, so grep never opens an unreadable path ---
+# Both names are honored because .gitignore has always ignored BOTH, while only the .local one was
+# ever read — so a contributor who followed the ignore hint saw their denylist correctly ignored
+# and reasonably believed the gate was armed by it. Reading both is the fail-safe direction;
+# removing the ignore entry instead would leave a file full of real names committable.
 COMMON_PARENT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || echo /nonexistent/_)")"
 FILE_SRC=""
 for d in "$TOP" "$COMMON_PARENT"; do
   [ -n "$d" ] || continue
-  if [ -f "$d/pii-denylist.local" ]; then FILE_SRC="$d/pii-denylist.local"; break; fi
+  for n in pii-denylist.local pii-denylist.txt; do
+    if [ -f "$d/$n" ]; then FILE_SRC="$d/$n"; break 2; fi
+  done
 done
 
-# A failed mktemp would leave DENY empty, both redirections below would fail unchecked (there is
-# no -e), and `[ ! -s "$DENY" ]` would then report INACTIVE — a broken or full TMPDIR silently
-# disarming the gate. This runs on EVERY push now, not only the env-var path, so it is checked.
+# A failed mktemp would leave DENY empty, the redirections below would fail, and `[ ! -s "$DENY" ]`
+# would then report INACTIVE — a broken or full TMPDIR silently disarming the gate. This runs on
+# EVERY push now, not only the env-var path, so it is checked. Naming the temp file is only half
+# the guarantee, though: the WRITES into it are what build the pattern list, and TMPDIR can fill or
+# remount read-only in between. So every write is checked too — an unwritable temp file blocks.
 DENY="$(mktemp)" || {
   echo "pre-push BLOCKED: could not create a temporary file, so this push cannot be verified." >&2
   echo "  Check that TMPDIR exists, is writable and has free space, then retry." >&2
   exit 1
 }
 CLEANUP="$DENY"
+# A KIND, never a path. This string is echoed on a block, and the denylist's own path is the one
+# piece of text the gate cannot denylist-check when it needs to most (the unreadable-file branch
+# has, by definition, no terms to check against). A clone living under a directory named after the
+# person would otherwise make the gate print the very term it withholds everywhere else.
 DENY_SRC="none"
 if [ -n "${PII_DENYLIST:-}" ]; then
-  printf '%s\n' "${PII_DENYLIST}" | norm > "$DENY"
+  if ! printf '%s\n' "${PII_DENYLIST}" | norm > "$DENY"; then
+    echo "pre-push BLOCKED: the denylist could not be written to a temporary file, so this push" >&2
+    echo "  cannot be verified. Check that TMPDIR is writable and has free space, then retry." >&2
+    exit 1
+  fi
   [ -s "$DENY" ] && DENY_SRC="the PII_DENYLIST env var"
 fi
 if [ ! -s "$DENY" ] && [ -n "$FILE_SRC" ]; then
@@ -93,11 +123,16 @@ if [ ! -s "$DENY" ] && [ -n "$FILE_SRC" ]; then
   # letting a stray empty env var mask a valid local denylist.
   if [ ! -r "$FILE_SRC" ]; then
     echo "pre-push BLOCKED: the denylist file exists but cannot be read, so this push cannot be verified." >&2
-    echo "  Fix its permissions (or set PII_DENYLIST) and retry. Path: $FILE_SRC" >&2
+    echo "  Fix the permissions on your pii-denylist.local (or .txt) — in this repo's root, or the" >&2
+    echo "  main clone's root for a linked worktree — or set PII_DENYLIST instead, then retry." >&2
     exit 1
   fi
-  norm < "$FILE_SRC" > "$DENY"
-  [ -s "$DENY" ] && DENY_SRC="$FILE_SRC"
+  if ! norm < "$FILE_SRC" > "$DENY"; then
+    echo "pre-push BLOCKED: the denylist could not be written to a temporary file, so this push" >&2
+    echo "  cannot be verified. Check that TMPDIR is writable and has free space, then retry." >&2
+    exit 1
+  fi
+  [ -s "$DENY" ] && DENY_SRC="the local pii-denylist file"
 fi
 if [ ! -s "$DENY" ]; then
   # Honest inactive: no terms survived normalization from either source. A comments-only or
@@ -130,10 +165,22 @@ scan_eval() {
   if [ "$grepst" -eq 0 ]; then SCAN_RESULT=match; else SCAN_RESULT=clean; fi
 }
 
-z=0000000000000000000000000000000000000000
+# git pads the all-zeros sentinel to the REPOSITORY's hash width — 40 hex characters for SHA-1, 64
+# for SHA-256. A hardcoded 40 therefore never matches in a SHA-256 repo: a ref deletion is not
+# recognized and gets scanned, and a new branch builds its push range from an object that does not
+# exist. Both then block, so this is fail-closed rather than a leak — but it bricks every push in
+# such a repo. Match the shape, not a fixed width.
+is_zero() {
+  case "$1" in
+    "")     return 1 ;;
+    *[!0]*) return 1 ;;
+    *)      return 0 ;;
+  esac
+}
+
 rc=0
 while read -r local_ref local_sha remote_ref remote_sha; do
-  [ "$local_sha" = "$z" ] && continue                                  # ref deletion
+  is_zero "$local_sha" && continue                                     # ref deletion
 
   # The ref NAME reaches the remote as a name, and it is echoed on a block — so check it first.
   ref_safe=yes
@@ -156,7 +203,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   # Push range. Passed to `git log` AS A RANGE — never as a rev-list-produced list of SHAs, which
   # git reads as positional "reachable from" revs and which therefore scans the WHOLE history
   # instead of the outgoing commits (and can overflow the argument limit on a large push).
-  if [ "$remote_sha" = "$z" ]; then
+  if is_zero "$remote_sha"; then
     # New ref on the TARGET remote — exclude what that same remote already has, not origin's refs.
     # When $1 is a URL rather than a configured name there are no tracking refs to exclude, so
     # scan everything reachable: fail closed means more scanning, never less.
@@ -191,9 +238,18 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   #   generated file with a NUL in the push would hide a name in any other commit. -a forces text.
   # -m: without it `git log -p` prints NO diff for a merge commit, so a name introduced only in a
   #   conflict resolution is never scanned.
+  # --pretty=fuller: the DEFAULT format prints Author but not Commit, so a commit whose COMMITTER
+  #   identity carries the name reaches the remote unscanned. Amends and rebases are exactly where
+  #   the two identities diverge. fuller prints both, and still prints the diff bodies.
+  # --text: a path marked `-diff` in .gitattributes makes git emit "Binary files ... differ"
+  #   instead of the content — and .gitattributes lives IN the repo, so this needs no unusual local
+  #   setup to arrive. Measured: without --text the name is simply absent from the stream.
+  # --no-ext-diff, --no-textconv: the same blinding via local config instead — an external diff
+  #   driver, or a textconv filter that rewrites the content before it is ever scanned.
   # Statuses are read from PIPESTATUS, not from the pipeline: under pipefail a non-zero `git log`
   #   overrides grep's verdict, which is exactly how a MATCH can read as "no match".
-  git log -p -m --no-color -U0 "${range[@]}" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
+  git log -p -m --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv \
+      "${range[@]}" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
   scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the outgoing commits"
   if [ "$SCAN_RESULT" = match ]; then
     echo "pre-push BLOCKED ($ref_label): a denylisted personal name is in the commits being pushed." >&2
