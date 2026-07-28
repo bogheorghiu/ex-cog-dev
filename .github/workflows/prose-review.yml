@@ -138,6 +138,7 @@ jobs:
           persist-credentials: false
 
       - name: Gather the review inputs
+        id: prepare
         if: steps.gate.outputs.review == 'true'
         run: python3 .github/scripts/prose_review_prepare.py
 
@@ -239,12 +240,14 @@ jobs:
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Edit(.prose-review/refuted.json),Task,Agent"
             --disallowedTools "Bash,WebFetch,WebSearch"
 
-      # What the reviewer actually DID. The action's own log reports `is_error: false` and
-      # a turn count and nothing else, which is uninformative in the one case that
-      # matters: the model finishing without producing its output. Three rounds were spent
-      # guessing at that from the outside. This prints the tool calls and any permission
-      # denial from the execution log the action leaves in the runner temp dir, so the
-      # next occurrence is read rather than inferred.
+      # What the reviewer actually DID. The action closes by printing a result object --
+      # `is_error`, `duration_ms`, `num_turns`, `total_cost_usd`, `permission_denials_count`
+      # -- which is every aggregate and no identity: how many calls were refused, never
+      # which. That is uninformative in the one case that matters: the model finishing
+      # without producing its output. Three rounds were spent guessing at that from the
+      # outside. This prints the tool calls and any permission denial from the execution
+      # log the action leaves in the runner temp dir, so the next occurrence is read
+      # rather than inferred.
       #
       # Deliberately narrow: tool names, the paths of file-writing calls, denial messages,
       # and the model's closing text. Not the full transcript -- this job's logs are
@@ -373,14 +376,14 @@ jobs:
       # not the answer either -- a run's log was already unreadable a day later when
       # someone went back for exactly these numbers.
       #
-      # `always()` because a round that fails is the one whose inputs you most want, and
-      # `if-no-files-found: ignore` because a run gated off before the prepare step has no
-      # directory to upload and that is not an error.
+      # `always()` because a round that FAILS is the one whose inputs you most want, and
+      # the condition names the step that creates the directory rather than the gate, so
+      # that "there is something to upload" holds by construction and needs no
+      # if-no-files-found excuse: prepare succeeded => the directory exists.
       - name: Keep the round's inputs and reasoning
-        if: always() && steps.gate.outputs.review == 'true'
+        if: always() && steps.prepare.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.PROSE_REVIEW_DIR }}
-          if-no-files-found: ignore
           retention-days: 30
