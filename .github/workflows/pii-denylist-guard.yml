@@ -23,19 +23,24 @@ name: PII denylist guard
 # To see which files matched, run the same grep locally against your own denylist. GitHub also
 # masks the secret value, but that only covers the secret's literal text.
 
-# TRIGGERS. `push` is filtered to main on purpose: an unfiltered `push` plus `pull_request` fires
-# this workflow TWICE for every push to a PR branch — same workflow, same commit, two runs and two
-# identical checks in the rollup (measured on this PR: one event=push, one event=pull_request). The
-# trade-off is stated rather than hidden: a branch pushed with no PR open is no longer tree-scanned
-# by CI until the PR exists. That is acceptable because CI is a DETECTION backstop, not prevention —
-# the branch is already public the moment it is pushed, so scanning at push time versus at PR time
-# changes when the leak is noticed, not whether it happened — and the pre-push hook is the layer
-# that actually stops it leaving the clone.
+# TRIGGERS, deliberately identical to .github/workflows/unit-tests.yml so the two workflows agree
+# on this repo's convention rather than contradicting each other.
+# `push` is filtered to main on purpose: an unfiltered `push` plus `pull_request` fires this
+# workflow TWICE for every push to a PR branch — same workflow, same commit, two runs and two
+# identical checks in the rollup (measured on this PR: one event=push, one event=pull_request).
+# `pull_request` carries NO base-branch filter, so a PR into ANY base is scanned — including this
+# repo's stacked integration branches (e.g. research-toolkit-v4). Filtering BOTH triggers to main,
+# as this workflow previously did, left every such PR with no denylist tree-scan from CI at all:
+# neither event fired, and the absence looked like a pass because nothing reported.
+# The remaining gap is stated rather than hidden: a branch pushed with no PR open is not
+# tree-scanned by CI until the PR exists. That is acceptable because CI is a DETECTION backstop,
+# not prevention — the branch is already public the moment it is pushed, so scanning at push time
+# versus at PR time changes when the leak is noticed, not whether it happened — and the pre-push
+# hook is the layer that actually stops it leaving the clone.
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

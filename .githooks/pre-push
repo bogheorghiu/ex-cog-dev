@@ -215,12 +215,29 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   # instead of the outgoing commits (and can overflow the argument limit on a large push).
   if is_zero "$remote_sha"; then
     # New ref on the TARGET remote — exclude what that same remote already has, not origin's refs.
-    # When $1 is a URL rather than a configured name there are no tracking refs to exclude, so
-    # scan everything reachable: fail closed means more scanning, never less.
+    #
+    # The exclusion basis is the remote's CURRENT refs, read live with ls-remote — NOT the local
+    # remote-tracking refs that `--remotes=` reads. Tracking refs are a CACHE of the last fetch,
+    # and a cache is not the remote. If the remote's branch was force-pushed or deleted since that
+    # fetch, a stale refs/remotes/<remote>/<branch> still points at commits the remote no longer
+    # has, and `--not --remotes=` then excluded exactly those commits from the scan — so a
+    # denylisted name sitting in one of them left the clone unscanned, with the hook reporting
+    # ALLOWED. That is the could-not-check-reads-as-clean shape the rest of this file blocks on.
+    #
+    # Fail closed by construction: the range starts as the whole reachable history and only shrinks
+    # for a ref the remote confirms RIGHT NOW and whose object we actually hold. If ls-remote fails
+    # (offline, auth, a URL-only remote), nothing is excluded and everything is scanned — slower,
+    # never weaker. Cost is one extra network round-trip, on a command that is already a network op.
+    range=("$local_sha")
     if [ -n "$REMOTE_NAME" ] && git config --get "remote.$REMOTE_NAME.url" >/dev/null 2>&1; then
-      range=("$local_sha" --not --remotes="$REMOTE_NAME")
-    else
-      range=("$local_sha")
+      ls_remote_out="$(git ls-remote --heads --tags "$REMOTE_NAME" 2>/dev/null)" || ls_remote_out=""
+      while read -r rsha _rref; do
+        [ -n "$rsha" ] || continue
+        # Only a ref whose object is present locally can be excluded; one we do not hold cannot
+        # bound the walk, and asking git to exclude it would abort the scan rather than narrow it.
+        git cat-file -e "${rsha}^{commit}" 2>/dev/null || continue
+        range+=("^$rsha")
+      done <<< "$ls_remote_out"
     fi
   else
     range=("$remote_sha..$local_sha")

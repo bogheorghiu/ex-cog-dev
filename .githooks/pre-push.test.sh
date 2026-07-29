@@ -412,6 +412,23 @@ git remote add mirror /dev/null
 run_hook "$R" mirror "refs/heads/main $SHA refs/heads/main $Z"
 expect_block "pushing to a second remote scans commits already on origin"
 
+# A remote-tracking ref is a CACHE of the last fetch, not remote truth. When it is STALE — the
+# remote's branch was force-pushed away or deleted — excluding it dropped commits the remote does
+# NOT have from the scan, and a name in one of them rode out on a new branch reporting ALLOWED.
+newrepo staleref
+BARE="$PWD/../staleref-origin.git"
+rm -rf "$BARE"; git init -q --bare "$BARE"
+git remote remove origin >/dev/null 2>&1 || true
+git remote add origin "$BARE"
+echo clean > a.txt; git add .; git commit -qm "clean base"
+git push -q origin HEAD:refs/heads/main
+git checkout -q -b feat2
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm "commit carrying the name"
+# origin/old points at the name commit, but the remote has no such branch — never pushed there.
+git update-ref refs/remotes/origin/old "$(git rev-parse HEAD)"
+run_hook "$R" origin "refs/heads/feat2 $(git rev-parse HEAD) refs/heads/feat2 $Z"
+expect_block "a stale remote-tracking ref does not exclude commits the remote does not have"
+
 echo ""
 echo -e "${YELLOW}--- Ref names ---${NC}"
 
