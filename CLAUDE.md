@@ -40,6 +40,17 @@ When you change **any** file under a plugin directory (`vasana-system/`, `resear
   ```
   Enforced by `.github/workflows/version-bump-guard.yml`; logic + tests in `.github/scripts/`.
 
+## Unit tests (REQUIRED for new executable code)
+
+Conventions, and why each one exists:
+
+- **Name and place**: a bash script's suite is `<script>.test.sh` **beside it**; Python is `test_<thing>.py` beside the code. Adjacency is what makes a missing suite visible — `ls` answers "is this tested?", so no catalog can drift out of date.
+- **Register it in `.github/workflows/unit-tests.yml`.** That workflow names every suite *explicitly*; nothing is auto-discovered. An unregistered suite silently never runs, which is indistinguishable from a passing one — the same false-negative shape as a security gate that fails open. Adding the file is not enough; adding the line is.
+- **Runnable standalone from the repo root** (`bash <path>` / `python3 <path>`), exiting non-zero on failure. No pytest requirement, no shared harness to break.
+- **Pin the ambient state the code reads.** The bash suites pin `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` and unset the env vars their subject consults, because a variable inherited from the developer's shell changes results on their machine and not in CI — a test that only passes for *you* is worse than no test.
+- **Prove the test discriminates**: run it against the code *before* the fix and confirm it fails there. A test written after the fact can pass for reasons unrelated to what it claims to check. Two of this repo's own suites initially passed vacuously (a `cd` inside a subshell; scratch repos committing the fixture they were meant to scan) and were only caught by running them against the unfixed version.
+- **Cross-note deliberate twins.** Some lint/test utilities (e.g. each plugin's `skills/test_skill_structure.py`) are duplicated per-plugin rather than shared; keep twin copies logic-identical and cross-note them — CI runs each.
+
 ## Release / publish
 
 Every PR to `main` (and every push to `main`) runs three CI gates:
