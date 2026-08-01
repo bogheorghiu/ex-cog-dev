@@ -35,3 +35,39 @@ htmlcov/
 .vscode/
 pii-denylist.local
 pii-denylist.txt
+
+# Claude Code sandbox deny-guard placeholders. When a session runs in an
+# in-repo worktree, the sandbox materializes zero-byte read-only guard FILES
+# at these paths (they shadow user-level config so the session can't write
+# it). They are runtime artifacts of the sandbox, never source — without
+# these entries a `git add -A` from a worktree sweeps all of them into the
+# commit (happened once: 17 empty files reached a PR branch). All patterns
+# are root-anchored: an unanchored `.mcp.json` would also ignore the
+# plugins' TRACKED per-plugin .mcp.json files.
+/.bash_profile
+/.bashrc
+/.gitconfig
+/.gitmodules
+/.idea
+/.vscode
+/.mcp.json
+/.profile
+/.ripgreprc
+/.zprofile
+/.zshrc
+/.claude/agents/*
+# …but deliberate, reviewed dev agents are source (same status as .claude/rules/):
+!/.claude/agents/probe-writer.md
+!/.claude/agents/restricted-domain-reader.md
+!/.claude/agents/review-triage.md
+/.claude/commands/*
+# …same for reviewed dev commands:
+!/.claude/commands/review-triage.md
+/.claude/hooks
+/.claude/launch.json
+/.claude/routines
+/.claude/skills
+/.claude/worktrees/
+
+# Scratch dir the prose-review workflow assembles on the runner
+.prose-review/

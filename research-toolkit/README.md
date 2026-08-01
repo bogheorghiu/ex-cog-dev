@@ -1,99 +1,40 @@
-# Research Toolkit
+# Research Toolkit — MCP server setup
 
-> relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin.
+What this plugin contains is readable from the tree itself (`skills/`, `agents/`,
+`commands/`, `principles/`, `reference/`, `mcp-servers/`); what it's *for* is in the
+plugin's `description`. Neither is repeated here — a hand-kept copy of either only rots.
+This file carries the one thing the tree can't express: how to run the two MCP servers
+**outside** the plugin.
 
-Research and cognition toolkit: investigation protocols, cognitive flexibility, iterative verification, and financial analysis.
+## You probably don't need this
 
-## What's Included
+Installed as a plugin, both servers are already configured: `.mcp.json` registers them
+via `uvx` and Claude Code starts them for you. **Nothing below is required.**
 
-### Skills
+The instructions here are only for running a server **standalone** — outside the plugin,
+or against a local checkout while developing it.
 
-| Skill | Purpose |
-|-------|---------|
-| **research** | Hub/router — entry point when unsure which research skill to invoke; routes by domain and depth |
-| **deep-investigation-protocol** | Rigorous multi-source verification for trust decisions |
-| **dialectic-spiral** | Standalone generative adversarial dialectic — generates the exact opposite of any synthesis and stress-tests it |
-| **youtube-research** | Extract practitioner knowledge from YouTube transcripts; what people actually do, not just document |
-| **substack-research** | Extract and analyze long-form content from Substack publications; independent voice analysis |
-| **video-transcript-extraction** | Platform-aware transcript extraction for YouTube, local files, or any video source |
-| **frame-rotation** | Linguistic frame rotation to escape stuck patterns — switch perspectives via language transforms |
-| **iterative-verification** | Ralph-wiggum methodology for factual accuracy — iterate until verified |
-| **macro-monitor** | Geopolitical/macro financial checklist — monitors Treasury flows, dollar-yield divergence, central bank gold behavior, yield curve |
-| **manufactured-consensus-detection** | Test whether source agreement is genuine independent corroboration or coordinated messaging from a single origin |
-| **source-omission-analysis** | Map what sources are NOT saying — omissions reveal structural position more reliably than statements |
-| **dev-job-defense-ties** | Screen a dev job/studio/employer for hidden military or defense ties — runs cui-bono for the buyer-chain, then classifies by end-use and buyer-nationality against *your* red line. Ships profile-less (builds + remembers your threshold on first run, or always-run/never-ask); mechanism, domain pack, and profile are decoupled and swappable |
+> Making even that unnecessary — and identical in Claude Code and Cowork — is a tracked
+> final action of the current update.
 
-### Commands
+## financial-mcp (standalone)
 
-| Command | Purpose |
-|---------|---------|
-| **substack-extract** | Extract and parse Substack articles with configurable detail levels (0-10), adaptive bulk corpus handling, and saturation detection |
+Stock market data via yfinance. Self-contained — no `PYTHONPATH` setup required, no API key.
 
-### Tools
+**Option A — uvx (no install):** add to your `.mcp.json`, replacing the path with your checkout:
 
-| Tool | Purpose |
-|------|---------|
-| **tools/substack-scraper** | Python scraper for Substack content extraction — browser-based auth, article discovery, HTML/JSON/Markdown output, progress checkpointing |
-
-### Reference Modules
-
-| Module | Purpose |
-|--------|---------|
-| **reference/topic-based-escalation.md** | Shared routing logic — maps topics to skills and escalation thresholds. Referenced by the research hub and all research skills. Not a skill; read directly. |
-
-### Agents
-
-| Agent | Purpose |
-|-------|---------|
-| **adversarial-critic** | Reads investigation output files and runs the generative dialectic spiral. Generates the exact OPPOSITE of each synthesis and tests it against evidence. |
-| **falsifier** | Adversarial verification — seeks disconfirmation, designs falsification tests, reports with evidence. Pairs with dialectic-spiral for stress-testing claims. |
-| **investigation-orchestrator** | Orchestrates full multi-agent investigations: designs team, assigns source-position scopes, deploys researchers + adversarial-critic, manages dialectic rounds, produces final synthesis |
-| **release-tagger** | Helps prepare tagged stable releases for ex-cog plugins — guides through git tagging and publish workflow |
-
-### MCP Servers
-
-| Server | Purpose | Status |
-|--------|---------|--------|
-| **financial-data** | Stock market data via yfinance | Stable |
-| **transparency-mcp** | Public transparency data: US Congress (GovTrack), World Bank indicators, ProPublica nonprofit 990 filings — all free, no API keys | Active |
-
-> **Note:** relational-memory and edge-graph MCPs have moved to the **vasana-system** plugin where they belong (core dependencies of pattern persistence).
-
-## Installation
-
-### Via Claude Code Plugin System
-
-```bash
-claude plugin add owner/research-toolkit
-```
-
-### Manual Installation
-
-Copy this folder to `~/.claude/plugins/` and restart Claude Code.
-
-### Financial MCP Setup (cui-bono / financial analysis)
-
-The financial-data MCP server provides stock market data via yfinance.
-It is self-contained — no `PYTHONPATH` setup required.
-
-**Option A: uvx (recommended, no install needed)**
-
-Add to your `.mcp.json` (replace `/path/to/research-toolkit` with your actual path):
 ```json
 {
   "mcpServers": {
-    "financial-data": {
+    "financial-mcp": {
       "command": "uvx",
-      "args": [
-        "--from", "/path/to/research-toolkit/mcp-servers/financial-mcp",
-        "financial-mcp"
-      ]
+      "args": ["--from", "/path/to/research-toolkit/mcp-servers/financial-mcp", "financial-mcp"]
     }
   }
 }
 ```
 
-**Option B: pip install**
+**Option B — pip install:**
 
 ```bash
 cd mcp-servers/financial-mcp
@@ -101,31 +42,27 @@ pip install .
 financial-mcp
 ```
 
-**Cache location:** `~/.cache/financial-mcp/ticker_cache.db` (override with `CACHE_DIR` env var)
+**Ticker cache:** `~/.cache/financial-mcp/ticker_cache.db` — override the directory with the
+`CACHE_DIR` env var.
 
-### Transparency MCP Setup
+## transparency-mcp (standalone)
 
-The transparency-mcp server provides free public data from GovTrack, World Bank, and ProPublica.
-No API keys required.
+Free public data from GovTrack, World Bank and ProPublica. **No API keys required.**
 
-**Option A: uvx (recommended)**
+**Option A — uvx (no install):**
 
-Add to your `.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "transparency": {
+    "transparency-mcp": {
       "command": "uvx",
-      "args": [
-        "--from", "/path/to/research-toolkit/mcp-servers/transparency-mcp",
-        "transparency-mcp"
-      ]
+      "args": ["--from", "/path/to/research-toolkit/mcp-servers/transparency-mcp", "transparency-mcp"]
     }
   }
 }
 ```
 
-**Option B: pip install**
+**Option B — pip install:**
 
 ```bash
 cd mcp-servers/transparency-mcp
@@ -133,22 +70,7 @@ pip install .
 transparency-mcp
 ```
 
-**Tools:** `govtrack_members`, `govtrack_bills`, `govtrack_votes`, `worldbank_indicator`, `worldbank_search`, `nonprofit_search`, `nonprofit_details`, `transparency_status`
-
-## Library Utilities
-
-| Utility | Purpose |
-|---------|---------|
-| **brainstorm.py** | JSON-based agent-to-agent brainstorming sessions |
-
-## Vasana
-
-A vasana is a pattern that persists across unrelated contexts. If during
-this task you notice such a pattern emerging, it may be worth capturing.
-This skill works best alongside the `vasana` skill and `vasana` hook
-from the Vasana System plugin.
-
-Modify freely. Keep this section intact.
+Its tools are self-describing over MCP — ask the server rather than trusting a list here.
 
 ## License
 
