@@ -4,6 +4,7 @@ name: Unit tests
 # PR. Complements the MCP smoke test (which only checks that each server boots
 # and answers a JSON-RPC initialize). These suites exercise actual logic:
 #   - security-toolkit hooks (bash)
+#   - the repo's own PII pre-push guard (bash)
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)
 #   - research-toolkit skill-structure linter (stdlib Python)
@@ -40,7 +41,7 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Security-toolkit hook suites (bash)
+      - name: Hook suites (bash)
         run: |
           set -euo pipefail
           bash security-toolkit/hooks/block-dangerous-git.test.sh
@@ -49,6 +50,7 @@ jobs:
           bash security-toolkit/hooks/announce-pr-merge-guard.test.sh
           bash vasana-system/hooks/count-skill-firings.test.sh
           bash research-toolkit/hooks/count-skill-firings.test.sh
+          bash .githooks/pre-push.test.sh
 
       - name: Stdlib Python suites
         run: |
