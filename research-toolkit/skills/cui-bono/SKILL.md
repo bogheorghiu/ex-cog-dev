@@ -29,7 +29,6 @@ Cui bono maps how power actually moves through systems — tracing beneficial ow
 /01_INVESTIGATION_METHODOLOGY.md   # Full multi-lens framework, named techniques
 /02_QUICK_REFERENCE.md             # One-page operational reference
 /02_METHODOLOGY_REFERENCE.md       # Detailed technique backgrounds
-/SOURCE_CLASSIFICATIONS.md         # External data source assessments (Layer 1)
 /SOURCE_DIVERSITY_FRAMEWORK.md     # Journalistic/analytical source positioning (Layer 2)
 /lenses/                           # Domain-specific investigation templates
   environmental.md
@@ -38,6 +37,7 @@ Cui bono maps how power actually moves through systems — tracing beneficial ow
   governance.md
   supply_chain.md
   geopolitical.md
+  financial_obfuscation.md
 ```
 
 ## Quick Protocol
@@ -220,6 +220,15 @@ If [priority B] highest: [different conclusion]
 
 **Hypothesis-Based Inquiry**: Story is hypothesis until verified. Willingness to abandon when contradicted.
 
+**Cui Bono ≠ Cui Auctor**: Benefit identifies SUSPECTS, never authors.
+"Who gains" generates hypotheses; authorship needs its own evidence chain.
+The **calendar test** keeps the two apart: what was already in the pipeline
+before the event? A benefit captured through pre-existing plans, budgets,
+or draft legislation is opportunism until authorship evidence exists —
+beneficiaries are often just the fastest to exploit what they did not
+cause. Run the test both ways: it also catches the reverse error of
+clearing an actor BECAUSE their gain looks too obvious.
+
 **Language/Power Analysis**: Examine what ideological work terminology does. When corporate frameworks import nation-state language:
 - **MFN provisions** ("Most Favored Nations"): Trade treaty terms applied to platform contracts.
 - **Protocol/standard**: Technical neutrality language masking power concentration.
@@ -227,7 +236,9 @@ If [priority B] highest: [different conclusion]
 
 ## External Data Sources
 
-Before relying on any external data source, check SOURCE_CLASSIFICATIONS.md:
+Before relying on any external data source, check source-dossier's
+references/data-tool-assessments.md (moved from this skill in 4.2.0), and open a
+dossier for any recurring source:
 - **BANNED**: Don't use (e.g., Candid - governance capture)
 - **PENDING**: Apply assessment framework before relying on
 - **ASSESSED**: Documented limits, use appropriately

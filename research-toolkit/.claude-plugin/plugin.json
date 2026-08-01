@@ -1,8 +1,16 @@
 {
   "name": "research-toolkit",
-  "description": "Even-handed investigation of loaded, contested topics. Research & investigation skills for thinking-with-AI — investigation protocols (deep-investigation, cui-bono / \"follow the money\", screening a dev job or employer for hidden military/defense ties), text & source deconstruction, frame rotation, and iterative verification that escalates to a recursive adversarial dialectic (generate a claim's exact opposite and test it). The skepticism is symmetric — turned on the consensus, the contrarian take, the model's own bias, and its own conclusions; it assumes no villain in advance (POSIWID: judge a method by what it does, not what it claims). Includes a transparency MCP.",
+  "description": "Even-handed investigation of loaded, contested topics. Research & investigation skills for thinking-with-AI — investigation protocols (deep-investigation, cui-bono / \"follow the money\", screening a dev job or employer for hidden military/defense ties), text & source deconstruction, frame rotation, and iterative verification that escalates to a recursive adversarial dialectic (generate a claim's exact opposite and test it). The skepticism is symmetric — turned on the consensus, the contrarian take, the model's own bias, and its own conclusions; it assumes no villain in advance (POSIWID: judge a method by what it does, not what it claims). Ships two deliberately basic MCP servers — thin data-access layers, not analysis engines; the skills do the analysis: financial-mcp (stock price, history, company info and standard technical indicators via yfinance, with a local ticker cache) and transparency-mcp (keyless public data — US Congress bills/members/votes via GovTrack, World Bank development indicators, and US nonprofit Form 990 filings via ProPublica).",
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "4.0.0"
+  "version": "4.7.0",
+  "userConfig": {
+    "firing_filter": {
+      "type": "boolean",
+      "default": true,
+      "title": "Firing filter (deterministic firing layer)",
+      "description": "Master switch for the zero-model firing layer (words arm, situations inject one guidance each, blocks only on claim-vs-record facts). Disabling removes the toolkit's only layer that fires without anyone noticing anything — every recorded failure was caught by a human, none by self-review; the prose rules alone are the layer that failed silently on record. Runtime control per session: /research-toolkit:firing-filter [status|on|off]."
+    }
+  }
 }

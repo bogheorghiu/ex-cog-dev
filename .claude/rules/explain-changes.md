@@ -1,3 +1,10 @@
+---
+# Not a `paths:` scope: this rule governs conversational output, so it still loads
+# every session. `scope:` marks it as binding on prose written TO the operator, not on
+# artifacts in a diff — read by the prose-review tooling, inert to Claude Code itself.
+scope: conversation
+---
+
 # Explain your work — write for someone who's been away
 
 Guidance for how you *report* in chat: status updates, findings, proposals. Not

@@ -108,7 +108,15 @@ the evidence is asymmetric — e.g. one camp's own internal documents
 contradict its public frame — the resolution states that asymmetry and its
 size. Downgrading your own priors (Principle P4 (counter-default)) never
 licenses crediting a self-exculpatory frame against its author's own
-documents.
+documents. Perform this check without narrating it: the resolution speaks
+in the evidence's terms — the documents, the asymmetry, its size — and
+claims nothing about what this guard contributed to the verdict. "This
+guard is why the conclusion isn't a both-sides map" asserts a
+counterfactual — the same spiral run without it — that you cannot observe
+from inside a run that has it; the credit is conjecture, not observation,
+and it sits in the transcript exactly where a later reader takes it for a
+finding. The remedy is omission, not a disclaimer: "though I can't be
+sure this guard helped" is the same commentary in humbler dress.
 
 ## Cross-References
 

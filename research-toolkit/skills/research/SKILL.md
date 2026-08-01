@@ -21,6 +21,28 @@ Central entry point for any research question. Routes to the right skill(s) base
 3. **ROUTE** to the appropriate skill(s)
 4. **PROPAGATE** budget flag if active
 
+## Investigation Profile (onboarded once)
+
+Stable preferences live in a persistent profile OUTSIDE the plugin —
+language space, deliverable format, default budget, saturation threshold.
+The skill ships profile-less: it assumes no values until the operator
+supplies them (a committed default would both leak an operator's setup and
+become everyone's inherited default).
+
+- **Locate/read/write** via the self-describing store: run
+  `python3 "${CLAUDE_PLUGIN_ROOT}/skills/research/scripts/config.py" describe`
+  and use the interface it emits (do not hard-code commands here — they
+  drift; the script is the source of truth).
+- **First run** (any `get profile/*` returns `NO_ELEMENT`): offer onboarding
+  — skippable; a decline is persisted as `profile/engagement: never` and
+  never re-asked. Ask at most four questions: languages you can/want to
+  search · default deliverable (template report / brief / three sentences) ·
+  default budget mode · saturation threshold (defaults to saturation-sweep's
+  stop rule — a wave adding under ~10% new material, or two waves moving no
+  verdict; unset until the operator sets one).
+- **Every routed investigation** reads the profile first and states which
+  profile values it applied.
+
 ## Routing
 
 Consult `reference/topic-based-escalation.md` for the full escalation table. Quick decision tree:
@@ -29,12 +51,28 @@ Consult `reference/topic-based-escalation.md` for the full escalation table. Qui
 - "Should I invest in / support X?" → **cui-bono + financial-mcp** (a dedicated **stonk** agent to orchestrate these is in design — issue #61)
 - "Who benefits from X?" → **cui-bono** skill (power analysis)
 - "Should I take this dev job / is this studio defense-linked?" — or any dev job/employer evaluation → **dev-job-defense-ties** (runs cui-bono, classifies the buyer against your saved profile)
+- "Have we searched enough? / What are we missing?" → **saturation-sweep** (declared axes, novelty ledger, measured stop)
 - "What's happening with X?" (geopolitical/military) → **DIP** + **cui-bono** lenses
 - "Learn X from YouTube" → **youtube-research**
 - "Analyze this Substack" → **substack-research**
 - "Transcribe this video" → **video-transcript-extraction**
 - "Challenge my findings" → **adversarial-critic** agent + **dialectic-spiral**
 - Multiple domains → Suggest **investigation-orchestrator** agent (spawns a multi-agent team for coordinated research)
+
+## Which Investigation Deserves the Depth
+
+Depth is a budget; spend it where these are true (any two justify full
+depth, none justifies a template report):
+
+- **Decision-linked:** a real decision changes with the answer (the report
+  template's Decision points section would be non-empty).
+- **Costly if wrong:** the wrong conclusion has a price you'd actually pay.
+- **Uniquely positioned:** you can reach evidence others haven't (language,
+  access, source-dossier history).
+- **Durable:** the answer stays relevant beyond the news cycle.
+
+Otherwise: a web search and three sentences is the right answer, and it is
+sovereign — say what depth was skipped and why (one line, not an apology).
 
 ## When to Escalate
 
@@ -62,6 +100,20 @@ Key escalation triggers:
 **Propagation:** When invoking other skills, pass budget context:
 "Invoking youtube-research --budget" or "Invoking DIP --budget"
 
+## Report Template
+
+For any investigation producing a written deliverable, COPY
+`assets/report-template.md` and fill it — do not re-derive the structure.
+The template carries the sections that get dropped exactly when
+inconvenient (per-camp omissions, symmetric cui-bono, errata) and the
+version protocol that keeps corrections from being orphaned. Sections that
+genuinely don't apply are kept with "n/a — why", not deleted: the reader
+must see that the slot was considered.
+
+A template is an asset to copy, never a mandatory rail: when a web search
+and three sentences is the right answer, that answer is sovereign — say
+the template was skipped and why.
+
 ## Close-Out Guards
 
 Before any routed investigation closes, apply two checks (they are cheap and
@@ -70,11 +122,17 @@ they catch the two most-observed late-stage failures):
 - **Verified ≠ understood.** For each verified load-bearing line, re-read it
   for meaning as a separate step: what does it imply for the question asked?
   A sourcing checkmark suppresses semantic re-reading — schedule the second
-  read explicitly. (Principle P2.)
+  read explicitly. (Principle P2 (verified-is-not-understood).)
 - **External correction ⇒ global regeneration.** If an external objection or
   correction arrived at any point, regenerate the salience map (what matters,
   in what order) from scratch rather than patching the corrected point. A
-  tilt that produced one visible error has usually produced invisible ones. (Principle P3.)
+  tilt that produced one visible error has usually produced invisible ones. (Principle P3 (inherited-salience-is-not-importance).)
+- **Method matured ⇒ re-apply backward.** If the method evolved during the
+  investigation (a new check adopted, a source class re-weighted), re-apply
+  the matured method to conclusions drawn before it existed, before
+  closing (Principle P8 (the-method-matures-backward)). Expect boundaries
+  and interpretations to sharpen rather than facts to flip — that
+  sharpening is the point.
 
 ## Platform Notes
 
