@@ -14,6 +14,24 @@
 - Weaponized interdependence (network chokepoints)
 - Chinese Comprehensive National Power assessment
 - Multi-polar analysis (symmetric across poles)
+- Attribution doctrines (rapid attribution as policy instrument)
+- Objective-responsibility formulas ("created the conditions" ≠ authored)
+
+### Attribution Doctrines
+
+Treat ATTRIBUTION MOVES as policy instruments to analyze, not as evidence
+to inherit — symmetrically, whichever pole makes the move:
+
+- **Rapid-attribution-as-de-escalation:** naming a culprit fast can be a
+  de-escalation (or escalation-control) move — it locks a narrative and a
+  response corridor before evidence stabilizes. Speed of attribution is a
+  datum about the attributor's policy needs; it is not a datum about the
+  event. Check what the rapid attribution enabled or foreclosed.
+- **Objective-responsibility formula:** "X is responsible because X created
+  the conditions" assigns responsibility WITHOUT authorship evidence. It
+  may be a defensible normative claim; it is never a factual attribution —
+  keep the two registers separate in the verdict table, and note who
+  benefits from collapsing them (cui bono of the formula itself).
 
 ## Evidence Sources
 - Foreign policy journals and analysis

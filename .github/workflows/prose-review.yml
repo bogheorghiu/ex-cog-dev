@@ -1,0 +1,354 @@
+# Reviews a pull request against this repository's own written conventions.
+#
+# Adapted from Anthropic's `code-review` plugin (anthropics/claude-code). The plugin is
+# deliberately NOT installed at run time via the action's `plugins:` input: that clones
+# anthropics/claude-code HEAD into a job holding this repo's credentials, with no way to
+# pin a version. The protocol is vendored at .github/prose-review-protocol.md instead,
+# which also lets it be adapted to this repo's rules.
+#
+# Shape of the job, and why:
+#
+#   1. Deterministic steps gather everything the reviewer needs (diff, changed files, PR
+#      text, prior comments, rule bindings) into .prose-review/ as plain files.
+#   2. Claude reads those files. It has no shell and no network, so an instruction hidden
+#      in a PR diff cannot make it fetch, run, or reach anything it was not handed. That
+#      absence is enforced with an explicit `--disallowedTools` list, not by omission:
+#      `--allowedTools` pre-approves tools but removes none, and the reviewer itself
+#      demonstrated in run 30215710855 that read-only shell commands run fine when Bash
+#      is merely left off the allow list.
+#   3. Claude writes findings to a file. It does NOT post. A validation script checks
+#      every finding against the derived rule bindings and the diff, and posts only what
+#      passes. That makes "cite the rule correctly" a machine check rather than a
+#      request the model can skip, and leaves the model with no write channel at all.
+#
+# The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
+# job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no
+# status, so an opted-out PR would leave a required check pending forever. This keeps the
+# option of making it required later.
+
+name: Prose review
+
+on:
+  # No base-branch filter: PRs into any base branch get reviewed, matching the other
+  # workflows since PR #156 (stacked integration-branch work, e.g. research-toolkit-v4).
+  pull_request:
+    # `labeled` / `unlabeled` so applying or removing the opt-out label takes effect
+    # immediately, instead of waiting for the next push.
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read # checkout only
+  pull-requests: write # post the review
+  # Read-only, and solely for the falsified-findings ledger fetched below. Comments on an
+  # issue fall under the `issues` scope even though one endpoint serves both kinds, and an
+  # unlisted scope is `none` — so without this the fetch 403s the moment the operator runs
+  # the `gh variable set PROSE_REVIEW_FALSIFIED_ISSUE` step this PR's own description asks
+  # for. That is a landmine armed by following the instructions, so it is granted here and
+  # the fetch is made non-fatal besides.
+  issues: read
+  # `id-token` is deliberately absent — absence means `none`. The action falls back to
+  # minting a Claude App token (hardcoded contents/pull_requests/issues WRITE, and not
+  # narrowable) whenever `github_token` is falsy. Without id-token that fallback throws
+  # instead of silently escalating, so a mistyped secret name fails loudly.
+
+concurrency:
+  # Supersede an in-flight review when the PR is pushed again. Safe to cancel: the
+  # review is posted as a single API call at the very end, so a cancelled run leaves no
+  # partial set of comments behind.
+  group: prose-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prose-review:
+    runs-on: ubuntu-latest
+    # Sized to the measured worst case, not the typical one: a fully staged (subagent)
+    # review round has cost ~18 minutes of Review-step wall clock, and a cap it barely
+    # clears turns a slow-but-sound round into a cancelled job — the least diagnosable
+    # failure this workflow can produce. Single-pass rounds run ~6 minutes and are
+    # unaffected by the extra headroom, which costs nothing when unused.
+    timeout-minutes: 35
+
+    env:
+      PROSE_REVIEW_DIR: .prose-review
+      # Limits live here and nowhere else. The prepare step publishes them to the
+      # reviewer in constraints.md and the validator reads the same variables, so the
+      # model's idea of the rules and their enforcement cannot drift apart.
+      PROSE_REVIEW_MAX_COMMENT_CHARS: "1200"
+      PROSE_REVIEW_MAX_QUOTED_LINES: "6"
+      # Whether a rejected finding gets one chance to be fixed before it is dropped.
+      # A boolean, not a count, because Actions cannot loop steps: a repair round is a
+      # literal step in the YAML, so "how many" is not a value this can express. Naming
+      # it as a count would promise configurability that does not exist. Issue #185 has
+      # the design for a real variable count (drive the CLI directly inside a bash loop).
+      PROSE_REVIEW_REPAIR_ENABLED: "true"
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Decide whether to review
+        id: gate
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+          HAS_OPT_OUT: ${{ contains(github.event.pull_request.labels.*.name, 'no-prose-review') }}
+        run: |
+          # `if` rather than `[ … ] && x=…`: the runner's default shell is `bash -e`, and
+          # a trailing `&&` list whose test is false returns 1, which would fail the step.
+          skip=""
+          # A fork PR gets no secrets and read-only permissions regardless of the
+          # `permissions:` block above, so the reviewer cannot run there at all. Say so
+          # once, clearly, rather than failing three steps later for an opaque reason.
+          if [ "$IS_FORK" = "true" ]; then skip="pull request is from a fork"; fi
+          # Dependabot-triggered runs get Dependabot secrets, not Actions secrets, so
+          # the Claude token evaluates to empty there — but the branch lives in this
+          # repo, so the fork arm passes it through and the credential preflight fails
+          # the job. Without this arm, every weekly grouped-update PR the Dependabot
+          # config opens would carry a red check it can do nothing about.
+          if [ "$IS_DEPENDABOT" = "true" ]; then skip="Dependabot pull request — its runs cannot see this job's secrets"; fi
+          if [ "$IS_DRAFT" = "true" ]; then skip="pull request is a draft"; fi
+          if [ "$HAS_OPT_OUT" = "true" ]; then skip="labelled no-prose-review"; fi
+          if [ -n "$skip" ]; then
+            echo "review=false" >> "$GITHUB_OUTPUT"
+            echo "### Prose review skipped — $skip" >> "$GITHUB_STEP_SUMMARY"
+            echo "skipping: $skip"
+          else
+            echo "review=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require the review credentials
+        if: steps.gate.outputs.review == 'true'
+        env:
+          CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # Explicit rather than relying on the id-token fallback failing: an empty
+          # secret is silently substituted by GitHub, and JS treats "" as falsy.
+          test -n "$CLAUDE_TOKEN" || { echo "::error::CLAUDE_CODE_OAUTH_TOKEN is unset or empty"; exit 1; }
+          test -n "$GH_TOKEN"     || { echo "::error::GITHUB_TOKEN is unset or empty — refusing to run"; exit 1; }
+
+      - name: Check out the repository
+        if: steps.gate.outputs.review == 'true'
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          # By default checkout writes the base64 GITHUB_TOKEN into .git/config, which
+          # the reviewer could Read and echo into a finding — and findings become a
+          # public comment. Nothing downstream needs git auth: both scripts reach the
+          # API via GH_TOKEN in the environment.
+          persist-credentials: false
+
+      - name: Gather the review inputs
+        if: steps.gate.outputs.review == 'true'
+        run: python3 .github/scripts/prose_review_prepare.py
+
+      - name: Gather previously falsified findings
+        if: steps.gate.outputs.review == 'true'
+        env:
+          # The ledger of findings already confirmed to be false positives. Fetched as a
+          # query rather than kept as a list in a file, so a new entry is a comment on
+          # an issue and nothing has to be duplicated or kept in sync.
+          FALSIFIED_ISSUE: ${{ vars.PROSE_REVIEW_FALSIFIED_ISSUE }}
+        run: |
+          out="$PROSE_REVIEW_DIR/falsified.md"
+          printf '# Previously falsified findings\n\n' > "$out"
+          if [ -z "$FALSIFIED_ISSUE" ]; then
+            printf '(none recorded yet)\n' >> "$out"
+          else
+            printf 'Patterns already confirmed as false positives. Do not raise these again.\n\n' >> "$out"
+            # The ledger is advisory: it suppresses repeat findings, it does not gate the
+            # review. So a failure to fetch it degrades to an empty ledger rather than
+            # failing the job -- previously `gh` was the last command of a redirected
+            # group under `bash -e`, which turned a renumbered issue, a transient API
+            # error or a missing scope into a dead review. Assigning inside `if` keeps
+            # errexit off for the fetch and writes nothing on failure, so the ledger is
+            # never half-written.
+            if ledger=$(gh issue view "$FALSIFIED_ISSUE" --repo "$GITHUB_REPOSITORY" \
+              --json comments --jq '.comments[] | "- " + (.body | gsub("\n"; " ")) + "\n"'); then
+              printf '%s\n' "$ledger" >> "$out"
+            else
+              printf '(ledger unavailable this run — treat it as empty)\n' >> "$out"
+              printf '::warning::falsified-findings ledger could not be read; continuing without it\n'
+            fi
+          fi
+          wc -l < "$out"
+
+      - name: Review
+        if: steps.gate.outputs.review == 'true'
+        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Passing this short-circuits the OIDC → Claude-App-token path in
+          # src/github/token.ts, so the only credential in the job is the ephemeral,
+          # `permissions:`-scoped GITHUB_TOKEN above.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # No inline-comment MCP server is used, so comment buffering/classification
+          # never enters the picture; turned off explicitly so a future default change
+          # cannot quietly route comments through a classifier.
+          classify_inline_comments: false
+          prompt: |
+            You are reviewing pull request #${{ github.event.pull_request.number }}
+            in ${{ github.repository }}.
+
+            Read .github/prose-review-protocol.md from this checkout and follow it
+            exactly. It is your complete instructions.
+
+            Everything you need has already been gathered into the .prose-review/
+            directory. Read those files; you have no shell and no network.
+
+            Produce .prose-review/findings.json. Do not attempt to post anything.
+
+            You get ONE turn. This is non-interactive: nothing reads your messages and
+            you will not be resumed. Do not end your response while subagents are still
+            outstanding, and do not end on a description of what you are about to do —
+            when you stop, the run stops, and anything unwritten is lost. Wait for your
+            subagents, finish the reconciliation yourself, and write findings.json
+            BEFORE your final message.
+          # Writing is scoped to the one file the reviewer produces. Unscoped, it could
+          # rewrite the validator's own inputs — forging manifest.json's bindings, or
+          # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
+          # which would route around every check that makes citation enforceable.
+          #
+          # It must be `Edit(path)`, not `Write(path)`: the CLI rejects the latter with
+          # "not matched by file permission checks — only Edit(path) rules are", and an
+          # Edit rule covers every file-editing tool including Write. Probed both ways:
+          # the reviewer can write findings.json and is refused any other path.
+          #
+          # Both `Task` and `Agent` are listed because the SDK refers to the
+          # subagent-spawn tool under both names; whichever the runtime registers, one
+          # matches, so the staged review cannot silently collapse to a single agent.
+          # Delegation is only safe together with the one-turn directive in the prompt
+          # above: without it, four consecutive runs (30214778070 through 30215530384)
+          # dispatched their finders, announced they would collect the candidates
+          # later, and ended the turn — leaving findings.json untouched while the
+          # action reported success. The directive and the tools travel together.
+          #
+          # The disallow list is load-bearing, not belt-and-braces: `--allowedTools`
+          # pre-approves but removes nothing, and run 30215710855 showed read-only
+          # shell commands executing despite Bash being absent from the allow list —
+          # the reviewer reported it itself, as a finding on this file. Explicitly
+          # disallowing Bash and the network tools is what makes the no-shell,
+          # no-network posture in this file's header true rather than asserted.
+          #
+          # `--model opus` is not decoration: the orchestrator runs stage-4
+          # reconciliation and writes findings.json itself, judgement work this design
+          # deliberately keeps off Sonnet-class models. Per-stage subagents override
+          # it themselves.
+          claude_args: >-
+            --model opus
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
+            --disallowedTools "Bash,WebFetch,WebSearch"
+
+      # What the reviewer actually DID. The action's own log reports `is_error: false` and
+      # a turn count and nothing else, which is uninformative in the one case that
+      # matters: the model finishing without producing its output. Three rounds were spent
+      # guessing at that from the outside. This prints the tool calls and any permission
+      # denial from the execution log the action leaves in the runner temp dir, so the
+      # next occurrence is read rather than inferred.
+      #
+      # Deliberately narrow: tool names, the paths of file-writing calls, denial messages,
+      # and the model's closing text. Not the full transcript -- this job's logs are
+      # publicly readable, and the transcript contains whatever the reviewer read.
+      # `always()`, not the default `success()`: this step exists for the runs that go
+      # wrong, and the default skips it in exactly that case. It did — run 30217117484's
+      # Review step failed and took the diagnostic down with it, leaving nothing to read
+      # about the one failure that had a new shape. A diagnostic gated on the success of
+      # the thing it diagnoses is not a diagnostic.
+      - name: What the reviewer did
+        if: always() && steps.gate.outputs.review == 'true'
+        continue-on-error: true
+        run: |
+          log=$(find "${RUNNER_TEMP}" -name 'claude-execution-output.json' -print -quit 2>/dev/null || true)
+          if [ -z "$log" ]; then echo "no execution log found under RUNNER_TEMP"; exit 0; fi
+          python3 - "$log" <<'PY'
+          import json, sys
+          try:
+              entries = json.load(open(sys.argv[1], encoding="utf-8"))
+          except Exception as exc:
+              print(f"could not parse execution log: {exc}")
+              raise SystemExit(0)
+          if isinstance(entries, dict):
+              entries = entries.get("messages", [])
+          calls, denials, last_text = [], [], ""
+          for e in entries if isinstance(entries, list) else []:
+              msg = e.get("message") if isinstance(e, dict) else None
+              for block in (msg or {}).get("content", []) if isinstance(msg, dict) else []:
+                  if not isinstance(block, dict):
+                      continue
+                  if block.get("type") == "tool_use":
+                      name = block.get("name", "?")
+                      inp = block.get("input") or {}
+                      path = inp.get("file_path") or inp.get("path") or ""
+                      calls.append(f"{name} {path}".strip())
+                  elif block.get("type") == "text":
+                      last_text = block.get("text", "") or last_text
+                  if "denied" in json.dumps(block)[:4000].lower():
+                      denials.append(json.dumps(block)[:400])
+          print(f"tool calls ({len(calls)}):")
+          for c in calls:
+              print(f"  - {c}")
+          print(f"\npermission denials seen in content ({len(denials)}):")
+          for d in denials[:5]:
+              print(f"  ! {d}")
+          print("\nreviewer's closing text (truncated):")
+          print(last_text[:1500] or "  (none)")
+          PY
+
+      - name: Validate the findings
+        id: validate
+        if: steps.gate.outputs.review == 'true'
+        env:
+          PROSE_REVIEW_VALIDATE_ONLY: "1"
+          # The validator's literal-credential screen matches the exact values in ITS
+          # environment. The job-level env only carries GH_TOKEN, so without this line
+          # the Claude token — which the Review step above does hold — would be covered
+          # only by the shape regex, the layer the script itself calls the weak one.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python3 .github/scripts/prose_review_post.py
+
+      # A rejected finding is usually a fixable mistake -- a rule cited that does not
+      # bind the file, a comment a little over length -- not a bad finding. Dropping it
+      # silently wastes work the reviewer already did and teaches nothing, so it gets
+      # told exactly what failed and one pass to correct it.
+      - name: Repair rejected findings
+        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
+        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          classify_inline_comments: false
+          prompt: |
+            Some of your findings were rejected by validation and will not be posted.
+
+            Read .prose-review/rejected.json. Each entry has the finding and the exact
+            reason it failed. Read .prose-review/constraints.md and
+            .prose-review/rule-bindings.md again.
+
+            Rewrite .prose-review/findings.json so it contains every finding that already
+            passed, plus any rejected one you can genuinely fix. Drop a rejected finding
+            rather than forcing it: if the rule you cited does not bind that file, the
+            finding was probably wrong, not merely misfiled.
+
+            This is your only repair pass.
+          # The Review step's disallow list PLUS the two subagent tools, deliberately:
+          # repair is a single fix pass over rejected.json, so it must not delegate —
+          # and since leaving a tool off the allow list removes nothing, these two
+          # entries are what actually withholds delegation here. The lists differ on
+          # purpose and in this direction only; do not "sync" them.
+          claude_args: >-
+            --model opus
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"
+            --disallowedTools "Bash,Task,Agent,WebFetch,WebSearch"
+
+      - name: Post the review
+        # `!cancelled()` with an explicit validate check, because a step-`if` that names
+        # no status function gets `success()` implied: under that default, a repair pass
+        # failing — an API error, a model hiccup — silently discarded every finding that
+        # had already validated cleanly. Posting after a failed repair is safe: this
+        # script re-validates findings.json in full before sending anything, so a repair
+        # that half-wrote the file is caught here rather than posted.
+        if: ${{ !cancelled() && steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' }}
+        env:
+          # Same reason as on the validate step: the literal screen can only match
+          # values this step's environment actually holds.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python3 .github/scripts/prose_review_post.py

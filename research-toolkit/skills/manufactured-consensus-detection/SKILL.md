@@ -114,6 +114,15 @@ For sources that agree, check:
 
 If YES to any: their agreement is not independent. Downgrade from "consensus" to "aligned interests."
 
+### Step 6: Hard cases — the five discriminators
+
+When Steps 1–5 leave the classification contested, or the stakes are high,
+apply the five measurable discriminators (inferential distance ·
+dimensionality · lexical fingerprint · temporal granularity ·
+pre-positioning) and the template-level check in
+`references/discriminators.md`. Cite instances per discriminator — the
+point of the file is that each one is checkable against the texts.
+
 ## Convergence Warning Template
 
 When rapid convergence is detected, issue this warning:

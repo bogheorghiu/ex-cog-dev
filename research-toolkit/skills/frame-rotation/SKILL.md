@@ -1,6 +1,6 @@
 ---
 name: frame-rotation
-description: 「透镜」 What structure hides in my native grammar? Linguistic frame rotation to escape English-default pattern-recognition. Use when (1) pattern-recognition feels stuck in familiar grooves, (2) abstraction circles without grounding, (3) cross-domain insight feels like same-OS-different-domain, (4) triggers fire (prime hours + why, cat mentions, triple punctuation, water metaphors, embedded digits, high typo density, 7th framework). Includes both cross-language frames (Chinese, Japanese, Sanskrit) AND intra-English language frameworks (E-Prime, Present-Centered, Affirmative, Intransitive).
+description: 「透镜」 What structure hides in my native grammar? Linguistic frame rotation to escape English-default pattern-recognition. Use when (1) pattern-recognition feels stuck in familiar grooves, (2) abstraction circles without grounding, (3) cross-domain insight feels like same-OS-different-domain, (4) triggers fire (prime hours + why, cat mentions, triple punctuation, water metaphors, embedded digits, high typo density, 7th framework). Includes both cross-language frames (Chinese, Japanese, Sanskrit) AND intra-English language frameworks (E-Prime, Present-Centered, Affirmative, Intransitive). Also rotates coverage-weighting — re-read what coverage ignored as if it were the headline.
 ---
 
 # Frame-Rotation Protocol (语法透镜)
@@ -77,6 +77,24 @@ Multiple frames can combine:
 - E-Prime + Present-Centered + Affirmative = stripped English baseline
 - Chinese aspect-markers + E-Prime = temporal precision without identity claims
 - Japanese particles + Intransitive = minimal-agent action flow
+
+## Salience Rotation (coverage-weighting)
+
+A third rotation type: rotate not the grammar but the WEIGHTING that
+coverage installed (Principle P3 (inherited-salience-is-not-importance)).
+
+1. List what dominant coverage of the material HEADLINED, and what it
+   IGNORED (two explicit columns — the ignored column must be non-empty;
+   if it seems empty, that is the finding to interrogate).
+2. Re-read the most-ignored substantive item AS IF it were the headline:
+   what would the story be? What evidence would the headline-version
+   demand?
+3. Report the friction: what the rotation surfaced, or that it surfaced
+   nothing (failed rotations are data — same rule as the other types).
+
+Pairs with `standpoint-pass`: that skill rotates WHO reads; this rotates
+WHAT was pre-weighted. Run both on material where coverage and affected
+parties diverge.
 
 ## Honest Limitations
 

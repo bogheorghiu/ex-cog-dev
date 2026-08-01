@@ -191,6 +191,7 @@ Manufacturer claims → Independent verification → Sustained performance reali
 - Which systems would degrade if this entity disappeared?
 - What does it optimize, accelerate, or enable?
 - Who becomes more powerful through this entity's existence?
+- For data-heavy entities: run `references/data-convergence-mapping.md` — the join, not the single program, is often the product
 
 ### Stage 3: Evidence Verification
 Label every claim:
@@ -285,7 +286,7 @@ Prefer: "X does [specific thing] [evidence tier]. For use cases involving [A], t
 
 ### Pre-Verdict Gate
 
-Before assigning verdict: CONFIRMED requires independent corroboration. DISCONFIRMED requires specific counter-evidence. Everything else is UNVERIFIED. Source-origin discounts credibility but does not falsify.
+Before assigning verdict: CONFIRMED requires independent corroboration. DISCONFIRMED requires specific counter-evidence. Everything else is UNVERIFIED. Source-origin discounts credibility but does not falsify. Symmetric scrutiny does not owe symmetric conclusions — Principle P5 (symmetric-scrutiny-is-not-symmetric-conclusions).
 
 ## Output Structure (MANDATORY)
 
@@ -540,7 +541,7 @@ leaks *upstream* of analysis — in unmarked evaluative words applied to
 power-aligned actors and in first-option ordering. Before output on any
 bloc-contested or establishment-vs-accuser question, run the lint at
 `skills/cui-bono/references/frame-leak-lint.md` (frame-marking pass ·
-first-option audit · recursive prose check).
+first-option audit · recursive prose check). (Principle P6 (the-frame-leaks-upstream).)
 
 ### Steel-Man Obligation
 For every conclusion, construct the strongest possible contrarian argument:
@@ -608,6 +609,7 @@ Auto-activates if budget-mode skill is active in session.
 
 - `references/red-flags.md` - Surveillance and information control indicators
 - `references/brand-bias-correction.md` - Product evaluation methodology
+- `references/data-convergence-mapping.md` - Who holds which datasets across separate programs; the join is often the product
 - `FALSIFICATION-CRITERIA.md` - Self-verification checklist (optional: verify output meets protocol standards)
 
 ## Vasana

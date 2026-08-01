@@ -23,6 +23,8 @@ The toolkit's identity is not "we find truth" — it is "we find where our curre
 5. **Always search in the languages of the traditions you're looking for.** English-language search systematically erases non-Western methodology.
 6. **OSINT feeds agencies.** When we investigate publicly, we generate intelligence product others harvest. Structural awareness, not paranoia.
 
+Shipped, numbered principles live in `principles/PRINCIPLES.md` — skills cite those by number; this dev list is context, not the citation target.
+
 ## Research Logs vs Methodology
 
 See `.claude/rules/research-logs-vs-methodology.md` — applies across all plugins.
