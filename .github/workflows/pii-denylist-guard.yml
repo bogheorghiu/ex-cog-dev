@@ -10,13 +10,37 @@ name: PII denylist guard
 # PII_DENYLIST — newline-separated terms. Set it in: Settings → Secrets and variables → Actions.
 # Until it is set, the gate logs a warning and passes (inactive), so it never blocks unrelated work.
 #
-# LOG SAFETY: the scan reports only FILE NAMES (git grep -l), never the matching line, so a
-# denylisted term is never echoed into the public CI log. GitHub also masks the secret value.
+# SCOPE, stated because a green check here is easy to over-read: this job scans the TRACKED TREE at
+# the single commit that was checked out (actions/checkout defaults to fetch-depth 1). It is not a
+# history scan. A name that was committed and then removed on the same branch is gone from the tree
+# and still present in the pushed commits, and this job reports clean. History is the pre-push
+# hook's job — it scans the outgoing commit range — so a clone that never installed the hook has no
+# history coverage at all.
+#
+# LOG SAFETY: the scan reports only COUNTS, never a matching line AND never a matching path. Paths
+# are withheld because a path can itself contain the term (`assets/<name>-scan.png`), so printing
+# "just the file names" would echo into a public log exactly what this gate exists to suppress.
+# To see which files matched, run the same grep locally against your own denylist. GitHub also
+# masks the secret value, but that only covers the secret's literal text.
 
+# TRIGGERS, deliberately identical to .github/workflows/unit-tests.yml so the two workflows agree
+# on this repo's convention rather than contradicting each other.
+# `push` is filtered to main on purpose: an unfiltered `push` plus `pull_request` fires this
+# workflow TWICE for every push to a PR branch — same workflow, same commit, two runs and two
+# identical checks in the rollup (measured on this PR: one event=push, one event=pull_request).
+# `pull_request` carries NO base-branch filter, so a PR into ANY base is scanned — including this
+# repo's stacked integration branches (e.g. research-toolkit-v4). Filtering BOTH triggers to main,
+# as this workflow previously did, left every such PR with no denylist tree-scan from CI at all:
+# neither event fired, and the absence looked like a pass because nothing reported.
+# The remaining gap is stated rather than hidden: a branch pushed with no PR open is not
+# tree-scanned by CI until the PR exists. That is acceptable because CI is a DETECTION backstop,
+# not prevention — the branch is already public the moment it is pushed, so scanning at push time
+# versus at PR time changes when the leak is noticed, not whether it happened — and the pre-push
+# hook is the layer that actually stops it leaving the clone.
 on:
   push:
-  pull_request:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -26,28 +50,105 @@ jobs:
   denylist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Scan tracked tree against PII denylist
         env:
           DENYLIST: ${{ secrets.PII_DENYLIST }}
         run: |
           set -euo pipefail
           if [ -z "${DENYLIST}" ]; then
-            echo "::warning::PII_DENYLIST secret is not set — PII gate is INACTIVE. Set the secret to activate it."
+            # Says "nothing was checked", not just "inactive": this branch also covers PULL REQUESTS
+            # FROM FORKS, where GitHub withholds secrets by design. That is exactly the
+            # untrusted-source case, and an "INACTIVE" line inside an otherwise green check reads to
+            # a reviewer as "passed". Whether a fork PR should instead FAIL here is a maintainer
+            # policy call — it would block every fork contribution — so this states the gap loudly
+            # rather than deciding it.
+            echo "::warning::PII_DENYLIST secret is unavailable — the denylist gate DID NOT RUN and this tree was NOT checked for personal names. A green check here means nothing was verified. Expected on pull requests from forks (secrets are withheld); otherwise set the secret in Settings → Secrets and variables → Actions."
             exit 0
           fi
-          # Write terms to a temp file (never echoed). Drop blank lines.
-          # accept '|'-separated (single-line) OR newline-separated denylist values
-          printf '%s\n' "${DENYLIST}" | tr '|' '\n' | grep -v '^[[:space:]]*$' > "${RUNNER_TEMP}/denylist.txt" || true
-          if [ ! -s "${RUNNER_TEMP}/denylist.txt" ]; then
-            echo "::warning::PII_DENYLIST secret held no non-blank terms — PII gate is INACTIVE."
-            exit 0
-          fi
-          # -F fixed strings, -i case-insensitive, -I skip binary, -l FILE NAMES ONLY (never the line).
-          if git grep -I -l -i -F -f "${RUNNER_TEMP}/denylist.txt" -- . ; then
-            echo "::error::PII denylist match in the file(s) listed above. A denylisted name is present in the tree. Remove it — and if it was already pushed, scrub history — before merging."
+          # Write terms to a temp file (never echoed), normalized EXACTLY as .githooks/pre-push's
+          # norm() does, so one denylist behaves the same whichever layer reads it: '|' is a
+          # separator (single-line secret fields use it), CRs are stripped, blanks are trimmed from
+          # both ends, and comment/blank lines are dropped. Divergence here is not cosmetic — a
+          # CRLF-pasted secret left every pattern ending in \r, matching NOTHING, while the file
+          # stayed non-empty so this job did not even report itself INACTIVE.
+          #
+          # grep's status is interpreted, not discarded. 1 means every line was a comment or blank —
+          # legitimate, and caught by the -s check below. >=2 is grep's own failure, and must not be
+          # laundered into an empty pattern file that then reads as "nothing to find".
+          #
+          # The interpretation happens INSIDE the pipeline, in a brace group, for a reason worth
+          # spelling out: `pipefail` reports the RIGHTMOST non-zero status, so a plain trailing grep
+          # exiting 1 ("no lines survived", benign) silently outranks an earlier `sed` or `tr` that
+          # died. Converting grep's status to 0-or-fail in place leaves the earlier stages as the
+          # only possible non-zero, so any of them failing reaches the check below. Measured: with
+          # the trailing grep left raw, a failing first stage reported the gate clean and exited 0.
+          nst=0
+          printf '%s\n' "${DENYLIST}" \
+            | tr '|' '\n' \
+            | tr -d '\r' \
+            | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+            | { grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#'; gs=$?; [ "${gs}" -le 1 ]; } \
+            > "${RUNNER_TEMP}/denylist.txt" || nst=$?
+          if [ "${nst}" -ne 0 ]; then
+            echo "::error::Normalizing the PII denylist failed (exit ${nst}) — the tree was NOT verified. Failing closed."
             rm -f "${RUNNER_TEMP}/denylist.txt"
             exit 1
           fi
-          rm -f "${RUNNER_TEMP}/denylist.txt"
-          echo "PII denylist gate: clean."
+          if [ ! -s "${RUNNER_TEMP}/denylist.txt" ]; then
+            echo "::warning::PII_DENYLIST secret held no usable terms (blank, or comments only) — PII gate is INACTIVE."
+            exit 0
+          fi
+          # Output goes to a file, never to the log: the hit list is a list of PATHS, and a path can
+          # contain the denylisted term itself.
+          #
+          # git grep exits 0 on a match, 1 on no match, and >=2 on its OWN error — an unreadable
+          # object, a bad pathspec, a pattern file it cannot open. `if git grep ...` read every
+          # non-zero status as "clean", so a scan that never ran reported that there was nothing to
+          # find. That is the same fail-open the hook closes with scan_eval, and it mattered more
+          # here: this is the layer that runs when nobody installed the hook.
+          #
+          # -a NOT -I, deliberately, and this is the one place the two layers had drifted apart.
+          # `-I` skips every file git classifies as binary, so a tracked .pdf/.docx/an image with the
+          # name in its metadata/a .jsonl with an embedded NUL was never scanned by this job at all,
+          # while the pre-push hook's `-a` scanned it. Measured on a scratch repo holding a NUL-bearing
+          # file with the term: `git grep -I -l` returned only the plain-text file, `git grep -a -l`
+          # returned both. The asymmetry mattered here more than anywhere else, because this is the
+          # layer that runs when nobody installed the hook — and it inverted the trade-off this gate
+          # is built on: a false block is visible and fixable in seconds, a missed name is permanent.
+          # Cost of -a is scan time on large binaries; it cannot leak, because the output is -l
+          # (paths only) and the paths are counted, never printed.
+          # -F fixed strings, -i case-insensitive, -l paths only (never the line).
+          st=0
+          git grep -a -l -i -F -f "${RUNNER_TEMP}/denylist.txt" -- . \
+            > "${RUNNER_TEMP}/content-hits.txt" || st=$?
+          if [ "${st}" -gt 1 ]; then
+            echo "::error::The PII denylist content scan itself failed (git grep exit ${st}) — the tree was NOT verified. Failing closed."
+            rm -f "${RUNNER_TEMP}"/denylist.txt "${RUNNER_TEMP}"/*-hits.txt
+            exit 1
+          fi
+
+          # git grep searches file CONTENTS only, so a denylisted term living in a PATH
+          # (assets/<name>-scan.png) was never scanned by this job at all. The local hooks catch
+          # that case incidentally, because `git diff`/`git log -p` print `+++ b/<path>` headers
+          # inside the text they scan — but this is the layer for clones with no hooks installed.
+          # Same brace-group treatment, same reason: a benign trailing `grep` exit 1 would otherwise
+          # be the rightmost non-zero status and mask a `git ls-files` that failed outright.
+          pst=0
+          git ls-files -z | tr '\0' '\n' \
+            | { grep -i -F -f "${RUNNER_TEMP}/denylist.txt"; gs=$?; [ "${gs}" -le 1 ]; } \
+            > "${RUNNER_TEMP}/path-hits.txt" || pst=$?
+          if [ "${pst}" -ne 0 ]; then
+            echo "::error::The PII denylist path scan itself failed (exit ${pst}) — the tree was NOT verified. Failing closed."
+            rm -f "${RUNNER_TEMP}"/denylist.txt "${RUNNER_TEMP}"/*-hits.txt
+            exit 1
+          fi
+
+          n_content=$(wc -l < "${RUNNER_TEMP}/content-hits.txt")
+          n_path=$(wc -l < "${RUNNER_TEMP}/path-hits.txt")
+          rm -f "${RUNNER_TEMP}"/denylist.txt "${RUNNER_TEMP}"/*-hits.txt
+          if [ "${n_content}" -gt 0 ] || [ "${n_path}" -gt 0 ]; then
+            echo "::error::PII denylist match: ${n_content} tracked file(s) contain a denylisted name, and ${n_path} tracked path(s) are named after one. The paths are withheld on purpose — run the same grep locally against your denylist to see them. Remove it — and if it was already pushed, scrub history — before merging."
+            exit 1
+          fi
+          echo "PII denylist gate: clean (tracked tree at this commit; not a history scan)."

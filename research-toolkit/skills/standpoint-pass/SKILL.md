@@ -26,7 +26,7 @@ Salience is inherited before reading begins: coverage, clipping, and quotation
 have already decided which lines are "important". Importance under the question
 actually asked — especially harm-to-the-many — has to be re-derived from the
 primary text. The worst line by that measure is often phrased as kindness, which
-is exactly why it survives passes tuned to offense.
+is exactly why it survives passes tuned to offense. (Principle P3 (inherited-salience-is-not-importance); the standpoint injection is also the outside-control Principle P7 (blindness-is-not-independence) calls for.)
 
 **The anti-pattern this counters:**
 ```

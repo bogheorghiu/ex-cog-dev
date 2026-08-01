@@ -4,6 +4,7 @@ name: Unit tests
 # PR. Complements the MCP smoke test (which only checks that each server boots
 # and answers a JSON-RPC initialize). These suites exercise actual logic:
 #   - security-toolkit hooks (bash)
+#   - the repo's own PII pre-push guard (bash)
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)
 #   - research-toolkit skill-structure linter (stdlib Python)
@@ -30,17 +31,17 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           enable-cache: true
 
-      - name: Security-toolkit hook suites (bash)
+      - name: Hook suites (bash)
         run: |
           set -euo pipefail
           bash security-toolkit/hooks/block-dangerous-git.test.sh
@@ -48,6 +49,8 @@ jobs:
           bash security-toolkit/hooks/block-dc.test.sh
           bash security-toolkit/hooks/announce-pr-merge-guard.test.sh
           bash vasana-system/hooks/count-skill-firings.test.sh
+          bash research-toolkit/hooks/count-skill-firings.test.sh
+          bash .githooks/pre-push.test.sh
 
       - name: Stdlib Python suites
         run: |
@@ -58,12 +61,15 @@ jobs:
           python3 research-toolkit/skills/macro-monitor/scripts/test_fred_fetcher.py
           python3 research-toolkit/skills/test_skill_structure.py
           python3 research-toolkit/skills/dev-job-defense-ties/scripts/test_config.py
+          python3 research-toolkit/skills/research/scripts/test_config.py
           python3 research-toolkit/skills/dev-job-defense-ties/test_screen_efficiency.py
           python3 research-toolkit/lib/test_brainstorm.py
+          python3 research-toolkit/hooks/firing-filter/test_firing_filter.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
           python3 .github/scripts/test_check_version_bump.py
+          python3 .github/scripts/test_prose_review_post.py
 
       - name: Skill-structure linters (vasana-system, security-toolkit)
         run: |

@@ -114,6 +114,18 @@ Every claim must carry a tier label. When researchers present unlabeled claims, 
 
 ## Analytical Patterns to Apply
 
+**Named lenses (external-objector role):** external objections produced the
+largest recorded quality jumps; when no human objector is available, you
+play that role — and a role needs material. Load named lenses and apply
+them BY NAME in your critique: this plugin's principles
+(`principles/PRINCIPLES.md` — P4 counter-default, P5
+symmetric-scrutiny-is-not-symmetric-conclusions, P6 the-frame-leaks-upstream
+are the load-bearing three for critique), and, when the
+vasana-system plugin is available, its pattern library via the canonical
+location (default `~/ClaudeShared/pattern-library/patterns/`; bundled copy
+as fallback; skip without failing if absent). "Lens X applied: [finding]"
+beats generic skepticism — cite the lens per challenge.
+
 Check for these patterns in the research:
 
 - **Closing Window:** When diplomacy succeeds, check if the success itself threatens pretext for other objectives. Look for tight temporal coupling between diplomatic openings and military actions.

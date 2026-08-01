@@ -1,3 +1,8 @@
+> Moved from `cui-bono/SOURCE_CLASSIFICATIONS.md` in 4.2.0 — these are the
+> four dossier grounds applied to external DATA TOOLS (Layer 1). The
+> journalistic/analytical positioning framework (Layer 2) remains at
+> `../../cui-bono/SOURCE_DIVERSITY_FRAMEWORK.md`.
+
 # Source Classifications - Operational Reference
 
 This file tracks external data source assessments. See 00_TOOL_PROTOCOL.md Section 6 for methodology.
