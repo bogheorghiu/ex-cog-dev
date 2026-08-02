@@ -21,6 +21,30 @@ reads as a live control while being inert.
 You *can* evaluate it: you have the run history in front of you. So the criterion is real
 here and was fiction there.
 
+## A green check is not a quiet round — it never was
+
+**The prose-review job exits 0 whether it posted ten comments or none.** Posting is the
+job doing its work, not a failure, so a round that found ten problems reports exactly what
+a clean round reports: a green tick. `gh pr checks` will tell you the reviewer ran. It will
+never tell you what it said.
+
+So "all checks pass" is not a reading of the round. Count the posted comments — from
+`gh api repos/OWNER/REPO/pulls/N/comments`, or from the PR page — every time.
+
+Two ways this goes wrong, both observed on PR #195:
+
+- **Believing the tick.** Round 10 posted three findings, every check went green, and the
+  three sat unread for five days because the checks looked done.
+- **Believing a bad count.** Twice in one session a comment count came back zero from a
+  filter comparing `created_at` against a local-clock timestamp — and the timestamps are
+  UTC, so the cutoff was hours in the future and matched nothing. A zero you computed is a
+  claim; a zero you can see on the PR is a result. Prefer listing the comments with their
+  timestamps and looking, over filtering and trusting the number.
+
+Making the job fail when it posts would fix the first half and break more than it fixes:
+the reviewer would gate merges on prose judgement, which is the authority this design
+deliberately withholds from it. So the check stays green and the reader carries the duty.
+
 ## Zero posted, not zero worth fixing
 
 The signal is **comments posted**, not your judgement of their importance. Severity is
