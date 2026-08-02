@@ -47,6 +47,15 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
+      # Pinned like the two sibling Python guards (unit-tests, version-bump-guard).
+      # The script is stdlib-only and would run on whatever the runner ships today,
+      # but an unpinned interpreter means a runner-image bump can change what this
+      # gate does with no commit to point at - and a gate that changes silently is
+      # the failure mode this whole workflow exists to argue against.
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
       - name: Check tracked JSON is ASCII-only
         run: |
           set -euo pipefail

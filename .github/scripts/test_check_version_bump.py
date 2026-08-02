@@ -7,10 +7,13 @@ Pure-function tests — no git, no filesystem. Run directly:
 
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from check_version_bump import evaluate, version_tuple, skip_requested  # noqa: E402
+from check_version_bump import (  # noqa: E402
+    evaluate, version_tuple, skip_requested, discover_plugin_dirs,
+)
 
 DIRS = {"alpha": "alpha/", "beta": "beta/"}
 failures = []
@@ -118,6 +121,34 @@ def test_skip_requested():
     check("marker only matched bracketed, not bare word", skip_requested("version bump done", []) is False)
 
 
+def test_plugin_dirs_derived_from_tree():
+    """The plugin map must come from the filesystem, never a hand-kept list.
+
+    This is the test the guard was missing. `PLUGIN_DIRS` used to be four hardcoded
+    names, so a fifth plugin would simply be absent from the map: the guard would
+    find no relevant change under a directory it did not know about and pass green,
+    while the REQUIRED version-bump rule was being broken. Under-coverage in a gate
+    is indistinguishable from compliance, which is the worst way for a gate to fail.
+    """
+    import tempfile
+
+    print("\n9. PLUGIN_DIRS is derived from the tree, not hand-listed")
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        for name in ("alpha", "beta", "fifth-toolkit"):
+            (root / name / ".claude-plugin").mkdir(parents=True)
+            (root / name / ".claude-plugin" / "plugin.json").write_text("{}")
+        (root / "not-a-plugin").mkdir()  # no manifest -> must not appear
+        got = discover_plugin_dirs(root)
+
+    check("finds every dir with a manifest", sorted(got) == ["alpha", "beta", "fifth-toolkit"])
+    check("a newly added plugin is picked up", "fifth-toolkit" in got)
+    check("a dir without a manifest is excluded", "not-a-plugin" not in got)
+    check("prefixes end in a slash", all(v == f"{k}/" for k, v in got.items()))
+    real = discover_plugin_dirs()
+    check("discovers this repo's own plugins", len(real) >= 4 and "research-toolkit" in real)
+
+
 if __name__ == "__main__":
     print("Testing version-bump guard logic (Appendix C)...")
     test_version_tuple()
@@ -131,6 +162,7 @@ if __name__ == "__main__":
     test_multiple_plugins_independent()
     test_prefix_not_substring_matched()
     test_skip_requested()
+    test_plugin_dirs_derived_from_tree()
     if failures:
         print(f"\n❌ {len(failures)} check(s) failed: {failures}")
         raise SystemExit(1)

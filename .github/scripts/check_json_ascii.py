@@ -126,13 +126,15 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
     # the guard in main() refuses - just at N>0 instead of N=0. A partial scan that
     # reads as a full pass is how an unchecked file acquires a green tick.
     present: list[Path] = []
+    skipped: list[str] = []
     for rel in seen:
         path = repo_root / rel
         if path.is_file():
             present.append(path)
         else:
+            skipped.append(rel)
             print(f"skipped (tracked, not in working tree): {rel}", file=sys.stderr)
-    return present
+    return present, skipped
 
 
 def write_atomically(path: Path, data: bytes) -> None:
@@ -231,7 +233,7 @@ def main() -> int:
         ).stdout.strip()
     )
 
-    files = tracked_json_files(repo_root)
+    files, skipped = tracked_json_files(repo_root)
 
     # Fail loudly on an empty file set rather than reporting success over nothing.
     # A guard that inspects zero files prints the same "all clear" as one that
@@ -285,10 +287,15 @@ def main() -> int:
         )
         return 1
 
+    # Claim "clean" only about what was actually opened. `tracked_json_files` argues
+    # that a partial scan reading as a full pass is the same defect as reporting
+    # success over an empty set - so the final line has to carry that qualifier, or
+    # the code is making an argument it does not keep one screen later.
+    scope = "" if not skipped else f" — {len(skipped)} tracked file(s) SKIPPED, not a full scan"
     if fixed_files:
-        print(f"\n{fixed_files} file(s) fixed; tracked JSON is now ASCII-only.")
+        print(f"\n{fixed_files} file(s) fixed; the files scanned are ASCII-only.{scope}")
     else:
-        print("Tracked JSON is ASCII-only, with no escape sequences.")
+        print(f"Tracked JSON is ASCII-only, with no escape sequences.{scope}")
     return 0
 
 
