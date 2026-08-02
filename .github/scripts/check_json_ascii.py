@@ -84,10 +84,15 @@ EXCLUDED_PREFIXES = (".claude/workflows/probes/",)
 # exactly what the round trip emits. Verified: the naive form finds nothing there.
 ESCAPE_RE = re.compile(rb"(?<!\\)(?:\\\\)*\\u[0-9a-fA-F]{4}")
 
-# JSON has no other way to write a control character: a literal byte below 0x20 is
-# invalid inside a string, so the backslash-u form is the ONLY legal spelling for one.
-# Flagging those would make correct JSON unmergeable, so an escape naming a code point
-# below 0x20 is allowed.
+# A literal byte below 0x20 is invalid inside a JSON string, so a control character
+# MUST be written escaped in some form - flagging those would make correct JSON
+# unmergeable. An escape naming a code point below 0x20 is therefore allowed.
+#
+# (Not because backslash-u is the only spelling, which an earlier version of this
+# comment claimed: JSON gives five control characters a shorter two-character escape
+# - \b \t \n \f \r - and those are exactly what json.dump emits, so they are the
+# common case rather than a corner. The regex above matches only the \uXXXX form, so
+# the guard behaves identically either way; it was the stated reason that was false.)
 #
 # Everything at or above that boundary is flagged REGARDLESS of what it names - an
 # HTML-safe serializer's `<` fails this guard exactly as an escaped em-dash does.

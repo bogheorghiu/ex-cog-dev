@@ -45,7 +45,7 @@ The reason is a silent rewrite this repo has already shipped twice. A manifest's
 
 Nothing catches it by accident: the tool exits 0, the file still parses, tests still pass, and escaped and raw are the **same JSON value** (jq, Node and Python all agree), so no consumer can tell. Only the bytes differ. Keeping the file ASCII removes the input rather than detecting the output — with nothing non-ASCII present, the rewrite cannot happen.
 
-**The guard also rejects `\uXXXX` escapes** naming any code point at or above `0x20` — so the rule is *ASCII-only **and** escape-free*, not ASCII-only alone. That second half is not redundant: an escape is **pure ASCII on disk**, so a file full of them satisfies "no non-ASCII character" while still being the exact wreckage a load-edit-dump leaves behind. Escapes below `0x20` are allowed, because a control character has no other legal spelling in JSON.
+**The guard also rejects `\uXXXX` escapes** naming any code point at or above `0x20` — so the rule is *ASCII-only **and** escape-free*, not ASCII-only alone. That second half is not redundant: an escape is **pure ASCII on disk**, so a file full of them satisfies "no non-ASCII character" while still being the exact wreckage a load-edit-dump leaves behind. Escapes below `0x20` are allowed, because a literal control byte is invalid inside a JSON string, so every control character *must* be written escaped in some form. (JSON gives five of them a shorter two-character escape — `\b \t \n \f \r` — and those are what `json.dump` actually emits; the guard's regex only matches the `\uXXXX` form, so it is unaffected either way.)
 
 - Self-check, and the fixer for em-dashes specifically:
   ```bash
@@ -74,13 +74,13 @@ Conventions, and why each one exists:
 
 Several plugins carry a copy of the same structural linter for their skills (`skills/test_skill_structure.py`). The copies are kept **logic-identical** — verified: they differ only in the plugin name printed in a banner, plus comment wording. CI runs each one, so a logic fix must land in every copy; fix one and not the others and a gate keeps passing on stale logic in a plugin nobody thought they had touched.
 
-**This duplication is technical debt, not a design.** These linters are delivered with the plugin — everything under a plugin directory reaches the install cache — but they never *run* for a consumer, so nothing about plugin packaging justifies separate copies — they were copied rather than shared, and the "keep them in sync by hand" rule is the cost of that. The right shape is one linter parameterised per plugin (a config naming the skills directory and which conventions apply). **Re-architect this rather than growing it: adding a fourth copy makes the problem worse, and hand-sync is exactly the invariant nothing enforces.**
+**This duplication is technical debt, not a design.** These linters are delivered with the plugin — everything under a plugin directory reaches the install cache — but they never *run* for a consumer, so nothing about plugin packaging justifies separate copies — they were copied rather than shared, and the "keep them in sync by hand" rule is the cost of that. The right shape is one linter parameterised per plugin (a config naming the skills directory and which conventions apply). **Re-architect this rather than growing it: adding a fourth copy makes the problem worse, and hand-sync is exactly the invariant nothing enforces.** Tracked in issue #196.
 
 Until that lands, treat the sync rule as binding and check every copy when you change one.
 
 ## Release / publish
 
-Every PR to `main`, and every push to `main`, runs the guards in `.github/workflows/`.
+Every PR to `main` runs the guards in `.github/workflows/`. **A push to `main` runs only some of them** — several, including the REQUIRED version-bump guard, declare `pull_request:` and no `push:`, so they never fire on a direct push. Derive which from the workflow files rather than from any sentence here; that asymmetry is exactly the kind of detail a summary gets wrong.
 
 **They are not listed here, deliberately.** The directory is the list, and each workflow opens with a header comment saying what it catches and why it exists — so the tree already answers both "which gates run?" and "what is this one for?". A second copy in this file could only drift out of step with it, and did: it claimed "three" while six were running. Where a gate carries a convention you must follow *before* pushing, that convention lives in its own section above, next to the rule it enforces, with the local self-check command.
 

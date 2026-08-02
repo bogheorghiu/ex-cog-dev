@@ -3,15 +3,13 @@
 
 TEMPORARY SHAPE - re-architect this rather than growing it. The file is
 triplicated across plugins and the copies are kept in step BY HAND, which
-nothing enforces. Nothing about plugin packaging requires the duplication:
-these linters are delivered with the plugin but never RUN for a consumer, so
-nothing about packaging requires separate copies - they were copied rather than
-shared, and the hand-sync rule is the price of that. (They do ship: everything
-under a plugin directory reaches the install cache. It is execution, not
-delivery, that is development-only.)
-The right shape is ONE linter parameterised per plugin - a config naming the
-skills directory and which conventions apply. Do not add a fourth copy;
-replace the mechanism.
+nothing enforces. Nothing about packaging justifies that: these linters ARE
+delivered with the plugin - everything under a plugin directory reaches the
+install cache - but they never RUN for a consumer, so it is execution, not
+delivery, that is development-only. They were copied rather than shared, and
+hand-sync is the price of that. The right shape is ONE linter parameterised per
+plugin - a config naming the skills directory and which conventions apply. Do
+not add a fourth copy; replace the mechanism. Tracked in issue #196.
 
 Lifted from research-toolkit/skills/test_skill_structure.py (issue #40) and
 calibrated to vasana-system's conventions (issue #41). Markdown-only skills have
