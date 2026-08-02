@@ -275,6 +275,11 @@ def main() -> int:
     # no longer looks like a round that got there and found nothing to argue down. That
     # matters because this pull request exists so a PERSON can tell a well-calibrated
     # filter from a harsh one, and nothing downstream branches on the file.
+    #
+    # No digest for it in the manifest, deliberately. Writing the file is what buys the
+    # present-vs-absent distinction; hashing it would buy nothing on top, since the two
+    # states a digest could separate are byte-identical. An entry no reader consults is
+    # structure the request does not need.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
     refuted_seed = json.dumps([], indent=2)
@@ -284,7 +289,6 @@ def main() -> int:
         "pr": int(pr_number),
         "head_sha": pr.get("headRefOid"),
         "findings_seed_sha256": hashlib.sha256(findings_seed.encode("utf-8")).hexdigest(),
-        "refuted_seed_sha256": hashlib.sha256(refuted_seed.encode("utf-8")).hexdigest(),
         "changed_files": changed,
         "bindings": bindings,
         "artifact_rules": [r["name"] for r in artifact_rules],

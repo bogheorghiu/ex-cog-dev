@@ -367,6 +367,37 @@ def test_scrub_catches_escaped_and_undecodable_credentials():
         prose_review_post.SECRET_LITERALS = ()
 
 
+def test_scrub_fails_closed_on_composed_bypass():
+    print("\n12. scrub() fails closed when the two bypasses are composed")
+    # One invalid byte routes a file down the bytes branch, where only the LITERAL screen
+    # runs -- no escape collapsing, no shape regex. An escaped shaped token therefore
+    # passes it untouched. Found by the reviewer as a refuted candidate and confirmed:
+    # composing two separately-closed bypasses reopened the screen.
+    #
+    # There is no safe in-place redaction (offsets in a lenient decode do not map back to
+    # the original bytes), so this must fail closed and withhold the artifact.
+    shaped = "ghp_" + "D" * 30
+    escaped = shaped.replace("ghp_", "\\u0067\\u0068\\u0070_")
+
+    work = Path(tempfile.mkdtemp(prefix="scrub-composed-"))
+    try:
+        (work / "odd.json").write_bytes(b"\xff " + escaped.encode())
+        prose_review_post.SECRET_LITERALS = ()
+        raised = False
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                scrub(work)
+        except RuntimeError:
+            raised = True
+        check("an undecodable file still carrying a credential refuses to publish", raised)
+        check("the refusal names no matched text",
+              shaped not in buf.getvalue() and escaped not in buf.getvalue())
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        prose_review_post.SECRET_LITERALS = ()
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -380,6 +411,7 @@ def main():
     test_artifact_scrub()
     test_scrub_fails_closed_on_unreadable_file()
     test_scrub_catches_escaped_and_undecodable_credentials()
+    test_scrub_fails_closed_on_composed_bypass()
 
     print()
     if failures:

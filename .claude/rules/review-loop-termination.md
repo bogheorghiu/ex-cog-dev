@@ -33,7 +33,18 @@ So the tick tells you the job started. It does not tell you the reviewer ran, an
 never tells you what it said.
 
 So "all checks pass" is not a reading of the round. Count the posted comments — from
-`gh api repos/OWNER/REPO/pulls/N/comments`, or from the PR page — every time.
+the PR page, or from the API **with `--paginate`** — every time:
+
+```bash
+gh api --paginate repos/OWNER/REPO/pulls/N/comments \
+  --jq '.[] | select(.user.login=="github-actions[bot]") | "\(.created_at)  \(.path)"'
+```
+
+`--paginate` is not optional here. Without it `gh api` returns one page, and a long-lived
+pull request outgrows a page quickly — this rule's own branch passed 45 review comments —
+so the fetch silently drops the newest round and hands you exactly the false zero the next
+bullet describes. Listing each comment with its timestamp beats asking for a count: a
+number cannot show you that it stopped early.
 
 Two ways this goes wrong, both observed on PR #195:
 

@@ -325,12 +325,11 @@ jobs:
                   # contain neither `permission` nor `denied`, so it could print zero on a
                   # round the result object counts three for.
                   #
-                  # The trade is deliberate and one-directional: without a wording gate
-                  # this list can OVER-report, since an ordinary errored call -- a Read of
-                  # a path that turned out not to exist -- lands here too. Over-reporting
-                  # is the safe direction for a diagnostic whose job is to say WHICH calls,
-                  # against the authoritative `permission_denials_count` printed above.
-                  # Read the two together: the count is the number, this is the shortlist.
+                  # The trade runs one way: this can now OVER-report, since an ordinary
+                  # errored call -- a Read of a path that turned out not to exist -- lands
+                  # here too. That is the safe direction for a shortlist read against the
+                  # authoritative `permission_denials_count` printed above it. The count is
+                  # the number; this says which.
                   # An errored tool_result IS the signal; no wording gate on top of it.
                   # Requiring "permission" or "denied" in the text assumed one CLI
                   # phrasing, and the CLI has others -- "The user doesn't want to proceed

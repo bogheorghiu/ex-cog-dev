@@ -327,6 +327,20 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
 REDACTED = "[REDACTED-CREDENTIAL]"
 
 
+def screened(value: str) -> str:
+    """Redact credential material from a string about to reach a public surface.
+
+    Used by every path that prints model-written bytes, so the artifact screen, the
+    dropped-finding warnings and the diagnostic step in the workflow all apply exactly
+    the same two patterns. A second copy would drift from the first, which is the defect
+    this branch spent a dozen rounds on.
+    """
+    out = value
+    for secret in SECRET_LITERALS:
+        out = out.replace(secret, REDACTED)
+    return SECRET_SHAPES.sub(REDACTED, out)
+
+
 def _string_carries_secret(value: str) -> bool:
     """True if this string holds a live credential or something shaped like one."""
     return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
@@ -360,7 +374,7 @@ def scrub(work: Path) -> int:
     by nothing. Counting two here rather than three would be the same under-count the
     paragraph above warns about, one file down instead of one channel.
 
-    Screening those two by name would be the wrong shape. This branch's own history is a
+    Screening those three by name would be the wrong shape. This branch's own history is a
     claim about which files exist going stale as files were added, so the guard is a choke
     point over the directory instead: every file that will be uploaded, whatever wrote it
     and whenever it appeared. A new output is covered on the day it is invented rather
@@ -377,7 +391,11 @@ def scrub(work: Path) -> int:
     instead of publishing it unscreened. A screen that can be bypassed by crashing is not
     a screen, and losing one round's archive is the cheaper of the two ways to be wrong.
     """
-    hits = 0
+    # Counts FILES CHANGED, not redaction operations. A file can be touched twice -- once
+    # to collapse escapes, once to redact what that revealed -- and counting each would
+    # over-report every time, since the collapse only fires when the redaction is certain
+    # to follow. The number is for a human reading the log, so it has to mean what it says.
+    redacted_files = 0
     for path in sorted(p for p in work.rglob("*") if p.is_file()):
         try:
             text = path.read_text(encoding="utf-8")
@@ -400,9 +418,27 @@ def scrub(work: Path) -> int:
                 scrubbed = scrubbed.replace(secret.encode("utf-8"), REDACTED.encode("utf-8"))
             if scrubbed != data:
                 path.write_bytes(scrubbed)
-                hits += 1
+                redacted_files += 1
                 print(f"::error::redacted credential bytes from "
                       f"{path.relative_to(work)} (undecodable file) before upload")
+
+            # The byte pass catches a LITERAL and nothing else -- it cannot collapse an
+            # escape and cannot run the shape regex. So the two bypasses this screen has
+            # already closed COMPOSE: one invalid byte routes a file down this branch, and
+            # an escaped shaped token then passes it untouched. Verified.
+            #
+            # There is no safe in-place redaction here, because the offsets in a lenient
+            # decode do not map back to the original bytes. So this fails closed, which is
+            # the posture the docstring already sets: an undecodable file is not something
+            # this pipeline produces, and one that also carries a credential is deliberate.
+            # The message names the file and never what matched.
+            view = ESCAPE_SEQUENCE.sub(
+                _decode_escape, scrubbed.decode("utf-8", errors="replace"))
+            if _string_carries_secret(view):
+                raise RuntimeError(
+                    f"{path.relative_to(work)} is not valid UTF-8 and still carries "
+                    f"credential material after the byte pass; refusing to publish"
+                )
             continue
 
         # An escaped credential hides from both screens without hiding from a reader:
@@ -424,7 +460,6 @@ def scrub(work: Path) -> int:
         unescaped = ESCAPE_SEQUENCE.sub(_decode_escape, text)
         if unescaped != text and _string_carries_secret(unescaped):
             text = unescaped
-            hits += 1
             print(f"::error::collapsed escaped credential in "
                   f"{path.relative_to(work)} before redacting it")
 
@@ -434,12 +469,12 @@ def scrub(work: Path) -> int:
         redacted = SECRET_SHAPES.sub(REDACTED, redacted)
         if redacted != text:
             path.write_text(redacted, encoding="utf-8")
-            hits += 1
+            redacted_files += 1
             # The path, never the match: echoing what matched would republish the secret
             # in the run log, the same mistake one channel further along.
             print(f"::error::redacted credential material from "
                   f"{path.relative_to(work)} before upload")
-    print(f"scrub: {hits} file(s) redacted")
+    print(f"scrub: {redacted_files} file(s) redacted")
     return 0
 
 
@@ -496,7 +531,14 @@ def main() -> int:
     # Rejections are surfaced, never swallowed: a reviewer that keeps citing rules that
     # do not bind the file it is looking at is itself the finding.
     for finding, reason in rejected:
-        print(f"::warning::dropped finding on {finding.get('file', '?')}: {reason}")
+        # Screened, because this is the third emitter of model-written bytes into the
+        # public log and the only one validate() does not already cover -- its screens run
+        # over `summary` and `detail`, while this line interpolates `file`, and the reason
+        # strings interpolate `rule`, `line` and `severity`. scrub() cannot reach any of
+        # it: it rewrites files on disk, and this is already printed by then. Same reason
+        # the closing text needed the screen imported into the step that prints it.
+        print(screened(f"::warning::dropped finding on "
+                       f"{finding.get('file', '?')}: {reason}"))
     (work / "rejected.json").write_text(
         json.dumps([{"finding": f, "reason": r} for f, r in rejected], indent=2),
         encoding="utf-8",
