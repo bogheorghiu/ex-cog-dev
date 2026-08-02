@@ -380,16 +380,20 @@ def scrub(work: Path) -> int:
     and whenever it appeared. A new output is covered on the day it is invented rather
     than on the day someone remembers to add it here.
 
-    Redacts rather than failing on a match, because redacting is the only thing that
-    changes what gets published. A match is not an error condition here: it is the screen
-    doing its job, on material that is going to be archived either way. So it is loud --
-    an error annotation naming the file -- but not fatal, and the round is kept with the
-    credential removed rather than discarded whole.
+    A match is REDACTED, not fatal, wherever redacting is possible -- which is every
+    decodable file. Redacting is the only thing that changes what gets published, and a
+    match is the screen working rather than an error, so it is loud (an error annotation
+    naming the file) and the round is still archived with the credential removed.
 
-    A crash is the opposite case and is handled the opposite way: the upload step runs
-    only when THIS step succeeded, so an unexpected failure here withholds the artifact
-    instead of publishing it unscreened. A screen that can be bypassed by crashing is not
-    a screen, and losing one round's archive is the cheaper of the two ways to be wrong.
+    ONE case is deliberately fatal, and it is fatal because redaction is unavailable
+    rather than because a match is: a file that is not valid UTF-8 and still carries
+    credential material after the byte pass. Positions in a lenient decode do not map back
+    to the original bytes, so there is nothing safe to write. It raises, and the upload --
+    gated on this step succeeding -- withholds the round.
+
+    An unexpected crash lands the same way for a different reason: a screen that can be
+    bypassed by crashing is not a screen. Either way, losing one round's archive is the
+    cheaper of the two ways to be wrong.
     """
     # Counts FILES CHANGED, not redaction operations. A file can be touched twice -- once
     # to collapse escapes, once to redact what that revealed -- and counting each would
@@ -463,10 +467,7 @@ def scrub(work: Path) -> int:
             print(f"::error::collapsed escaped credential in "
                   f"{path.relative_to(work)} before redacting it")
 
-        redacted = text
-        for secret in SECRET_LITERALS:
-            redacted = redacted.replace(secret, REDACTED)
-        redacted = SECRET_SHAPES.sub(REDACTED, redacted)
+        redacted = screened(text)
         if redacted != text:
             path.write_text(redacted, encoding="utf-8")
             redacted_files += 1

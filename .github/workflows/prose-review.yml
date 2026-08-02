@@ -290,13 +290,7 @@ jobs:
           # later, so it cannot reach bytes already emitted here. A second copy of the
           # patterns would drift from the first, which is this branch's whole history.
           sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], ".github", "scripts"))
-          from prose_review_post import SECRET_LITERALS, SECRET_SHAPES, REDACTED
-
-          def screened(value: str) -> str:
-              out = value
-              for secret in SECRET_LITERALS:
-                  out = out.replace(secret, REDACTED)
-              return SECRET_SHAPES.sub(REDACTED, out)
+          from prose_review_post import screened
           try:
               entries = json.load(open(sys.argv[1], encoding="utf-8"))
           except Exception as exc:
@@ -325,17 +319,16 @@ jobs:
                   # contain neither `permission` nor `denied`, so it could print zero on a
                   # round the result object counts three for.
                   #
+                  # Requiring the wording was the opposite error: the CLI has phrasings
+                  # containing neither word -- "The user doesn't want to proceed with this
+                  # tool use." -- so it could print zero on a round the result object
+                  # counts three for.
+                  #
                   # The trade runs one way: this can now OVER-report, since an ordinary
                   # errored call -- a Read of a path that turned out not to exist -- lands
                   # here too. That is the safe direction for a shortlist read against the
                   # authoritative `permission_denials_count` printed above it. The count is
                   # the number; this says which.
-                  # An errored tool_result IS the signal; no wording gate on top of it.
-                  # Requiring "permission" or "denied" in the text assumed one CLI
-                  # phrasing, and the CLI has others -- "The user doesn't want to proceed
-                  # with this tool use." contains neither. That filter could only ever
-                  # UNDER-report, printing "refused tool calls (0)" on a round where the
-                  # result object counts three, and the list exists precisely to say which.
                   if block.get("type") == "tool_result" and block.get("is_error"):
                       denials.append(json.dumps(block)[:400])
           print(f"tool calls ({len(calls)}):")

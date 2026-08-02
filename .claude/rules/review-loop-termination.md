@@ -60,6 +60,12 @@ Making the job fail when it posts would fix the first half and break more than i
 the reviewer would gate merges on prose judgement, which is the authority this design
 deliberately withholds from it. So the check stays green and the reader carries the duty.
 
+**Siblings.** `verify-delegated-work-against-artifacts` is the general form of the
+instruction above — judge what ran by its artifacts, not by any agent's account, this rule
+being the review-round instance. `verify-claims` carries the same don't-outrun-your-evidence
+discipline for your own conversational claims, which is what "a zero you computed is a
+claim" applies here.
+
 ## Zero posted, not zero worth fixing
 
 The signal is **comments posted**, not your judgement of their importance. Severity is

@@ -260,9 +260,10 @@ def main() -> int:
     # --- Both files the reviewer is required to produce -------------------------------
     # Seeded here, rather than left for the reviewer to create, so a reader can tell "the
     # reviewer wrote nothing" apart from "the reviewer found nothing" -- which a missing
-    # file cannot express, since both arrive as an absence. Each seed's digest goes in the
-    # manifest, so an untouched file is recognisable as untouched rather than reported as
-    # a vanished one.
+    # file cannot express, since both arrive as an absence. findings.json's seed digest
+    # goes in the manifest, so an untouched file is recognisable as untouched rather than
+    # reported as a vanished one; refuted.json gets no digest, for the reason two
+    # paragraphs down.
     #
     # refuted.json is seeded for a WEAKER reason, stated exactly because the strong one
     # does not hold. Its seed is `[]`, and the protocol tells the reviewer to write `[]`
