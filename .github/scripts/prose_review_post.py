@@ -327,6 +327,42 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
 REDACTED = "[REDACTED-CREDENTIAL]"
 
 
+def _collapse_with_map(value: str) -> tuple[str, list[tuple[int, int]]]:
+    """Collapse escapes, and record which span of the ORIGINAL each collapsed char came from.
+
+    The map is what lets a redaction touch only the matched span. Rewriting the whole
+    string as its collapsed form would decode every unrelated escape too -- and `\u0022`
+    decoding to a bare `"` turns a valid JSON file into an invalid one, which is the
+    archive this branch exists to preserve.
+    """
+    out: list[str] = []
+    origin: list[tuple[int, int]] = []
+    pos = 0
+    for match in ESCAPE_SEQUENCE.finditer(value):
+        literal = value[pos:match.start()]
+        out.append(literal)
+        origin.extend((pos + i, pos + i + 1) for i in range(len(literal)))
+        decoded = _decode_escape(match)
+        out.append(decoded)
+        origin.extend((match.start(), match.end()) for _ in decoded)
+        pos = match.end()
+    tail = value[pos:]
+    out.append(tail)
+    origin.extend((pos + i, pos + i + 1) for i in range(len(tail)))
+    return "".join(out), origin
+
+
+def _secret_spans(text: str) -> list[tuple[int, int]]:
+    """Every span of `text` holding a live credential or something shaped like one."""
+    spans = [(m.start(), m.end()) for m in SECRET_SHAPES.finditer(text)]
+    for secret in SECRET_LITERALS:
+        at = text.find(secret)
+        while at != -1:
+            spans.append((at, at + len(secret)))
+            at = text.find(secret, at + 1)
+    return sorted(spans)
+
+
 def screened(value: str) -> str:
     """Redact credential material from a string about to reach a public surface.
 
@@ -335,22 +371,32 @@ def screened(value: str) -> str:
     three apply exactly the same rules. A second copy would drift from the first, which is
     the defect this branch spent a dozen rounds on.
 
-    Collapses `\\uXXXX` escapes FIRST, and that ordering is the point. An escaped token
-    matches neither the literal nor the shape as raw text, so screening without collapsing
-    is the bypass already closed once for the artifact -- and the closing text printed to
-    the run log reached this function without it, putting the same hole one channel over.
-    Doing it here rather than in each caller is what stops that recurring a third time.
+    Matching happens on the escape-COLLAPSED text and redaction happens on the ORIGINAL,
+    through a position map. Both halves are load-bearing. Matching raw would miss an
+    escaped token, which matches neither the literal nor the shape as text -- the bypass
+    already closed once for the artifact and once for the log. Returning the collapsed
+    text would decode every unrelated escape as a side effect, and a `\u0022` becoming a
+    bare quote makes a JSON archive unparseable.
+
+    A string with nothing to redact comes back unchanged, byte for byte.
     """
-    collapsed = ESCAPE_SEQUENCE.sub(_decode_escape, value)
-    out = collapsed
-    for secret in SECRET_LITERALS:
-        out = out.replace(secret, REDACTED)
-    out = SECRET_SHAPES.sub(REDACTED, out)
-    # Nothing matched, so hand back what came in -- escapes intact. Returning `collapsed`
-    # would rewrite every file that merely CONTAINS an escape, which is most JSON this
-    # pipeline writes, for no gain. The collapse exists to see through the escaping, not
-    # to normalise it.
-    return value if out == collapsed else out
+    collapsed, origin = _collapse_with_map(value)
+    spans = _secret_spans(collapsed)
+    if not spans:
+        return value
+
+    # Merge overlaps, then splice from the end so earlier offsets stay valid.
+    merged: list[tuple[int, int]] = []
+    for lo, hi in spans:
+        if merged and lo <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], hi))
+        else:
+            merged.append((lo, hi))
+
+    out = value
+    for lo, hi in reversed(merged):
+        out = out[: origin[lo][0]] + REDACTED + out[origin[hi - 1][1] :]
+    return out
 
 
 def _string_carries_secret(value: str) -> bool:
@@ -440,8 +486,11 @@ def scrub(work: Path) -> int:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Undecodable, so the shape regex cannot run -- but the LITERAL check can, and
-            # it is the check that matters: it compares the exact bytes this job holds.
+            # Undecodable, so nothing can be REDACTED in place -- offsets in a lenient
+            # decode do not map back to the original bytes. The literal check still works
+            # on the raw bytes, and the shape check still works on a lenient decode; what
+            # is missing is a safe way to write the result, which is why this branch ends
+            # fatal rather than redacting.
             # An earlier version skipped the file outright, reasoning that "neither screen
             # applies to what it cannot decode". That was false for the literal half, and
             # it left one invalid byte enough to smuggle a credential past a screen that
@@ -472,9 +521,19 @@ def scrub(work: Path) -> int:
             # the posture the docstring already sets: an undecodable file is not something
             # this pipeline produces, and one that also carries a credential is deliberate.
             # The message names the file and never what matched.
-            view = ESCAPE_SEQUENCE.sub(
-                _decode_escape, scrubbed.decode("utf-8", errors="replace"))
-            if _string_carries_secret(view):
+            # BOTH decodings, because each hides what the other reveals. With
+            # errors="replace" every bad byte becomes U+FFFD, which is in none of the
+            # shape pattern's character classes -- so one `\xff` dropped into the middle
+            # of a token splits it into two runs and neither matches. With
+            # errors="ignore" the bad byte vanishes and the token reads whole again.
+            # Checking only the first was the gap; checking only the second would lose a
+            # token whose bytes really are separated by content.
+            views = [
+                scrubbed.decode("utf-8", errors="replace"),
+                scrubbed.decode("utf-8", errors="ignore"),
+            ]
+            if any(_string_carries_secret(ESCAPE_SEQUENCE.sub(_decode_escape, v))
+                   for v in views):
                 raise RuntimeError(
                     f"{path.relative_to(work)} is not valid UTF-8 and still carries "
                     f"credential material after the byte pass; refusing to publish"

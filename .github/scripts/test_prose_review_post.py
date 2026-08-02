@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prose_review_post  # noqa: E402
 from prose_review_post import (  # noqa: E402
     scrub,
+    screened as scrub_screen,
     REDACTED,
     hunk_lines,
     quoted_line_count,
@@ -405,6 +406,33 @@ def test_scrub_fails_closed_on_composed_bypass():
         prose_review_post.SECRET_LITERALS = ()
 
 
+def test_screened_preserves_everything_it_did_not_match():
+    print("\n13. screened() redacts the matched span and leaves the rest alone")
+    # Matching happens on the escape-collapsed text; redaction has to happen on the
+    # ORIGINAL. Returning the collapsed form decoded every unrelated escape as a side
+    # effect, and `\\u0022` becoming a bare quote turned a valid JSON archive invalid --
+    # the archive this whole branch exists to preserve.
+    tok = "ghp_" + "G" * 30
+    prose_review_post.SECRET_LITERALS = ()
+    try:
+        src = '{"a": "he said \\u0022hi\\u0022", "t": "%s"}' % tok
+        out = scrub_screen(src)
+        check("the credential is gone", tok not in out)
+        check("unrelated escapes are NOT decoded", "\\u0022" in out)
+        check("the archive still parses as JSON", json.loads(out) is not None)
+
+        esc = '{"t": "\\u0067\\u0068\\u0070_%s"}' % ("G" * 30)
+        out2 = scrub_screen(esc)
+        check("an escaped credential is still caught", REDACTED in out2)
+        check("and its file still parses", json.loads(out2) is not None)
+
+        clean = json.dumps({"note": "ok", "q": 'a "quoted" word'})
+        check("a file with nothing to redact is byte-identical",
+              scrub_screen(clean) == clean)
+    finally:
+        prose_review_post.SECRET_LITERALS = ()
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -419,6 +447,7 @@ def main():
     test_scrub_fails_closed_on_unreadable_file()
     test_scrub_catches_escaped_and_undecodable_credentials()
     test_scrub_fails_closed_on_composed_bypass()
+    test_screened_preserves_everything_it_did_not_match()
 
     print()
     if failures:
