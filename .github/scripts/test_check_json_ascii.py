@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Unit tests for the JSON ASCII guard's detection logic.
+"""Unit tests for the JSON ASCII guard's detection AND fixing logic.
 
-Pure-function tests against `scan()` - no git, no filesystem. Run directly:
+Pure-function tests against `scan()` (detection) and `replace_escaped_em_dash()`
+(the byte substitution `--fix` performs) - no git, no filesystem. Both are named
+because a suite sitting beside its subject is what answers "is this tested?", so
+a header that mentions only detection tells the next reader the fixer is
+uncovered when three of these cases exercise it. Run directly:
     python3 .github/scripts/test_check_json_ascii.py
 
 The case that matters most is `test_escape_after_escaped_backslash`: the guard's

@@ -74,7 +74,7 @@ Conventions, and why each one exists:
 
 Several plugins carry a copy of the same structural linter for their skills (`skills/test_skill_structure.py`). The copies are kept **logic-identical** — verified: they differ only in the plugin name printed in a banner, plus comment wording. CI runs each one, so a logic fix must land in every copy; fix one and not the others and a gate keeps passing on stale logic in a plugin nobody thought they had touched.
 
-**This duplication is technical debt, not a design.** These linters run at development time and never ship to a consumer, so nothing about plugin packaging justifies separate copies — they were copied rather than shared, and the "keep them in sync by hand" rule is the cost of that. The right shape is one linter parameterised per plugin (a config naming the skills directory and which conventions apply). **Re-architect this rather than growing it: adding a fourth copy makes the problem worse, and hand-sync is exactly the invariant nothing enforces.**
+**This duplication is technical debt, not a design.** These linters are delivered with the plugin — everything under a plugin directory reaches the install cache — but they never *run* for a consumer, so nothing about plugin packaging justifies separate copies — they were copied rather than shared, and the "keep them in sync by hand" rule is the cost of that. The right shape is one linter parameterised per plugin (a config naming the skills directory and which conventions apply). **Re-architect this rather than growing it: adding a fourth copy makes the problem worse, and hand-sync is exactly the invariant nothing enforces.**
 
 Until that lands, treat the sync rule as binding and check every copy when you change one.
 

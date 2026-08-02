@@ -4,8 +4,11 @@
 TEMPORARY SHAPE - re-architect this rather than growing it. The file is
 triplicated across plugins and the copies are kept in step BY HAND, which
 nothing enforces. Nothing about plugin packaging requires the duplication:
-these linters run at development time and never ship to a consumer, so they
-were copied rather than shared, and the hand-sync rule is the price of that.
+these linters are delivered with the plugin but never RUN for a consumer, so
+nothing about packaging requires separate copies - they were copied rather than
+shared, and the hand-sync rule is the price of that. (They do ship: everything
+under a plugin directory reaches the install cache. It is execution, not
+delivery, that is development-only.)
 The right shape is ONE linter parameterised per plugin - a config naming the
 skills directory and which conventions apply. Do not add a fourth copy;
 replace the mechanism.
@@ -23,13 +26,15 @@ instead of shipping broken:
   - description present and within Anthropic's 1024-char limit
   - a self-replication section, per CLAUDE.md's Self-Replication Principle
 
-One delta from the research-toolkit original: counting the self-replication
-heading. The canonical section is `## Vasana` (exactly one per skill, per the
-CLAUDE.md Self-Replication Principle and the `vasana` entry skill). Two
-vasana-system-specific wrinkles are handled: the teaching skill `record-pattern`
-embeds the section inside ```markdown``` templates, so fenced code is stripped
-before counting; and the older `## Vasana Propagation` variant is deprecated, so
-it's rejected outright to keep it from creeping back in.
+On counting the self-replication heading: the canonical section is `## Vasana`
+(exactly one per skill, per the CLAUDE.md Self-Replication Principle and the
+`vasana` entry skill). Two wrinkles are handled: the teaching skill
+`record-pattern` embeds the section inside ```markdown``` templates, so fenced
+code is stripped before counting; and the older `## Vasana Propagation` variant
+is deprecated, so it's rejected outright to keep it from creeping back in.
+(This paragraph used to open "One delta from the research-toolkit original" -
+untrue since that copy gained the same two regexes and both checks, and it sat
+fourteen lines under a paragraph asserting the copies are logic-identical.)
 
 YAML validity prefers a real parse via PyYAML when importable, and ALWAYS also
 runs a stdlib check for the one footgun the house seed-question style invites: a

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Unit tests for the version-bump guard decision logic (Appendix C).
 
-Pure-function tests — no git, no filesystem. Run directly:
+Mostly pure-function tests — no git. One exception, deliberately: the plugin-map
+discovery test builds a temp tree and globs the real checkout, because the thing
+being asserted is precisely that the map comes from the filesystem rather than a
+hand-kept list. Importing the subject touches the filesystem too, since
+`PLUGIN_DIRS` is computed at module scope. Run directly:
     python3 .github/scripts/test_check_version_bump.py
 """
 

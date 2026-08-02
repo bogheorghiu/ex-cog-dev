@@ -4,9 +4,11 @@
 TEMPORARY SHAPE - re-architect this rather than growing it. The file is
 triplicated across plugins and the copies are kept in step BY HAND, which
 nothing enforces. Nothing about plugin packaging requires the duplication:
-these linters run at development time and never ship to a consumer, so they
-were copied rather than shared, and the hand-sync rule below is the price of
-that. The right shape is ONE linter parameterised per plugin - a config naming
+these linters are delivered with the plugin but never RUN for a consumer, so
+nothing about packaging requires separate copies - they were copied rather than
+shared, and the hand-sync rule is the price of that. (They do ship: everything
+under a plugin directory reaches the install cache. It is execution, not
+delivery, that is development-only.) The right shape is ONE linter parameterised per plugin - a config naming
 the skills directory and which conventions apply. Do not add a fourth copy;
 replace the mechanism.
 
