@@ -57,6 +57,17 @@ Nothing catches it by accident: the tool exits 0, the file still parses, tests s
 
 This applies to JSON only. Markdown keeps its em-dashes — nothing parses and re-serialises Markdown, so the failure can't occur there.
 
+## Unit tests (REQUIRED for new executable code)
+
+Conventions, and why each one exists:
+
+- **Name and place**: a bash script's suite is `<script>.test.sh` **beside it**; Python is `test_<thing>.py` beside the code. Adjacency is what makes a missing suite visible — `ls` answers "is this tested?", so no catalog can drift out of date.
+- **Register it in `.github/workflows/unit-tests.yml`.** That workflow names every suite *explicitly*; nothing is auto-discovered. An unregistered suite silently never runs, which is indistinguishable from a passing one — the same false-negative shape as a security gate that fails open. Adding the file is not enough; adding the line is.
+- **Runnable standalone from the repo root** (`bash <path>` / `python3 <path>`), exiting non-zero on failure. No pytest requirement, no shared harness to break.
+- **Pin the ambient state the code reads.** The bash suites pin `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` and unset the env vars their subject consults, because a variable inherited from the developer's shell changes results on their machine and not in CI — a test that only passes for *you* is worse than no test.
+- **Prove the test discriminates**: run it against the code *before* the fix and confirm it fails there. A test written after the fact can pass for reasons unrelated to what it claims to check. Two of this repo's own suites initially passed vacuously (a `cd` inside a subshell; scratch repos committing the fixture they were meant to scan) and were only caught by running them against the unfixed version.
+- **Some test utilities are deliberately duplicated** - see *Duplicated skill linters* below. Treat that as debt with a hand-sync rule, **not** as a pattern to copy for new suites.
+
 ## Duplicated skill linters — TEMPORARY, re-architect them
 
 Several plugins carry a copy of the same structural linter for their skills (`skills/test_skill_structure.py`). The copies are kept **logic-identical** — verified: they differ only in the plugin name printed in a banner, plus comment wording. CI runs each one, so a logic fix must land in every copy; fix one and not the others and a gate keeps passing on stale logic in a plugin nobody thought they had touched.
