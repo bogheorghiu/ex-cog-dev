@@ -10,9 +10,11 @@ dropping a valid finding or letting one through a limit the reviewer had been to
 enforced. A green run is not evidence here, because every one of these bugs coexisted
 with a green run.
 
-No git and no network. Every test but the last is a pure function over strings; the
-artifact scrub necessarily writes files, so it runs against a temporary directory it
-creates and removes itself. Run directly:
+No git and no network. Tests 1-8 are pure functions over strings. The last two exercise
+the artifact scrub, which necessarily writes files, so each builds a temporary directory
+and removes it again. The very last one also chmods a file to 0o000 to make it unreadable,
+and self-skips when that fails to make it unreadable -- as it does under root. Run
+directly:
     python3 .github/scripts/test_prose_review_post.py
 """
 

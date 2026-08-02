@@ -23,10 +23,14 @@ here and was fiction there.
 
 ## A green check is not a quiet round — it never was
 
-**The prose-review job exits 0 whether it posted ten comments or none.** Posting is the
-job doing its work, not a failure, so a round that found ten problems reports exactly what
-a clean round reports: a green tick. `gh pr checks` will tell you the reviewer ran. It will
-never tell you what it said.
+**The prose-review job exits 0 whether it posted ten comments, none, or never ran at
+all.** Posting is the job doing its work, not a failure, so a round that found ten
+problems reports exactly what a clean round reports: a green tick. And a round that was
+gated off — a draft, a fork, Dependabot, the opt-out label — exits 0 deliberately too, so
+that an opted-out pull request does not leave a required check pending forever.
+
+So the tick tells you the job started. It does not tell you the reviewer ran, and it
+never tells you what it said.
 
 So "all checks pass" is not a reading of the round. Count the posted comments — from
 `gh api repos/OWNER/REPO/pulls/N/comments`, or from the PR page — every time.

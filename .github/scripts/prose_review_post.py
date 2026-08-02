@@ -327,9 +327,15 @@ REDACTED = "[REDACTED-CREDENTIAL]"
 def scrub(work: Path) -> int:
     """Redact credential material from every file that is about to be published.
 
-    The findings screen guards the review comment, which used to be the only thing
-    leaving this job. Uploading the work directory as an artifact adds a second public
-    channel, and two of the files in it never pass that screen: `rejected.json` records
+    The findings screen guards the review comment. That is one of THREE public surfaces
+    this job now has -- the header above lists them -- and this function covers exactly
+    one more: the work directory uploaded as an artifact. The third, the reviewer's
+    closing text printed to a world-readable log, is screened by nothing and cannot be
+    reached from here, because those bytes are emitted before this runs. Counting the
+    artifact as "the second channel" and stopping there is how an audit of what must be
+    covered misses the one that gets no cover at all.
+
+    Two files in the artifact never pass the findings screen: `rejected.json` records
     each rejected finding IN FULL -- including one rejected precisely for containing a
     live credential -- and `refuted.json` is model-written under an Edit rule and read by
     nothing.
@@ -385,10 +391,10 @@ def main() -> int:
     work = Path(os.environ["PROSE_REVIEW_DIR"])
     if os.environ.get("PROSE_REVIEW_SCRUB") == "1":
         # Returns before anything below reads the PR because the scrub needs none of it --
-        # not because those files might be missing. They are always present here: this path
-        # is entered only from the screening step, which is gated on `prepare` succeeding,
-        # and `prepare` has no exit that writes neither the manifest nor the diff. Coupling
-        # a redaction pass to files it never opens would be one more way to break it.
+        # not because those files might be missing. This path is entered only from the
+        # screening step, which is gated on `prepare` succeeding, and that gate is the
+        # whole guarantee. Coupling a redaction pass to files it never opens would be one
+        # more way to break it.
         return scrub(work)
 
     repo = os.environ["GITHUB_REPOSITORY"]
