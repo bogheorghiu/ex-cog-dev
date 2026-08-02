@@ -44,6 +44,7 @@ Markdown, and this failure has never occurred there.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -113,7 +114,43 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
     # yet staged). Skip those rather than dying: this is the documented local
     # self-check, and a traceback instead of a report is a worse answer than "nothing
     # to check here". CI is unaffected - a fresh checkout has every tracked file.
-    return [p for rel in seen if (p := repo_root / rel).is_file()]
+    #
+    # But SAY which ones were skipped. Silently narrowing the set and then printing
+    # "ASCII-only" is the same defect as reporting success over an EMPTY set - the one
+    # the guard in main() refuses - just at N>0 instead of N=0. A partial scan that
+    # reads as a full pass is how an unchecked file acquires a green tick.
+    present: list[Path] = []
+    for rel in seen:
+        path = repo_root / rel
+        if path.is_file():
+            present.append(path)
+        else:
+            print(f"skipped (tracked, not in working tree): {rel}", file=sys.stderr)
+    return present
+
+
+def write_atomically(path: Path, data: bytes) -> None:
+    """Replace `path`'s contents all-or-nothing.
+
+    `Path.write_bytes` truncates first and then writes, so an interruption between
+    the two - Ctrl-C, a full disk - leaves the file empty or half-written. For a
+    plugin manifest that is worse than the typography this tool exists to tidy, and
+    it would make the guard against programs corrupting manifests into a program
+    that corrupts one.
+
+    Writing a sibling temp file and renaming it over the target avoids that: the
+    rename is atomic, so a reader sees either the old bytes or the new ones and
+    never a partial file. The temp file must be in the SAME directory - `os.replace`
+    is only atomic within one filesystem, and /tmp is often a different one.
+    """
+    tmp = path.with_name(f".{path.name}.tmp")
+    try:
+        tmp.write_bytes(data)
+        os.replace(tmp, path)
+    finally:
+        # If the rename never happened, don't leave the scratch file behind.
+        if tmp.exists():
+            tmp.unlink()
 
 
 def line_of(data: bytes, index: int) -> int:
@@ -216,7 +253,7 @@ def main() -> int:
             # Gate the write on an actual change, not on a substring test. The old
             # gate could fire on a file with nothing to fix and rewrite it anyway.
             if fixed != data:
-                path.write_bytes(fixed)
+                write_atomically(path, fixed)
                 data = fixed
                 fixed_files += 1
                 print(f"fixed (em-dash -> '-'): {path.relative_to(repo_root)}")
