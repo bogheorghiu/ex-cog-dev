@@ -28,11 +28,14 @@ except through text a validation script chose to send — precisely so that a fa
 Stated that precisely because the precision *is* the safety argument. "No power to act"
 is a claim about what an injection could achieve, and it holds for the comment path
 because a script screens every finding against the rule bindings, the diff, and the
-limits. It does not extend to every byte the model emits: the job also publishes its work
-directory as a build artifact and prints the reviewer's closing text to a world-readable
-log, both model-written and screened for credentials only. That is a real, low-bandwidth
-public channel, and a rule governing what may be automated here has to say so rather than
-round it to zero. Whether it should exist at all is issue #197.
+limits. It does not extend to every byte the model emits, and the two exceptions are not
+screened alike. The job publishes its work directory as a build artifact, which a
+credential scrub rewrites just before upload — that and nothing more. It also prints the
+reviewer's closing text to a world-readable log, and that gets **no screen at all**: the
+scrub rewrites files on disk, and those bytes were emitted several steps earlier. Both are
+real public channels, one weakly guarded and one unguarded, and a rule governing what may
+be automated here has to say which is which rather than round either to zero. Whether they
+should exist at all is issue #197.
 
 ## What this means in practice
 

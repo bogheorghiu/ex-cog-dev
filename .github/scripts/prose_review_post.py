@@ -377,8 +377,11 @@ def scrub(work: Path) -> int:
 def main() -> int:
     work = Path(os.environ["PROSE_REVIEW_DIR"])
     if os.environ.get("PROSE_REVIEW_SCRUB") == "1":
-        # Returns before anything below reads the PR: this path also runs after a failed
-        # round, where the manifest and the diff may not exist.
+        # Returns before anything below reads the PR because the scrub needs none of it --
+        # not because those files might be missing. They are always present here: this path
+        # is entered only from the screening step, which is gated on `prepare` succeeding,
+        # and `prepare` has no exit that writes neither the manifest nor the diff. Coupling
+        # a redaction pass to files it never opens would be one more way to break it.
         return scrub(work)
 
     repo = os.environ["GITHUB_REPOSITORY"]

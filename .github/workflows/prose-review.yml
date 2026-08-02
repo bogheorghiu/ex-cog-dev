@@ -24,12 +24,14 @@
 #      NOT the same as "no public output at all", and the difference is new: this job
 #      also publishes the work directory as a build artifact and prints the reviewer's
 #      closing text to a log, both world-readable on a public repo, and both carrying
-#      model-written bytes. Those two are screened for credentials only -- not for rule
-#      binding, line, length or severity, which are what makes the comment path safe. So
-#      the model has a low-bandwidth public channel with weak screening, and no channel
-#      to the pull request without a strong one. Issue #197 carries whether that trade is
-#      the right one; this comment's job is to stop the file asserting the older, simpler
-#      claim that it no longer earns.
+#      model-written bytes, and they are NOT screened alike. The artifact gets a
+#      credential scrub immediately before upload and nothing else -- not rule binding,
+#      line, length or severity, which are what make the comment path safe. The log gets
+#      no screen at all: the scrub rewrites files on disk, and the closing text was
+#      printed several steps earlier. So the model has one weakly-screened public channel
+#      and one unscreened one, and no channel to the pull request without a strong screen.
+#      Issue #197 carries whether that trade is the right one; this comment's job is to
+#      stop the file asserting the older, simpler claim that it no longer earns.
 #
 # The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
 # job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no

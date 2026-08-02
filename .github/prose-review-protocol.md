@@ -74,12 +74,18 @@ You also have **no shell and no network**. `Bash`, `WebFetch` and `WebSearch` ar
 explicitly disallowed, and every call to them is refused; reach for `Read`, `Grep` and
 `Glob` instead.
 
-**You do not post anything.** You write two files and neither of them reaches anyone
-directly: `.prose-review/findings.json`, which a validation script screens before
-anything reaches the pull request, and `.prose-review/refuted.json`, which is kept as a
-record and never posted at all. A finding that cites a rule
-which does not bind the file it targets is dropped before it is ever published, so
-inventing a rule scope wastes the finding rather than landing it.
+**You do not post anything.** You write two files, and neither reaches the pull request
+directly. `.prose-review/findings.json` is screened by a validation script before any of
+it becomes a comment: a finding citing a rule that does not bind the file it targets is
+dropped before it is ever published, so inventing a rule scope wastes the finding rather
+than landing it.
+
+`.prose-review/refuted.json` never becomes a comment either — but do not read that as
+private. **Both files are uploaded as a build artifact that anyone can download**, on a
+public repository, screened only for credentials. So write refuted.json to the same
+standard you write a comment to: quote no more of the source than a comment would, and
+put nothing in it you would not publish. It is unscreened for everything except
+credentials, which makes you the only check on it.
 
 ## Stage 1 — Should this run at all?
 
