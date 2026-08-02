@@ -24,14 +24,14 @@
 #      NOT the same as "no public output at all", and the difference is new: this job
 #      also publishes the work directory as a build artifact and prints the reviewer's
 #      closing text to a log, both world-readable on a public repo, and both carrying
-#      model-written bytes, and they are NOT screened alike. The artifact gets a
-#      credential scrub immediately before upload and nothing else -- not rule binding,
-#      line, length or severity, which are what make the comment path safe. The log gets
-#      no screen at all: the scrub rewrites files on disk, and the closing text was
-#      printed several steps earlier. So the model has one weakly-screened public channel
-#      and one unscreened one, and no channel to the pull request without a strong screen.
-#      Issue #197 carries whether that trade is the right one; this comment's job is to
-#      stop the file asserting the older, simpler claim that it no longer earns.
+#      model-written bytes. Both now get the CREDENTIAL screen and only that -- the
+#      artifact from `scrub()` just before upload, the log from the same patterns imported
+#      into the diagnostic step, since a scrub over files on disk cannot reach bytes
+#      already printed. Neither gets rule binding, line, length or severity, which are what
+#      make the comment path safe. So the model has two weakly-screened public channels and
+#      no channel to the pull request without a strong screen. Issue #197 carries whether
+#      that trade is the right one; this comment's job is to stop the file asserting the
+#      older, simpler claim that it no longer earns.
 #
 # The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
 # job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no
@@ -275,11 +275,28 @@ jobs:
       - name: What the reviewer did
         if: always() && steps.gate.outputs.review == 'true'
         continue-on-error: true
+        env:
+          # Only so the screen below can compare against the real values. Never printed.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           log=$(find "${RUNNER_TEMP}" -name 'claude-execution-output.json' -print -quit 2>/dev/null || true)
           if [ -z "$log" ]; then echo "no execution log found under RUNNER_TEMP"; exit 0; fi
           python3 - "$log" <<'PY'
-          import json, sys
+          import json, sys, os
+          # The one screen, imported rather than copied. This step prints model-written
+          # text into a world-readable log, which is the third public surface and the only
+          # one nothing guarded -- scrub() runs over the work directory several steps
+          # later, so it cannot reach bytes already emitted here. A second copy of the
+          # patterns would drift from the first, which is this branch's whole history.
+          sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], ".github", "scripts"))
+          from prose_review_post import SECRET_LITERALS, SECRET_SHAPES, REDACTED
+
+          def screened(value: str) -> str:
+              out = value
+              for secret in SECRET_LITERALS:
+                  out = out.replace(secret, REDACTED)
+              return SECRET_SHAPES.sub(REDACTED, out)
           try:
               entries = json.load(open(sys.argv[1], encoding="utf-8"))
           except Exception as exc:
@@ -307,23 +324,27 @@ jobs:
                   # figure is `permission_denials_count` in the action's own result object
                   # printed by the step above; this list exists to say WHICH calls, so it
                   # must not disagree with that count.
+                  # An errored tool_result IS the signal; no wording gate on top of it.
+                  # Requiring "permission" or "denied" in the text assumed one CLI
+                  # phrasing, and the CLI has others -- "The user doesn't want to proceed
+                  # with this tool use." contains neither. That filter could only ever
+                  # UNDER-report, printing "refused tool calls (0)" on a round where the
+                  # result object counts three, and the list exists precisely to say which.
                   if block.get("type") == "tool_result" and block.get("is_error"):
-                      detail = json.dumps(block.get("content", ""))[:4000].lower()
-                      if "permission" in detail or "denied" in detail:
-                          denials.append(json.dumps(block)[:400])
+                      denials.append(json.dumps(block)[:400])
           print(f"tool calls ({len(calls)}):")
           for c in calls:
-              print(f"  - {c}")
+              print(f"  - {screened(c)}")
           print(f"\nrefused tool calls ({len(denials)}); compare against "
                 f"permission_denials_count in the result object above:")
           for d in denials[:5]:
-              print(f"  ! {d}")
+              print(f"  ! {screened(d)}")
           # Printed whole. At 1500 characters this cut the reviewer's account of its own
           # round mid-sentence. What that account holds and refuted.json does not is the
           # reviewer's narrative of its own round -- and, decisively, the round where it
           # wrote no file at all, which is precisely when there is nothing else to read.
           print("\nreviewer's closing text:")
-          print(last_text or "  (none)")
+          print(screened(last_text) if last_text else "  (none)")
           PY
 
       - name: Validate the findings
@@ -388,8 +409,9 @@ jobs:
 
       # This job holds two live tokens and has three public surfaces (see the header): the
       # PR comment, this artifact, and the closing text in the log. The findings screen
-      # guards the first; this step guards the second; the third is guarded by nothing and
-      # cannot be reached from here, since it is printed before this runs. `rejected.json`
+      # guards the first; this step guards the second; the third is guarded by the same
+      # patterns imported into the diagnostic step, because it is printed before this runs
+      # and a scrub over files on disk cannot reach it. `rejected.json`
       # stores each rejected finding in full -- including one rejected precisely FOR
       # containing a credential -- and `refuted.json` is model-written and screened by
       # nothing else. The upload below runs only if this step SUCCEEDS, so the screen

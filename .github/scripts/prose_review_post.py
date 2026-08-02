@@ -16,8 +16,9 @@ afterwards. So the only thing reaching the PULL REQUEST is text this script chos
 send. That is narrower than "the only thing reaching a public surface": the workflow
 also publishes the work directory as a build artifact and prints the reviewer's closing
 text to a world-readable log, both carrying model-written bytes that these checks never
-see. `scrub()` below covers the artifact for credentials and for nothing else. Issue
-#197 carries whether that channel should exist at all.
+see. Both get the credential screen and nothing more -- the artifact from `scrub()`
+below, the log from `SECRET_LITERALS`/`SECRET_SHAPES` imported into the step that prints
+it. Issue #197 carries whether those channels should exist at all.
 
 Links are generated here too, so a malformed permalink is not something the reviewer can
 get wrong.
@@ -74,9 +75,9 @@ MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
 BARE_REF = re.compile(r"(?<!issue )(?<!request )(?<!PR )(?<![\w/])#\d+", re.IGNORECASE)
 
 # A finding becomes a public comment, so its text is the one output channel out of this
-# job that these checks control — the artifact and the run log are the other two, screened
-# for credentials and not at all respectively (see the header). The job holds two live
-# tokens on all three. The reviewer is given `Read` without a path
+# job that these checks control — the artifact and the run log are the other two, and both
+# get only the credential screens defined just below (see the header). The job holds two
+# live tokens on all three. The reviewer is given `Read` without a path
 # scope (it has to be able to read the repo it reviews), which means /proc/self/environ
 # is reachable to it, so this is a real channel and not a theoretical one. The reviewer
 # has no legitimate reason to ever quote a credential, so anything matching here is
@@ -326,14 +327,47 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
 REDACTED = "[REDACTED-CREDENTIAL]"
 
 
+def _string_carries_secret(value: str) -> bool:
+    """True if this string holds a live credential or something shaped like one."""
+    return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
+
+
+def _json_value_carries_secret(value) -> bool:
+    """True if any string anywhere in a decoded JSON value carries a credential."""
+    if isinstance(value, str):
+        return _string_carries_secret(value)
+    if isinstance(value, dict):
+        return any(_json_value_carries_secret(v) for v in value.values()) or \
+               any(_string_carries_secret(k) for k in value if isinstance(k, str))
+    if isinstance(value, list):
+        return any(_json_value_carries_secret(v) for v in value)
+    return False
+
+
+def _redact_json(value):
+    """Return the same JSON value with every credential-bearing string redacted."""
+    if isinstance(value, str):
+        out = value
+        for secret in SECRET_LITERALS:
+            out = out.replace(secret, REDACTED)
+        return SECRET_SHAPES.sub(REDACTED, out)
+    if isinstance(value, dict):
+        return {_redact_json(k) if isinstance(k, str) else k: _redact_json(v)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_json(v) for v in value]
+    return value
+
+
 def scrub(work: Path) -> int:
     """Redact credential material from every file that is about to be published.
 
     The findings screen guards the review comment. That is one of THREE public surfaces
     this job now has -- the header above lists them -- and this function covers exactly
     one more: the work directory uploaded as an artifact. The third, the reviewer's
-    closing text printed to a world-readable log, is screened by nothing and cannot be
-    reached from here, because those bytes are emitted before this runs. Counting the
+    closing text printed to a world-readable log, cannot be reached from here at all --
+    those bytes are emitted before this runs -- so the diagnostic step imports the same
+    two patterns and applies them there. Counting the
     artifact as "the second channel" and stopping there is how an audit of what must be
     covered misses the one that gets no cover at all.
 
@@ -367,16 +401,57 @@ def scrub(work: Path) -> int:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Not text this screen can reason about. Skipped deliberately: it matches
-            # exact bytes and known shapes, and neither applies to what it cannot decode.
+            # Undecodable, so the shape regex cannot run -- but the LITERAL check can, and
+            # it is the check that matters: it compares the exact bytes this job holds.
+            # An earlier version skipped the file outright, reasoning that "neither screen
+            # applies to what it cannot decode". That was false for the literal half, and
+            # it left one invalid byte enough to smuggle a credential past a screen that
+            # then published it.
             #
-            # ONLY this one exception. An OSError is caught nowhere here on purpose: a
-            # file the screen could not READ is not a file it has cleared, and skipping
-            # past it would leave it in the directory the next step publishes -- the
-            # bypass-by-crashing the paragraph above refuses. Letting it escape fails the
-            # step, and the upload is gated on this step succeeding. Binary files raise
-            # UnicodeDecodeError, not OSError, so nothing legitimate needs the wider net.
+            # An OSError is still caught nowhere here on purpose: a file the screen could
+            # not READ is not a file it has cleared, and skipping past it would leave it in
+            # the directory the next step publishes -- the bypass-by-crashing the paragraph
+            # above refuses. Letting it escape fails the step, and the upload is gated on
+            # this step succeeding.
+            data = path.read_bytes()
+            scrubbed = data
+            for secret in SECRET_LITERALS:
+                scrubbed = scrubbed.replace(secret.encode("utf-8"), REDACTED.encode("utf-8"))
+            if scrubbed != data:
+                path.write_bytes(scrubbed)
+                hits += 1
+                print(f"::error::redacted credential bytes from "
+                      f"{path.relative_to(work)} (undecodable file) before upload")
             continue
+
+        # JSON hides a credential from both screens without hiding it from a reader: the
+        # escape `ghp_...` matches neither the literal nor the shape as raw
+        # text, and json.loads turns it back into a live token. Escaped and raw are the
+        # SAME VALUE -- the property this repo already learned the hard way from an
+        # ensure_ascii round-trip -- so a screen that only reads bytes is strictly weaker
+        # than the one guarding the comment path, in exactly the class it exists to cover.
+        # Verified: `"ghp_" + "A"*30` passes both screens as text.
+        if path.suffix == ".json":
+            decoded_hit = False
+            try:
+                decoded_hit = _json_value_carries_secret(json.loads(text))
+            except (json.JSONDecodeError, RecursionError):
+                # Malformed or pathological: the raw pass below still runs, and the
+                # validator reports the malformed file separately.
+                pass
+            if decoded_hit:
+                # Re-serialising rewrites the whole file, which this repo forbids as a
+                # ROUTINE edit. Here it is the emergency path -- reached only when a live
+                # credential is actually present -- and publishing that credential is the
+                # worse of the two outcomes. ensure_ascii=False so the fix cannot itself
+                # re-escape anything.
+                text = json.dumps(_redact_json(json.loads(text)),
+                                  indent=2, ensure_ascii=False)
+                path.write_text(text, encoding="utf-8")
+                hits += 1
+                print(f"::error::redacted an escaped credential from "
+                      f"{path.relative_to(work)} before upload")
+
         redacted = text
         for secret in SECRET_LITERALS:
             redacted = redacted.replace(secret, REDACTED)

@@ -31,11 +31,11 @@ because a script screens every finding against the rule bindings, the diff, and 
 limits. It does not extend to every byte the model emits, and the two exceptions are not
 screened alike. The job publishes its work directory as a build artifact, which a
 credential scrub rewrites just before upload — that and nothing more. It also prints the
-reviewer's closing text to a world-readable log, and that gets **no screen at all**: the
-scrub rewrites files on disk, and those bytes were emitted several steps earlier. Both are
-real public channels, one weakly guarded and one unguarded, and a rule governing what may
-be automated here has to say which is which rather than round either to zero. Whether they
-should exist at all is issue #197.
+reviewer's closing text to a world-readable log, which is screened by the same patterns
+imported into the step that prints it -- a scrub over files on disk cannot reach bytes
+already emitted. So both are real public channels, both guarded against credentials and
+against nothing else, and a rule governing what may be automated here has to say that
+rather than round it to zero. Whether they should exist at all is issue #197.
 
 ## What this means in practice
 

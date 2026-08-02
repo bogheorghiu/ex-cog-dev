@@ -257,26 +257,30 @@ def main() -> int:
     for rule in artifact_rules + conversation_rules:
         shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
 
-    # --- One of the two files the reviewer is required to produce --------------------
-    # Seeded here, rather than left for the reviewer to create, so the validator can tell
-    # "the reviewer wrote nothing" apart from "the reviewer found nothing" -- which a
-    # missing file cannot express, since both arrive as an absence. The seed's digest goes
-    # in the manifest, so an untouched file is recognisable as untouched rather than being
-    # reported as a vanished one.
+    # --- Both files the reviewer is required to produce -------------------------------
+    # Seeded here, rather than left for the reviewer to create, so a reader can tell "the
+    # reviewer wrote nothing" apart from "the reviewer found nothing" -- which a missing
+    # file cannot express, since both arrive as an absence. Each seed's digest goes in the
+    # manifest, so an untouched file is recognisable as untouched rather than reported as
+    # a vanished one.
     #
-    # That distinction is the whole reason, and deliberately the only one. An earlier
-    # version of this comment also claimed a seed was needed because an Edit rule wants a
-    # file that already exists; run 30352689105 disproves it -- the reviewer created
-    # refuted.json, which nothing seeds, under the same kind of rule. refuted.json stays
-    # unseeded because no validator decision turns on telling its silence from its
-    # absence, so a seed would buy it nothing.
+    # refuted.json is seeded for the same reason and NOT for a validator's sake -- nothing
+    # downstream branches on it. An earlier version of this comment used that to argue a
+    # seed would buy it nothing, which had the audience wrong: this pull request exists so
+    # a PERSON can tell a well-calibrated filter from a harsh one, and the protocol
+    # requires the file "even when the array is empty". Unseeded, a round that skipped
+    # stage 3 and a round that refuted nothing produce the identical artifact -- the exact
+    # ambiguity this change was opened to remove, reintroduced one file over.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
+    refuted_seed = json.dumps([], indent=2)
+    (out_dir / "refuted.json").write_text(refuted_seed, encoding="utf-8")
 
     manifest = {
         "pr": int(pr_number),
         "head_sha": pr.get("headRefOid"),
         "findings_seed_sha256": hashlib.sha256(findings_seed.encode("utf-8")).hexdigest(),
+        "refuted_seed_sha256": hashlib.sha256(refuted_seed.encode("utf-8")).hexdigest(),
         "changed_files": changed,
         "bindings": bindings,
         "artifact_rules": [r["name"] for r in artifact_rules],

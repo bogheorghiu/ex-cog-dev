@@ -10,15 +10,15 @@ dropping a valid finding or letting one through a limit the reviewer had been to
 enforced. A green run is not evidence here, because every one of these bugs coexisted
 with a green run.
 
-No git and no network. Tests 1-8 are pure functions over strings. The last two exercise
+No git and no network. Tests 1-8 are pure functions over strings. Tests 9 onward exercise
 the artifact scrub, which necessarily writes files, so each builds a temporary directory
-and removes it again. The very last one also chmods a file to 0o000 to make it unreadable,
-and self-skips when that fails to make it unreadable -- as it does under root. Run
-directly:
+and removes it again. Test 10 also chmods a file to 0o000 to make it unreadable, and
+self-skips when that fails to make it unreadable -- as it does under root. Run directly:
     python3 .github/scripts/test_prose_review_post.py
 """
 
 import io
+import json
 import os
 import shutil
 import sys
@@ -315,6 +315,48 @@ def test_scrub_fails_closed_on_unreadable_file():
         prose_review_post.SECRET_LITERALS = ()
 
 
+def test_scrub_catches_escaped_and_undecodable_credentials():
+    print("\n11. scrub() catches a credential the raw-text screens cannot see")
+    # Two bypasses of a screen that only reads a file's bytes as text. Both were found by
+    # /code-review on 2026-08-02, and both let a live token reach the public artifact.
+    literal = "s3cr3t-literal-value-xyz"
+    shaped = "ghp_" + "B" * 30
+
+    work = Path(tempfile.mkdtemp(prefix="scrub-bypass-"))
+    try:
+        # (a) JSON escapes. Escaped and raw are the SAME VALUE, so the token survives
+        # json.loads while matching neither screen as text -- the property this repo
+        # already met from the other direction in the ensure_ascii incident.
+        escaped = json.dumps({"detail": shaped}).replace("ghp_", "\\u0067\\u0068\\u0070_")
+        assert shaped not in escaped, "fixture must not contain the raw token"
+        (work / "findings.json").write_text(escaped, encoding="utf-8")
+
+        # (b) One invalid UTF-8 byte makes read_text raise, and an earlier version skipped
+        # the file entirely -- publishing it. The literal check works fine on bytes.
+        (work / "odd.log").write_bytes(b"\xff prefix " + literal.encode() + b" suffix")
+
+        prose_review_post.SECRET_LITERALS = (literal,)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            scrub(work)
+        out = buf.getvalue()
+
+        after_json = (work / "findings.json").read_text(encoding="utf-8")
+        check("the escaped token no longer decodes to a credential",
+              shaped not in json.dumps(json.loads(after_json)))
+        check("the escaped file is reported as redacted",
+              "findings.json" in out)
+        check("a credential in an undecodable file is redacted, not skipped",
+              literal.encode() not in (work / "odd.log").read_bytes())
+        check("the undecodable file keeps its surrounding bytes",
+              (work / "odd.log").read_bytes().startswith(b"\xff prefix "))
+        check("neither log line echoes the credential",
+              literal not in out and shaped not in out)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        prose_review_post.SECRET_LITERALS = ()
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -327,6 +369,7 @@ def main():
     test_screen_header()
     test_artifact_scrub()
     test_scrub_fails_closed_on_unreadable_file()
+    test_scrub_catches_escaped_and_undecodable_credentials()
 
     print()
     if failures:
