@@ -144,12 +144,12 @@ into `.prose-review/refuted.json`, as a JSON array of objects with `file`, `line
 its own words, not summarised). Write the file even when the array is empty.
 
 This is not for you and you never read it back — each round finds blind, which is the
-point. It is for the person reading afterwards, and it is the durable way to tell a
-well-calibrated filter from a reflexively harsh one: your closing text carries the same
-reasoning, but only into a run log that expires, and only as your summary rather than
-each argument verbatim. Without such a record a round that posts nothing reads the same
-whether it found nothing or refuted everything it found, and those are opposite facts
-about the change under review.
+point. It is for the person reading afterwards, and it is the only place each argument
+survives VERBATIM: your closing text carries the same reasoning as your own summary of
+it, in a log someone has to scroll, while this is a downloadable file holding what you
+actually said. Without such a record a round that posts nothing reads the same whether it
+found nothing or refuted everything it found, and those are opposite facts about the
+change under review.
 
 This is a distinct agent on purpose. The stage-2 agent has already committed to the
 finding, and asking it to check its own work is the same confirmation bias that stage 2

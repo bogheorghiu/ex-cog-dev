@@ -28,14 +28,16 @@ here and was fiction there.
 
 ## A green check is not a quiet round — it never was
 
-**The prose-review job exits 0 whether it posted ten comments, none, or never ran at
-all.** Posting is the job doing its work, not a failure, so a round that found ten
-problems reports exactly what a clean round reports: a green tick. And a round that was
-gated off — a draft, a fork, Dependabot, the opt-out label — exits 0 deliberately too, so
-that an opted-out pull request does not leave a required check pending forever.
+**A green check does not encode what the round found, and a red one does not mean a
+finding blocked you.** Posting is the job doing its work, not a failure, so a round that
+found ten problems shows the same green tick as a clean one. A round that was gated off —
+a draft, a fork, Dependabot, the opt-out label — is also green, deliberately, so that an
+opted-out pull request does not leave a required check pending forever. And the job can
+go RED after posting ten comments, because the artifact screen runs after the posting
+step and withholds the archive if it cannot clear a file.
 
-So the tick tells you the job started. It does not tell you the reviewer ran, and it
-never tells you what it said.
+So the tick tells you the job ran to the end. It does not tell you the reviewer ran, it
+never tells you what it said, and red is about the job rather than about the findings.
 
 So "all checks pass" is not a reading of the round. Count the posted comments — from
 the PR page, or from the API **with `--paginate`** — every time:

@@ -16,9 +16,9 @@ afterwards. So the only thing reaching the PULL REQUEST is text this script chos
 send. That is narrower than "the only thing reaching a public surface": the workflow
 also publishes the work directory as a build artifact and prints the reviewer's closing
 text to a world-readable log, both carrying model-written bytes that these checks never
-see. Both get the credential screen and nothing more -- the artifact from `scrub()`
-below, the log from `SECRET_LITERALS`/`SECRET_SHAPES` imported into the step that prints
-it. Issue #197 carries whether those channels should exist at all.
+see. Both get the credential screen and nothing more, and it is the SAME screen: the
+artifact through `scrub()` below, the log through `screened()` imported into the step
+that prints it. Issue #197 carries whether those channels should exist at all.
 
 Links are generated here too, so a malformed permalink is not something the reviewer can
 get wrong.
@@ -76,7 +76,7 @@ BARE_REF = re.compile(r"(?<!issue )(?<!request )(?<!PR )(?<![\w/])#\d+", re.IGNO
 
 # A finding becomes a public comment, so its text is the one output channel out of this
 # job that these checks control — the artifact and the run log are the other two, and both
-# get only the credential screens defined just below (see the header). The job holds two
+# get only `screened()` below (see the header). The job holds two
 # live tokens on all three. The reviewer is given `Read` without a path
 # scope (it has to be able to read the repo it reviews), which means /proc/self/environ
 # is reachable to it, so this is a real channel and not a theoretical one. The reviewer
@@ -370,11 +370,22 @@ ESCAPE_SEQUENCE = re.compile(
 
 
 def _decode_escape(match: re.Match) -> str:
-    """Turn one escape -- or one surrogate pair -- back into the character it encodes."""
+    """Turn one escape -- or one surrogate pair -- back into the character it encodes.
+
+    An UNPAIRED surrogate is left as the literal escape text it already was. Decoding it
+    yields a lone surrogate, which `str.encode("utf-8")` refuses, so the write would raise
+    and withhold the round -- the same crash pair-matching was added to prevent, reached
+    by the half of the input pair-matching does not cover. Nothing is lost by leaving it:
+    a lone surrogate cannot be part of a credential, so the screens have nothing to find
+    behind it.
+    """
     high, low, single = match.groups()
-    if single is not None:
-        return chr(int(single, 16))
-    return chr(0x10000 + (int(high, 16) - 0xD800) * 0x400 + (int(low, 16) - 0xDC00))
+    if single is None:
+        return chr(0x10000 + (int(high, 16) - 0xD800) * 0x400 + (int(low, 16) - 0xDC00))
+    code = int(single, 16)
+    if 0xD800 <= code <= 0xDFFF:
+        return match.group(0)
+    return chr(code)
 
 
 def scrub(work: Path) -> int:
@@ -408,15 +419,17 @@ def scrub(work: Path) -> int:
     match is the screen working rather than an error, so it is loud (an error annotation
     naming the file) and the round is still archived with the credential removed.
 
-    ONE case is deliberately fatal, and it is fatal because redaction is unavailable
-    rather than because a match is: a file that is not valid UTF-8 and still carries
-    credential material after the byte pass. Positions in a lenient decode do not map back
-    to the original bytes, so there is nothing safe to write. It raises, and the upload --
-    gated on this step succeeding -- withholds the round.
+    TWO cases are deliberately fatal, and both for the same reason -- the file cannot be
+    cleared, not that a match occurred. A file that is not valid UTF-8 and still carries
+    credential material after the byte pass: positions in a lenient decode do not map back
+    to the original bytes, so there is nothing safe to write. And a file that cannot be
+    READ at all: an OSError is caught nowhere here, because skipping past an unread file
+    would leave it in the directory the next step publishes.
 
-    An unexpected crash lands the same way for a different reason: a screen that can be
-    bypassed by crashing is not a screen. Either way, losing one round's archive is the
-    cheaper of the two ways to be wrong.
+    An unexpected crash lands the same way for a third reason: a screen that can be
+    bypassed by crashing is not a screen. In all three, the upload -- gated on this step
+    succeeding -- withholds the round, and losing one round's archive is the cheaper of
+    the two ways to be wrong.
     """
     # Counts FILES CHANGED, not redaction operations. A file can be touched twice -- once
     # to collapse escapes, once to redact what that revealed -- and counting each would
