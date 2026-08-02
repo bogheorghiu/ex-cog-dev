@@ -383,16 +383,23 @@ def test_scrub_fails_closed_on_composed_bypass():
     try:
         (work / "odd.json").write_bytes(b"\xff " + escaped.encode())
         prose_review_post.SECRET_LITERALS = ()
-        raised = False
+        message = None
         buf = io.StringIO()
         try:
             with redirect_stdout(buf):
                 scrub(work)
-        except RuntimeError:
-            raised = True
-        check("an undecodable file still carrying a credential refuses to publish", raised)
+        except RuntimeError as exc:
+            message = str(exc)
+        check("an undecodable file still carrying a credential refuses to publish",
+              message is not None)
+        # Asserted on the EXCEPTION, not on stdout. Nothing is printed down this path --
+        # the byte pass matched no literal and scrub() raises before its closing tally --
+        # so a stdout assertion held for any implementation, including one that echoed the
+        # token. The raised message is what a failing step surfaces to the public log, so
+        # it is the text that has to be clean.
+        check("the refusal names the file", message is not None and "odd.json" in message)
         check("the refusal names no matched text",
-              shaped not in buf.getvalue() and escaped not in buf.getvalue())
+              message is not None and shaped not in message and escaped not in message)
     finally:
         shutil.rmtree(work, ignore_errors=True)
         prose_review_post.SECRET_LITERALS = ()

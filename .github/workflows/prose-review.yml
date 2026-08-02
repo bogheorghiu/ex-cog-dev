@@ -315,11 +315,7 @@ jobs:
                   # its wording. Matching the bare word `denied` anywhere in a block once
                   # counted diff text, subagent prompts, and twice the reviewer grepping
                   # this repository for `denied` while reading this very line. Requiring
-                  # the wording instead was the opposite error: the CLI has phrasings that
-                  # contain neither `permission` nor `denied`, so it could print zero on a
-                  # round the result object counts three for.
-                  #
-                  # Requiring the wording was the opposite error: the CLI has phrasings
+                  # the wording instead was the opposite error: the CLI has phrasings
                   # containing neither word -- "The user doesn't want to proceed with this
                   # tool use." -- so it could print zero on a round the result object
                   # counts three for.

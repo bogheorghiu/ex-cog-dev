@@ -1,7 +1,12 @@
 # When the review-addressing loop ends — you decide, and here is the criterion
 
 (No `paths:` frontmatter on purpose: this governs how any pull request in this repo is
-driven to completion, not a file type, so it loads every session.)
+driven to completion, not a file type, so it loads every session. Be aware of the second
+effect in this repo, which is a poor fit: the prose reviewer buckets a rule with no
+`paths:` as binding *every* changed file, so it appears in every file's citable set even
+though no diff can satisfy a rule about driving a loop. Nothing here has cited it, and
+nothing should — there is no scope today for "a process rule that binds no file and is
+not about prose written to the operator". Tracked in issue #204.)
 
 Addressing review comments is a loop — read what was posted, fix, push, and the push
 starts a fresh review. **Stop when a round posts zero comments, then run one more round

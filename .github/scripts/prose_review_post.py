@@ -330,15 +330,27 @@ REDACTED = "[REDACTED-CREDENTIAL]"
 def screened(value: str) -> str:
     """Redact credential material from a string about to reach a public surface.
 
-    Used by every path that prints model-written bytes, so the artifact screen, the
-    dropped-finding warnings and the diagnostic step in the workflow all apply exactly
-    the same two patterns. A second copy would drift from the first, which is the defect
-    this branch spent a dozen rounds on.
+    Used by every path that prints or publishes model-written bytes -- the artifact
+    screen, the dropped-finding warnings, and the workflow's diagnostic step -- so all
+    three apply exactly the same rules. A second copy would drift from the first, which is
+    the defect this branch spent a dozen rounds on.
+
+    Collapses `\\uXXXX` escapes FIRST, and that ordering is the point. An escaped token
+    matches neither the literal nor the shape as raw text, so screening without collapsing
+    is the bypass already closed once for the artifact -- and the closing text printed to
+    the run log reached this function without it, putting the same hole one channel over.
+    Doing it here rather than in each caller is what stops that recurring a third time.
     """
-    out = value
+    collapsed = ESCAPE_SEQUENCE.sub(_decode_escape, value)
+    out = collapsed
     for secret in SECRET_LITERALS:
         out = out.replace(secret, REDACTED)
-    return SECRET_SHAPES.sub(REDACTED, out)
+    out = SECRET_SHAPES.sub(REDACTED, out)
+    # Nothing matched, so hand back what came in -- escapes intact. Returning `collapsed`
+    # would rewrite every file that merely CONTAINS an escape, which is most JSON this
+    # pipeline writes, for no gain. The collapse exists to see through the escaping, not
+    # to normalise it.
+    return value if out == collapsed else out
 
 
 def _string_carries_secret(value: str) -> bool:
@@ -346,12 +358,23 @@ def _string_carries_secret(value: str) -> bool:
     return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
 
 
-ESCAPE_SEQUENCE = re.compile(r"\\u([0-9a-fA-F]{4})")
+# A surrogate PAIR is matched as one unit, before the single-escape alternative. Decoding
+# the halves independently yields two lone surrogates, which `str.encode("utf-8")` refuses
+# -- so a file holding any non-BMP character (json.dumps writes every emoji this way under
+# its default ensure_ascii) plus credential material would raise on the write instead of
+# being redacted, turning a match fatal in a file where redaction is perfectly possible.
+ESCAPE_SEQUENCE = re.compile(
+    r"\\u([dD][89abAB][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})"
+    r"|\\u([0-9a-fA-F]{4})"
+)
 
 
 def _decode_escape(match: re.Match) -> str:
-    """Turn one `\\uXXXX` sequence back into the character it encodes."""
-    return chr(int(match.group(1), 16))
+    """Turn one escape -- or one surrogate pair -- back into the character it encodes."""
+    high, low, single = match.groups()
+    if single is not None:
+        return chr(int(single, 16))
+    return chr(0x10000 + (int(high, 16) - 0xD800) * 0x400 + (int(low, 16) - 0xDC00))
 
 
 def scrub(work: Path) -> int:
@@ -461,12 +484,6 @@ def scrub(work: Path) -> int:
         #
         # Only rewritten when a credential is actually there, so an ordinary file keeps its
         # bytes exactly.
-        unescaped = ESCAPE_SEQUENCE.sub(_decode_escape, text)
-        if unescaped != text and _string_carries_secret(unescaped):
-            text = unescaped
-            print(f"::error::collapsed escaped credential in "
-                  f"{path.relative_to(work)} before redacting it")
-
         redacted = screened(text)
         if redacted != text:
             path.write_text(redacted, encoding="utf-8")
@@ -574,9 +591,11 @@ def main() -> int:
         f"{len(accepted)} comment(s) posted"
         + (f"; {len(rejected)} finding(s) dropped in validation." if rejected else ".")
         + "\n\n<sub>Adapted from Anthropic's `code-review` plugin. These comments are "
-        "advisory: none of them blocks a merge. A red check on this job means the "
-        "reviewer failed to produce a review at all, which is a different thing and "
-        "worth looking at. Reply, or apply the `no-prose-review` label to opt out.</sub>"
+        "advisory: none of them blocks a merge. A red check on this job never means a "
+        "finding is blocking -- it means the job itself failed, either producing no "
+        "review at all or withholding this run's archive from publication, which is a "
+        "different thing and worth looking at. Reply, or apply the `no-prose-review` "
+        "label to opt out.</sub>"
     )
 
     review = {
