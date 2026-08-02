@@ -74,7 +74,9 @@ MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
 BARE_REF = re.compile(r"(?<!issue )(?<!request )(?<!PR )(?<![\w/])#\d+", re.IGNORECASE)
 
 # A finding becomes a public comment, so its text is the one output channel out of this
-# job — and the job holds two live tokens. The reviewer is given `Read` without a path
+# job that these checks control — the artifact and the run log are the other two, screened
+# for credentials and not at all respectively (see the header). The job holds two live
+# tokens on all three. The reviewer is given `Read` without a path
 # scope (it has to be able to read the repo it reviews), which means /proc/self/environ
 # is reachable to it, so this is a real channel and not a theoretical one. The reviewer
 # has no legitimate reason to ever quote a credential, so anything matching here is
@@ -335,10 +337,13 @@ def scrub(work: Path) -> int:
     artifact as "the second channel" and stopping there is how an audit of what must be
     covered misses the one that gets no cover at all.
 
-    Two files in the artifact never pass the findings screen: `rejected.json` records
-    each rejected finding IN FULL -- including one rejected precisely for containing a
-    live credential -- and `refuted.json` is model-written under an Edit rule and read by
-    nothing.
+    ALL THREE model-written files in the artifact reach it unscreened. The findings screen
+    decides which entries become a comment; it never rewrites a file, so `findings.json`
+    is uploaded exactly as the model left it -- including any entry the screen refused.
+    `rejected.json` records each rejected finding IN FULL, one of them rejected precisely
+    for containing a live credential. `refuted.json` is written under an Edit rule and read
+    by nothing. Counting two here rather than three would be the same under-count the
+    paragraph above warns about, one file down instead of one channel.
 
     Screening those two by name would be the wrong shape. This branch's own history is a
     claim about which files exist going stale as files were added, so the guard is a choke
@@ -417,8 +422,8 @@ def main() -> int:
     seed_digest = manifest.get("findings_seed_sha256")
     if seed_digest and hashlib.sha256(raw_text.encode("utf-8")).hexdigest() == seed_digest:
         # Distinguished from "found nothing", which is a legitimate empty result the
-        # reviewer states deliberately. An untouched seed means the reviewer ran and
-        # never wrote its one required output, so there is no review to validate and
+        # reviewer states deliberately. An untouched seed means the reviewer ran and never
+        # wrote the one output this script validates, so there is no review to validate and
         # nothing to learn from validating it. Named precisely so the run's log says
         # which of the two happened.
         print("::error::the reviewer did not write findings.json — the file is still "
