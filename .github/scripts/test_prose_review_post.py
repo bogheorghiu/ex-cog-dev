@@ -266,7 +266,7 @@ def test_artifact_scrub():
               REDACTED in (work / "refuted.json").read_text(encoding="utf-8"))
         check("a clean file is left byte-identical",
               (work / "diff.patch").read_text(encoding="utf-8") == clean)
-        check("an undecodable file is skipped rather than crashing",
+        check("an undecodable file with no credential keeps its bytes exactly",
               (work / "blob.bin").read_bytes() == b"\xff\xfe\x00binary")
         check("three files reported as redacted", "scrub: 3 file(s) redacted" in out)
         check("the log names paths and never echoes the match",
@@ -335,6 +335,12 @@ def test_scrub_catches_escaped_and_undecodable_credentials():
         # the file entirely -- publishing it. The literal check works fine on bytes.
         (work / "odd.log").write_bytes(b"\xff prefix " + literal.encode() + b" suffix")
 
+        # (c) The same escape plus ONE syntax error. An earlier fix parsed the JSON and
+        # fell through to the raw pass when the parse failed -- so a single stray comma
+        # was enough to carry the token through intact, and nothing downstream reads
+        # refuted.json to catch it. Collapsing escapes textually has nothing to malform.
+        (work / "refuted.json").write_text(escaped[:-1] + ",", encoding="utf-8")
+
         prose_review_post.SECRET_LITERALS = (literal,)
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -350,6 +356,10 @@ def test_scrub_catches_escaped_and_undecodable_credentials():
               literal.encode() not in (work / "odd.log").read_bytes())
         check("the undecodable file keeps its surrounding bytes",
               (work / "odd.log").read_bytes().startswith(b"\xff prefix "))
+        after_broken = (work / "refuted.json").read_text(encoding="utf-8")
+        check("a MALFORMED json file does not smuggle the escaped token through",
+              shaped not in prose_review_post.ESCAPE_SEQUENCE.sub(
+                  prose_review_post._decode_escape, after_broken))
         check("neither log line echoes the credential",
               literal not in out and shaped not in out)
     finally:

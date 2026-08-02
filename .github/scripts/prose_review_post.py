@@ -332,31 +332,12 @@ def _string_carries_secret(value: str) -> bool:
     return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
 
 
-def _json_value_carries_secret(value) -> bool:
-    """True if any string anywhere in a decoded JSON value carries a credential."""
-    if isinstance(value, str):
-        return _string_carries_secret(value)
-    if isinstance(value, dict):
-        return any(_json_value_carries_secret(v) for v in value.values()) or \
-               any(_string_carries_secret(k) for k in value if isinstance(k, str))
-    if isinstance(value, list):
-        return any(_json_value_carries_secret(v) for v in value)
-    return False
+ESCAPE_SEQUENCE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
 
-def _redact_json(value):
-    """Return the same JSON value with every credential-bearing string redacted."""
-    if isinstance(value, str):
-        out = value
-        for secret in SECRET_LITERALS:
-            out = out.replace(secret, REDACTED)
-        return SECRET_SHAPES.sub(REDACTED, out)
-    if isinstance(value, dict):
-        return {_redact_json(k) if isinstance(k, str) else k: _redact_json(v)
-                for k, v in value.items()}
-    if isinstance(value, list):
-        return [_redact_json(v) for v in value]
-    return value
+def _decode_escape(match: re.Match) -> str:
+    """Turn one `\\uXXXX` sequence back into the character it encodes."""
+    return chr(int(match.group(1), 16))
 
 
 def scrub(work: Path) -> int:
@@ -424,33 +405,28 @@ def scrub(work: Path) -> int:
                       f"{path.relative_to(work)} (undecodable file) before upload")
             continue
 
-        # JSON hides a credential from both screens without hiding it from a reader: the
-        # escape `ghp_...` matches neither the literal nor the shape as raw
-        # text, and json.loads turns it back into a live token. Escaped and raw are the
-        # SAME VALUE -- the property this repo already learned the hard way from an
-        # ensure_ascii round-trip -- so a screen that only reads bytes is strictly weaker
-        # than the one guarding the comment path, in exactly the class it exists to cover.
-        # Verified: `"ghp_" + "A"*30` passes both screens as text.
-        if path.suffix == ".json":
-            decoded_hit = False
-            try:
-                decoded_hit = _json_value_carries_secret(json.loads(text))
-            except (json.JSONDecodeError, RecursionError):
-                # Malformed or pathological: the raw pass below still runs, and the
-                # validator reports the malformed file separately.
-                pass
-            if decoded_hit:
-                # Re-serialising rewrites the whole file, which this repo forbids as a
-                # ROUTINE edit. Here it is the emergency path -- reached only when a live
-                # credential is actually present -- and publishing that credential is the
-                # worse of the two outcomes. ensure_ascii=False so the fix cannot itself
-                # re-escape anything.
-                text = json.dumps(_redact_json(json.loads(text)),
-                                  indent=2, ensure_ascii=False)
-                path.write_text(text, encoding="utf-8")
-                hits += 1
-                print(f"::error::redacted an escaped credential from "
-                      f"{path.relative_to(work)} before upload")
+        # An escaped credential hides from both screens without hiding from a reader:
+        # written as `\\uXXXX` sequences a token matches neither the literal nor the shape
+        # as raw text, and anything that decodes the file gets a live one back. Escaped and
+        # raw are the SAME VALUE -- the property this repo already met from the other
+        # direction in the ensure_ascii incident -- so a screen reading only bytes is
+        # strictly weaker than the one guarding the comment path, which decodes first.
+        #
+        # Done by collapsing the escapes rather than by parsing JSON, deliberately. An
+        # earlier version parsed, and fell through to the raw pass when the parse failed --
+        # which left a model-written file needing only ONE syntax error to carry an escaped
+        # credential past the screen intact. Nothing downstream would have caught it:
+        # `refuted.json` is read by nothing. Collapsing is also not JSON-specific and
+        # cannot be defeated by malformed input, because there is nothing to malform.
+        #
+        # Only rewritten when a credential is actually there, so an ordinary file keeps its
+        # bytes exactly.
+        unescaped = ESCAPE_SEQUENCE.sub(_decode_escape, text)
+        if unescaped != text and _string_carries_secret(unescaped):
+            text = unescaped
+            hits += 1
+            print(f"::error::collapsed escaped credential in "
+                  f"{path.relative_to(work)} before redacting it")
 
         redacted = text
         for secret in SECRET_LITERALS:

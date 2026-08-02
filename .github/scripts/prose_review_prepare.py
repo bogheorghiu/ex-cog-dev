@@ -264,13 +264,17 @@ def main() -> int:
     # manifest, so an untouched file is recognisable as untouched rather than reported as
     # a vanished one.
     #
-    # refuted.json is seeded for the same reason and NOT for a validator's sake -- nothing
-    # downstream branches on it. An earlier version of this comment used that to argue a
-    # seed would buy it nothing, which had the audience wrong: this pull request exists so
-    # a PERSON can tell a well-calibrated filter from a harsh one, and the protocol
-    # requires the file "even when the array is empty". Unseeded, a round that skipped
-    # stage 3 and a round that refuted nothing produce the identical artifact -- the exact
-    # ambiguity this change was opened to remove, reintroduced one file over.
+    # refuted.json is seeded for a WEAKER reason, stated exactly because the strong one
+    # does not hold. Its seed is `[]`, and the protocol tells the reviewer to write `[]`
+    # when it refuted nothing -- the same two bytes -- so no digest can separate "skipped
+    # stage 3" from "refuted nothing". findings.json's seed discriminates only because it
+    # carries an empty `summary` that any real result must overwrite.
+    #
+    # What seeding refuted.json does buy is the weaker distinction: present-and-empty is
+    # at least distinguishable from ABSENT, so a round that never reached stage 3 at all
+    # no longer looks like a round that got there and found nothing to argue down. That
+    # matters because this pull request exists so a PERSON can tell a well-calibrated
+    # filter from a harsh one, and nothing downstream branches on the file.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
     refuted_seed = json.dumps([], indent=2)
