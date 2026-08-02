@@ -274,6 +274,45 @@ def test_artifact_scrub():
         prose_review_post.SECRET_LITERALS = ()
 
 
+def test_scrub_fails_closed_on_unreadable_file():
+    print("\n10. scrub() fails rather than skipping a file it could not read")
+    # A file the screen could not READ is not a file it has cleared. Skipping past it
+    # would leave it in the directory the upload step publishes, which is the
+    # bypass-by-crashing the docstring refuses. So the error must escape: the workflow
+    # gates the upload on this step succeeding, and a failure there withholds the
+    # artifact. Binary content raises UnicodeDecodeError (skipped, covered above), so
+    # only a genuine I/O failure reaches this path.
+    work = Path(tempfile.mkdtemp(prefix="scrub-oserror-"))
+    try:
+        (work / "readable.json").write_text("{}", encoding="utf-8")
+        unreadable = work / "unreadable.json"
+        unreadable.write_text("secret-bearing", encoding="utf-8")
+        unreadable.chmod(0o000)
+
+        # Root ignores the mode bits, so the unreadable state cannot be created there.
+        # Say so and pass, rather than asserting a setup this user could not build.
+        if os.access(unreadable, os.R_OK):
+            check("skipped - this user can read a 0o000 file (root?)", True)
+            return
+
+        prose_review_post.SECRET_LITERALS = ("secret-bearing",)
+        raised = False
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                scrub(work)
+        except OSError:
+            raised = True
+        check("an unreadable file raises instead of being skipped", raised)
+    finally:
+        try:
+            (work / "unreadable.json").chmod(0o600)
+        except OSError:
+            pass
+        shutil.rmtree(work, ignore_errors=True)
+        prose_review_post.SECRET_LITERALS = ()
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -285,6 +324,7 @@ def main():
     test_quoted_line_counting()
     test_screen_header()
     test_artifact_scrub()
+    test_scrub_fails_closed_on_unreadable_file()
 
     print()
     if failures:

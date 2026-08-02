@@ -355,9 +355,16 @@ def scrub(work: Path) -> int:
     for path in sorted(p for p in work.rglob("*") if p.is_file()):
         try:
             text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError:
             # Not text this screen can reason about. Skipped deliberately: it matches
             # exact bytes and known shapes, and neither applies to what it cannot decode.
+            #
+            # ONLY this one exception. An OSError is caught nowhere here on purpose: a
+            # file the screen could not READ is not a file it has cleared, and skipping
+            # past it would leave it in the directory the next step publishes -- the
+            # bypass-by-crashing the paragraph above refuses. Letting it escape fails the
+            # step, and the upload is gated on this step succeeding. Binary files raise
+            # UnicodeDecodeError, not OSError, so nothing legitimate needs the wider net.
             continue
         redacted = text
         for secret in SECRET_LITERALS:
