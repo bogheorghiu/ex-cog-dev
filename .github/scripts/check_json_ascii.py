@@ -87,7 +87,13 @@ ESCAPE_RE = re.compile(rb"(?<!\\)(?:\\\\)*\\u[0-9a-fA-F]{4}")
 # JSON has no other way to write a control character: a literal byte below 0x20 is
 # invalid inside a string, so the backslash-u form is the ONLY legal spelling for one.
 # Flagging those would make correct JSON unmergeable, so an escape naming a code point
-# below 0x20 is allowed. The rule is "no escaped TYPOGRAPHY", not "no escapes".
+# below 0x20 is allowed.
+#
+# Everything at or above that boundary is flagged REGARDLESS of what it names - an
+# HTML-safe serializer's `<` fails this guard exactly as an escaped em-dash does.
+# That is deliberate, and the bluntness is the point: "is this a control character?"
+# is decidable from the code point, "is this typography?" is not. A guard that tried
+# to tell them apart would need a judgement call in a place that must not have one.
 CONTROL_MAX = 0x20
 
 

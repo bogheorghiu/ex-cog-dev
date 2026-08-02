@@ -45,6 +45,8 @@ The reason is a silent rewrite this repo has already shipped twice. A manifest's
 
 Nothing catches it by accident: the tool exits 0, the file still parses, tests still pass, and escaped and raw are the **same JSON value** (jq, Node and Python all agree), so no consumer can tell. Only the bytes differ. Keeping the file ASCII removes the input rather than detecting the output — with nothing non-ASCII present, the rewrite cannot happen.
 
+**The guard also rejects `\uXXXX` escapes** naming any code point at or above `0x20` — so the rule is *ASCII-only **and** escape-free*, not ASCII-only alone. That second half is not redundant: an escape is **pure ASCII on disk**, so a file full of them satisfies "no non-ASCII character" while still being the exact wreckage a load-edit-dump leaves behind. Escapes below `0x20` are allowed, because a control character has no other legal spelling in JSON.
+
 - Self-check, and the fixer for em-dashes specifically:
   ```bash
   python3 .github/scripts/check_json_ascii.py        # report + fail
