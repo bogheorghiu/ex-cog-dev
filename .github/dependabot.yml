@@ -1,0 +1,28 @@
+# Keeps the SHA-pinned actions from silently rotting.
+#
+# WHY this exists alongside pinning rather than instead of it: a commit-SHA pin is the
+# only real integrity guarantee (a tag can be re-pointed at different code by anyone who
+# takes over the publisher's account, and your next run executes it). But a pin with no
+# watcher means freezing forever and never hearing about a security fix. Dependabot
+# rewrites the SHA *and* its `# vX.Y.Z` comment together, so it composes with pinning
+# instead of fighting it.
+#
+# Grouped into one PR per week on purpose: eight workflows share four actions, so
+# ungrouped updates would open several PRs that all need the same review and the same CI
+# run. One grouped PR is one decision.
+
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies

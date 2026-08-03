@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """Structural linter for security-toolkit skills.
 
+TEMPORARY SHAPE - re-architect this rather than growing it. The file is
+triplicated across plugins and the copies are kept in step BY HAND, which
+nothing enforces. Nothing about packaging justifies that: these linters ARE
+delivered with the plugin - everything under a plugin directory reaches the
+install cache - but they never RUN for a consumer, so it is execution, not
+delivery, that is development-only. They were copied rather than shared, and
+hand-sync is the price of that. The right shape is ONE linter parameterised per
+plugin - a config naming the skills directory and which conventions apply. Do
+not add a fourth copy; replace the mechanism. Tracked in issue #196.
+
 Kept logic-identical to research-toolkit/skills/test_skill_structure.py (the
 original; see issue #40/#42) and vasana-system/skills/test_skill_structure.py —
 only the plugin name in the docstring and the printed banner differ. If you

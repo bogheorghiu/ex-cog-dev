@@ -22,6 +22,8 @@ Consensus is evidence — but only when it is genuine. When multiple "independen
 
 Distinguishing these is critical because manufactured consensus creates the appearance of verification without actual independent confirmation.
 
+This applies to consensus about *sources* as much as about *claims*: a discrediting label — "fringe", "conspiracist", "discredited" — is often one profile's editorial aside echoed downstream until it reads as settled consensus. Topology-map the label's provenance before importing it as a verdict, the same way you would any manufactured agreement.
+
 **The anti-pattern this counters:**
 ```
 ❌ "Multiple sources agree, so it must be true"
@@ -111,6 +113,15 @@ For sources that agree, check:
 - Would their business model suffer from reaching a different conclusion?
 
 If YES to any: their agreement is not independent. Downgrade from "consensus" to "aligned interests."
+
+### Step 6: Hard cases — the five discriminators
+
+When Steps 1–5 leave the classification contested, or the stakes are high,
+apply the five measurable discriminators (inferential distance ·
+dimensionality · lexical fingerprint · temporal granularity ·
+pre-positioning) and the template-level check in
+`references/discriminators.md`. Cite instances per discriminator — the
+point of the file is that each one is checkable against the texts.
 
 ## Convergence Warning Template
 
@@ -209,6 +220,7 @@ Effective corporate PR created the appearance of independent consensus around a 
 | **source-omission-analysis** | Complementary — omission analysis maps what sources DON'T say; this skill tests what they DO say in unison |
 | **cui-bono** | Contradiction Analysis methods (Direct, Deductive, Falsification, Standpoint) apply to testing whether consensus survives challenge |
 | **frame-rotation** | When manufactured consensus is detected, frame-rotation helps find the perspective that the manufactured narrative was designed to displace |
+| **engage-the-disfavored** | Intake-time counterpart: a manufactured label-consensus ("fringe"/"conspiracist" echoed downstream) is exactly what pre-discounts a disfavored source before its facts are read — map the label's consensus here, engage the source there |
 
 **Workflow position:** Invoke when convergence warning fires during iterative-verification, OR when the source-omission-analysis reveals that everyone is saying the same thing. Run BEFORE accepting consensus as evidence in the dialectic spiral.
 

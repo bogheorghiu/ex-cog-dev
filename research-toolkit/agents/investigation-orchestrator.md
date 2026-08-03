@@ -91,7 +91,14 @@ Before spawning anyone, define the file structure:
 
 1. **Adversarial critic FIRST** (or simultaneously with researchers). The critic must be live before first findings arrive so it can challenge in real-time.
 2. **Researchers in parallel** — each with distinct source-position scope.
-3. **Specialized agents later** — add fact-verifiers, technical experts, or domain specialists when gaps emerge.
+3. **Sweep in waves with a novelty ledger** — deploy researchers per wave
+   using the recipe in `skills/saturation-sweep/assets/agent-prompts.md`;
+   keep the ledger yourself (you are the ledger-keeper); apply the stop
+   rule (<~10% novelty, or two waves moving no verdict) instead of
+   stopping on coverage-feeling. Blind-agent convergence is ONE evidence
+   stream, not N (Principle P7 (blindness-is-not-independence)) — weight
+   it accordingly in synthesis.
+4. **Specialized agents later** — add fact-verifiers, technical experts, or domain specialists when gaps emerge.
 
 **Agent prompt template (researchers):**
 
@@ -108,6 +115,10 @@ Search these source positions thoroughly. Record what each source says AND what 
 **Your output file:** [path to researcher output file]
 Write ALL findings to this file. Include:
 - Every claim with evidence tier label (VERIFIED/CREDIBLE/ALLEGED/SPECULATIVE)
+- Tag [RELAY] on any claim you took from a summary, digest, or another agent's
+  output instead of the primary source. Load-bearing claims may not remain
+  [RELAY]: verify against the primary source or demote to satellite. Note what
+  you checked when you clear a tag.
 - Sources with dates and links
 - What your sources are SILENT about (omission notes)
 - Your preliminary synthesis
@@ -163,9 +174,11 @@ check what THIS investigation omits that ANOTHER investigation covers.]
 **Order of operations:**
 1. Wait for researcher files to have content
 2. Verify key empirical claims FIRST (dates, numbers, attributions)
-3. THEN run the full generative dialectic (minimum 4 rounds)
-4. Apply source omission analysis across ALL researcher outputs
-5. Test for manufactured consensus when researchers agree
+3. Hunt [RELAY] tags: any load-bearing claim still tagged [RELAY] is an
+   automatic challenge — no primary source read means no verified claim.
+4. THEN run the full generative dialectic (minimum 4 rounds)
+5. Apply source omission analysis across ALL researcher outputs
+6. Test for manufactured consensus when researchers agree
 
 If you need to challenge researchers, send messages via SendMessage.
 Write your complete critique to your output file.
@@ -284,7 +297,7 @@ If a new analytical pattern emerged (observed for the first time), flag it for p
 ### When to stop
 - The criteria file is fully checked
 - The critic has completed Round 4+
-- Two consecutive sweeps add nothing
+- The saturation-sweep stop rule fired (cite the ledger rows)
 - Or: the user explicitly says to stop
 
 ### When NOT to stop

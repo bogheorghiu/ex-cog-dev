@@ -49,6 +49,7 @@ jobs:
           bash security-toolkit/hooks/block-dc.test.sh
           bash security-toolkit/hooks/announce-pr-merge-guard.test.sh
           bash vasana-system/hooks/count-skill-firings.test.sh
+          bash research-toolkit/hooks/count-skill-firings.test.sh
           bash .githooks/pre-push.test.sh
 
       - name: Stdlib Python suites
@@ -60,12 +61,16 @@ jobs:
           python3 research-toolkit/skills/macro-monitor/scripts/test_fred_fetcher.py
           python3 research-toolkit/skills/test_skill_structure.py
           python3 research-toolkit/skills/dev-job-defense-ties/scripts/test_config.py
+          python3 research-toolkit/skills/research/scripts/test_config.py
           python3 research-toolkit/skills/dev-job-defense-ties/test_screen_efficiency.py
           python3 research-toolkit/lib/test_brainstorm.py
+          python3 research-toolkit/hooks/firing-filter/test_firing_filter.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_scripts.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_convert_md.py
           python3 research-toolkit/tools/substack-scraper/scripts/test_parse_content.py
           python3 .github/scripts/test_check_version_bump.py
+          python3 .github/scripts/test_prose_review_post.py
+          python3 .github/scripts/test_check_json_ascii.py
 
       - name: Skill-structure linters (vasana-system, security-toolkit)
         run: |

@@ -29,7 +29,6 @@ Cui bono maps how power actually moves through systems — tracing beneficial ow
 /01_INVESTIGATION_METHODOLOGY.md   # Full multi-lens framework, named techniques
 /02_QUICK_REFERENCE.md             # One-page operational reference
 /02_METHODOLOGY_REFERENCE.md       # Detailed technique backgrounds
-/SOURCE_CLASSIFICATIONS.md         # External data source assessments (Layer 1)
 /SOURCE_DIVERSITY_FRAMEWORK.md     # Journalistic/analytical source positioning (Layer 2)
 /lenses/                           # Domain-specific investigation templates
   environmental.md
@@ -38,6 +37,7 @@ Cui bono maps how power actually moves through systems — tracing beneficial ow
   governance.md
   supply_chain.md
   geopolitical.md
+  financial_obfuscation.md
 ```
 
 ## Quick Protocol
@@ -89,6 +89,8 @@ For each claim AND its rebuttal:
 **The principle:** Separate methodology from institution. Procedures are evaluated by internal validity. Sources are evaluated by stakeholder position. Never confuse the two.
 
 *Validated March 2026: Cited domestic media (interested party) and fact-checking ecosystem members (shared methodology pool) as "verification" without mapping their incentive structures. Conclusion was correct; process was flawed.*
+
+The strongest form of asymmetric skepticism is the source never opened — a dismissal that fired before reading, which no audit of the analyzed evidence can catch. That intake face is engage-the-disfavored's job; run it beneath this skill on bloc-contested material.
 
 ### 2b. Unexamined Dichotomy Investigation (MANDATORY)
 
@@ -160,7 +162,7 @@ The question is not "which pole is worse" but "what power structures does this e
 
 #### 4a. Recursive Debiasing Check
 
-The asymmetric skepticism error reasserts at each meta-level. A one-time correction is insufficient — the correction itself can carry the same bias. Run this check after completing the multi-polar analysis:
+The asymmetric skepticism error reasserts at each meta-level. A one-time correction is insufficient — the correction itself can carry the same bias. This check operationalizes Principle P4 (counter-default). Run this check after completing the multi-polar analysis:
 
 ```
 FOR EACH power pole assessed:
@@ -183,6 +185,11 @@ FOR EACH power pole assessed:
 - Treating the debiasing check as complete after one pass (it's recursive — if the meta-check surfaces a concern, run it again)
 
 **Exit criterion:** The meta-check yields no new asymmetry concerns, OR you've explicitly noted the remaining asymmetry and why it's genuine rather than analytical artifact.
+
+**Then lint the prose:** 4a audits the evidence table; the words and the
+option ordering can still carry the default frame after the table is clean.
+Before output on any bloc-contested analysis, run
+`references/frame-leak-lint.md`. (Principle P6 (the-frame-leaks-upstream).)
 
 ### 5. Output Structure
 
@@ -213,6 +220,15 @@ If [priority B] highest: [different conclusion]
 
 **Hypothesis-Based Inquiry**: Story is hypothesis until verified. Willingness to abandon when contradicted.
 
+**Cui Bono ≠ Cui Auctor**: Benefit identifies SUSPECTS, never authors.
+"Who gains" generates hypotheses; authorship needs its own evidence chain.
+The **calendar test** keeps the two apart: what was already in the pipeline
+before the event? A benefit captured through pre-existing plans, budgets,
+or draft legislation is opportunism until authorship evidence exists —
+beneficiaries are often just the fastest to exploit what they did not
+cause. Run the test both ways: it also catches the reverse error of
+clearing an actor BECAUSE their gain looks too obvious.
+
 **Language/Power Analysis**: Examine what ideological work terminology does. When corporate frameworks import nation-state language:
 - **MFN provisions** ("Most Favored Nations"): Trade treaty terms applied to platform contracts.
 - **Protocol/standard**: Technical neutrality language masking power concentration.
@@ -220,7 +236,9 @@ If [priority B] highest: [different conclusion]
 
 ## External Data Sources
 
-Before relying on any external data source, check SOURCE_CLASSIFICATIONS.md:
+Before relying on any external data source, check source-dossier's
+references/data-tool-assessments.md (moved from this skill in 4.2.0), and open a
+dossier for any recurring source:
 - **BANNED**: Don't use (e.g., Candid - governance capture)
 - **PENDING**: Apply assessment framework before relying on
 - **ASSESSED**: Documented limits, use appropriately
@@ -230,7 +248,7 @@ Before relying on any external data source, check SOURCE_CLASSIFICATIONS.md:
 
 1. **Material Reality First**: Follow the money, not the marketing. Revenue sources reveal true business models.
 
-2. **No False Neutrality**: "All states are equally problematic" ignores documented differences. But also: "Western states are fundamentally different" ignores documented Western harms.
+2. **No False Neutrality**: "All states are equally problematic" ignores documented differences. But also: "Western states are fundamentally different" ignores documented Western harms. (Principle P5 (symmetric-scrutiny-is-not-symmetric-conclusions) — see `../../principles/PRINCIPLES.md`.)
 
 3. **Graduated Assessment**: Avoid binary pass/fail. Articulate trade-offs. "Least problematic" when no clean options exist.
 
@@ -262,6 +280,7 @@ Auto-activates if budget-mode skill is active in session.
 - **manufactured-consensus-detection** — test whether source agreement is genuine or manufactured
 - **source-omission-analysis** — map what each perspective is silent about
 - **dev-job-defense-ties** — labor-market instantiation: consumes this skill's buyer-chain to screen a tech/creative job for military end-use and apply an operator red line
+- **engage-the-disfavored** — intake-time counterpart to §2a/§4a: forces engagement of sources the valence reflex would close unread; supplies the counter-case agent for deep investigations
 
 ---
 

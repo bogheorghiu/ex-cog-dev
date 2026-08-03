@@ -64,6 +64,7 @@ For facts: keep verifying until claims meet evidence thresholds.
      * CREDIBLE: Multiple independent sources
      * ALLEGED: Single source, unverified
      * SPECULATIVE: Inference, theoretical
+   - Add [RELAY] to any claim taken from a summary, not the primary source
 
 3. CHECK THRESHOLDS
    - ≥80% claims labeled?
@@ -89,6 +90,26 @@ For facts: keep verifying until claims meet evidence thresholds.
 | **CREDIBLE** | Multiple independent sources agree | 3+ news outlets, consistent professional reports, corroborated accounts |
 | **ALLEGED** | Single source, no corroboration | One article, one whistleblower, one study |
 | **SPECULATIVE** | Inference from patterns | "If X then probably Y", theoretical risk |
+
+### The [RELAY] Rule
+
+A claim that entered this investigation through an agent's summary, a quoted
+digest, or any intermediary's compression — rather than through the primary
+source itself — carries the tag `[RELAY]` next to its evidence tier until
+someone in this investigation has read the primary source directly.
+
+- `[RELAY]` stacks with any tier: `CREDIBLE [RELAY]` means "would be CREDIBLE
+  if the relay is faithful — unverified that it is."
+- A **load-bearing** claim (one a verdict, ranking, or recommendation depends
+  on) MAY NOT remain `[RELAY]` in a final output. Verify it against the
+  primary source, or demote it to a satellite claim.
+- Removing the tag requires naming what was checked: "[RELAY] cleared — read
+  the filing itself; the summary had dropped the qualifier 'alleged'."
+
+Why this exists: an intermediary's summary is a *positioned compression* — it
+keeps what its author found salient and silently drops the rest. The evidence
+tier describes the SOURCE's quality; `[RELAY]` describes YOUR distance from
+it. The two are independent, which is why the tag stacks instead of replacing. (Principle P1 (relayed-is-not-read).)
 
 ## Threshold Requirements
 
@@ -231,6 +252,34 @@ Before claiming completion, ask:
 8. **"Is this skill's framework limiting what I can verify?"**
    - These evidence tiers, thresholds, and protocols are tools, not truths — if they're channeling you away from something real, override them and say why
 
+9. **"I verified it — did I re-read it?"**
+   - A sourcing checkmark suppresses semantic re-reading: once a line is
+     verified, attention releases it. After verification, run the value
+     question as its own separate step — what does this line MEAN for the
+     question asked, as distinct from whether it is accurately quoted? (Principle P2 (verified-is-not-understood).)
+
+10. **"Did an external correction just land?"**
+    - If yes: treat the whole salience map as suspect, not just the corrected
+      point. Regenerate the ranking/summary from scratch with the correction
+      in hand. A correction is evidence about the process that produced the
+      output, not only about the point it names — patching locally preserves
+      the tilt that made the error. (Principle P3 (inherited-salience-is-not-importance) — the map, not the point, is suspect.)
+
+11. **"Did I discount — or credit — any source by its label instead of a named defect?"**
+    - A dismissal is a claim too: it needs the specific factual defect (which
+      claim, what is wrong, on what evidence). "Biased / fringe / propaganda"
+      with nothing named is the frame talking — and it fires before reading;
+      a source that was never opened has a void dismissal. Same requirement,
+      symmetric, for crediting by halo. (Kin: the Verdict-Tier Check — "no
+      mainstream confirmation" = UNVERIFIED, not FALSE. Full counter:
+      engage-the-disfavored.)
+
+12. **"Did the method change since the earliest conclusions?"**
+    - If yes: re-run the matured checks against those early conclusions
+      before claiming completion (Principle P8 (the-method-matures-backward)). Early conclusions passed a
+      weaker gate than late ones — that gradient is invisible unless
+      checked.
+
 ## The "One More" Sweep Rule
 
 After believing verification is complete and all thresholds pass, do ONE MORE sweep:
@@ -279,7 +328,7 @@ Both achieve the same goal: iterate until genuinely verified.
 ## Verification Status
 
 ### Claims Assessed
-1. [Claim] - [TIER] - [Source]
+1. [Claim] - [TIER] [RELAY if unverified relay] - [Source]
 2. [Claim] - [TIER] - [Source]
 ...
 
