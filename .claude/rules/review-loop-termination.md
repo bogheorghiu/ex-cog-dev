@@ -91,6 +91,21 @@ what distinguishes those from a genuinely settled change, and it costs one push.
 Read both rounds from the run history and the posted comments — not from any agent's
 account of what it did, including your own summary of the round you just drove.
 
+## When the loop ends, squash-merge
+
+A review loop leaves a particular commit shape behind: many small correction commits,
+each one answering a finding. That history is valuable **on the pull request**, where
+each fix sits next to the comment that prompted it, and noise **on the base branch**,
+where `git log` and `git bisect` have to wade through one-line comment corrections that
+never existed as independent states worth returning to. Squash-merging keeps both: the
+PR page retains every commit and thread untouched, and the base branch gains one commit
+that is the loop's *result*. (This rule's own branch reached ~30 commits, most of them
+one-line corrections — the shape is normal for a driven loop, not a smell.)
+
+Squash is history hygiene only, not a security measure: the review job's build
+artifacts belong to workflow **runs**, not commits, so no merge strategy removes them —
+bounding those is the artifact-cleanup workflow's job.
+
 ## What a quiet round does *not* establish
 
 A round can post nothing because it found nothing, or because everything it found was
