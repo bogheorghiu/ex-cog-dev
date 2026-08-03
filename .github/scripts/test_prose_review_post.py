@@ -256,7 +256,7 @@ def test_artifact_scrub():
             rc = scrub(work)
         out = buf.getvalue()
 
-        check("returns 0 so a failed round is still archived", rc == 0)
+        check("a round with matches still returns 0, so it is archived", rc == 0)
         check("literal credential is gone from rejected.json",
               literal not in (work / "rejected.json").read_text(encoding="utf-8"))
         check("credential-shaped token is gone from refuted.json",
@@ -433,6 +433,44 @@ def test_screened_preserves_everything_it_did_not_match():
         prose_review_post.SECRET_LITERALS = ()
 
 
+def test_comment_path_collapses_escapes_too():
+    print("\n14. the PR-comment gate collapses escapes, like the artifact gate")
+    # The seventh bypass, and the worst: the escape-collapse fix reached scrub() and the
+    # log and stopped there, leaving the two functions that gate a LIVE PUBLIC COMMENT
+    # matching raw text. The comment posts in an earlier workflow step than the artifact
+    # screen, so nothing could have taken it back.
+    import importlib
+    fake = "ghp_" + "Z" * 32
+    saved = os.environ.get("GH_TOKEN")
+    os.environ["GH_TOKEN"] = fake
+    try:
+        mod = importlib.reload(prose_review_post)
+        escaped = "".join(chr(92) + "u%04x" % ord(c) for c in fake)
+        finding = {"file": "f.py", "line": 1, "rule": mod.BUG, "severity": "blocking",
+                   "summary": "s", "detail": "leaked: " + escaped}
+        manifest = {"bindings": {"f.py": [mod.BUG]}, "rules_snapshot": "."}
+        accepted, rejected = mod.validate([finding], manifest, {"f.py": {1}})
+        check("an escaped credential is rejected, not posted", not accepted and len(rejected) == 1)
+        check("and rejected as a LIVE credential, not merely shaped",
+              rejected and "live credential" in rejected[0][1])
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            header = mod.screen_header("leaked: " + escaped)
+        check("an escaped credential in the summary falls back to the neutral header",
+              header == mod.NEUTRAL_HEADER)
+
+        ordinary = {**finding, "detail": "an ordinary finding about a rule"}
+        ok, _ = mod.validate([ordinary], manifest, {"f.py": {1}})
+        check("an ordinary finding is unaffected", len(ok) == 1)
+    finally:
+        if saved is None:
+            os.environ.pop("GH_TOKEN", None)
+        else:
+            os.environ["GH_TOKEN"] = saved
+        importlib.reload(prose_review_post)
+
+
 def main():
     print("Prose-review validator — unit tests")
     test_hunk_lines_basic()
@@ -448,6 +486,7 @@ def main():
     test_scrub_catches_escaped_and_undecodable_credentials()
     test_scrub_fails_closed_on_composed_bypass()
     test_screened_preserves_everything_it_did_not_match()
+    test_comment_path_collapses_escapes_too()
 
     print()
     if failures:

@@ -206,7 +206,14 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, f"missing required field(s): {', '.join(missing)}"))
             continue
 
-        blob = f"{raw['summary']} {raw['detail']}"
+        # Matched on the escape-COLLAPSED text, for the same reason the artifact screen
+        # is: an escaped token matches neither check as raw text and decodes to a live one
+        # for anything that reads it. That fix reached `scrub()` and the log and stopped
+        # here, which left the STRONGEST channel the weakest -- a review comment is public
+        # the moment it posts, and `scrub()` runs in a later workflow step, so nothing can
+        # take it back. Collapse only for the decision; the finding is rejected whole, so
+        # no collapsed text is ever published.
+        blob = _collapse_with_map(f"{raw['summary']} {raw['detail']}")[0]
         # Neither branch echoes what it matched, and the literal check is deliberately
         # first: it is the one that is certain rather than heuristic.
         if any(secret in blob for secret in SECRET_LITERALS):
@@ -286,7 +293,9 @@ def screen_header(summary: str) -> str:
     repaired: unlike a finding there is no repair round for it, and the failure is
     logged, so nothing is silently rewritten.
     """
-    text = summary.strip()
+    # Collapsed before matching, same reason as validate(): this text becomes the review
+    # body, which is public on post.
+    text = _collapse_with_map(summary.strip())[0]
     if not text:
         return NEUTRAL_HEADER
     quoted = quoted_line_count(text)
@@ -617,12 +626,12 @@ def main() -> int:
     # Rejections are surfaced, never swallowed: a reviewer that keeps citing rules that
     # do not bind the file it is looking at is itself the finding.
     for finding, reason in rejected:
-        # Screened, because this is the third emitter of model-written bytes into the
-        # public log and the only one validate() does not already cover -- its screens run
-        # over `summary` and `detail`, while this line interpolates `file`, and the reason
-        # strings interpolate `rule`, `line` and `severity`. scrub() cannot reach any of
-        # it: it rewrites files on disk, and this is already printed by then. Same reason
-        # the closing text needed the screen imported into the step that prints it.
+        # Screened because validate()'s own checks do not cover these fields: they run
+        # over `summary` and `detail`, while this line interpolates `file` and the reason
+        # strings interpolate `rule`, `line` and `severity`. scrub() cannot reach it
+        # either -- it rewrites files on disk and this is already printed by then, the
+        # same reason the closing text needed the screen imported into the step that
+        # prints it.
         print(screened(f"::warning::dropped finding on "
                        f"{finding.get('file', '?')}: {reason}"))
     (work / "rejected.json").write_text(

@@ -25,9 +25,9 @@
 #      also publishes the work directory as a build artifact and prints the reviewer's
 #      closing text to a log, both world-readable on a public repo, and both carrying
 #      model-written bytes. Both now get the CREDENTIAL screen and only that -- the
-#      artifact from `scrub()` just before upload, the log from the same patterns imported
-#      into the diagnostic step, since a scrub over files on disk cannot reach bytes
-#      already printed. Neither gets rule binding, line, length or severity, which are what
+#      artifact from `scrub()` just before upload, the log from `screened()` imported into
+#      the diagnostic step, since a scrub over files on disk cannot reach bytes already
+#      printed. Neither gets rule binding, line, length or severity, which are what
 #      make the comment path safe. So the model has two weakly-screened public channels and
 #      no channel to the pull request without a strong screen. Issue #197 carries whether
 #      that trade is the right one; this comment's job is to stop the file asserting the

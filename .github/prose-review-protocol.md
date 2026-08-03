@@ -74,8 +74,11 @@ You also have **no shell and no network**. `Bash`, `WebFetch` and `WebSearch` ar
 explicitly disallowed, and every call to them is refused; reach for `Read`, `Grep` and
 `Glob` instead.
 
-**You do not post anything.** You write two files, and neither reaches the pull request
-directly. `.prose-review/findings.json` is screened by a validation script before any of
+**You do not post anything.** Nothing you write reaches the pull request directly. Which
+files you owe depends on the path you take through this protocol — a round skipped at
+stage 1 writes `findings.json` alone, and `refuted.json` exists only if stage 3 ran.
+Writing it anyway on a skipped round is not harmless: an absent `refuted.json` is how a
+reader tells "stage 3 never happened" from "stage 3 happened and refuted nothing". `.prose-review/findings.json` is screened by a validation script before any of
 it becomes a comment: a finding citing a rule that does not bind the file it targets is
 dropped before it is ever published, so inventing a rule scope wastes the finding rather
 than landing it.

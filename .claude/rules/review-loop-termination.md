@@ -48,9 +48,10 @@ gh api --paginate repos/OWNER/REPO/pulls/N/comments \
 ```
 
 `--paginate` is not optional here. Without it `gh api` returns one page, and a long-lived
-pull request outgrows a page quickly — this rule's own branch passed 45 review comments —
-so the fetch silently drops the newest round and hands you exactly the false zero the next
-bullet describes. Listing each comment with its timestamp beats asking for a count: a
+pull request outgrows one quickly — this rule's own branch went past a page and kept
+going — so the fetch silently drops the newest round and hands you exactly the false zero
+the next bullet describes. (A count was written here and was stale within a day, which is
+the same lesson one level down.) Listing each comment with its timestamp beats asking for a count: a
 number cannot show you that it stopped early.
 
 Two ways this goes wrong, both observed on PR #195:
