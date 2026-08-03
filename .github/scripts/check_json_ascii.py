@@ -102,7 +102,7 @@ ESCAPE_RE = re.compile(rb"(?<!\\)(?:\\\\)*\\u[0-9a-fA-F]{4}")
 CONTROL_MAX = 0x20
 
 
-def tracked_json_files(repo_root: Path) -> list[Path]:
+def tracked_json_files(repo_root: Path) -> tuple[list[Path], list[str], list[str]]:
     out = subprocess.run(
         ["git", "ls-files", "-z", "*.json"],
         cwd=repo_root,
@@ -111,11 +111,13 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
     ).stdout
 
     seen: dict[str, None] = {}
+    excluded: list[str] = []
     for raw in out.split(b"\0"):
         if not raw:
             continue
         rel = raw.decode()
         if rel.startswith(EXCLUDED_PREFIXES):
+            excluded.append(rel)
             continue
         # `git ls-files` lists a path once per stage during an unresolved merge, so
         # the same file would otherwise be reported three times.
@@ -139,7 +141,7 @@ def tracked_json_files(repo_root: Path) -> list[Path]:
         else:
             skipped.append(rel)
             print(f"skipped (tracked, not in working tree): {rel}", file=sys.stderr)
-    return present, skipped
+    return present, skipped, excluded
 
 
 def write_atomically(path: Path, data: bytes) -> None:
@@ -238,7 +240,7 @@ def main() -> int:
         ).stdout.strip()
     )
 
-    files, skipped = tracked_json_files(repo_root)
+    files, skipped, excluded = tracked_json_files(repo_root)
 
     # Fail loudly on an empty file set rather than reporting success over nothing.
     # A guard that inspects zero files prints the same "all clear" as one that
@@ -296,11 +298,20 @@ def main() -> int:
     # that a partial scan reading as a full pass is the same defect as reporting
     # success over an empty set - so the final line has to carry that qualifier, or
     # the code is making an argument it does not keep one screen later.
-    scope = "" if not skipped else f" — {len(skipped)} tracked file(s) SKIPPED, not a full scan"
+    # Two ways the scan is short of "every tracked .json", and both belong in the line:
+    # a file git lists but the tree does not have, and a file EXCLUDED_PREFIXES drops
+    # before it is ever opened. Only the first was reported, so a clean run over a tree
+    # containing unscanned probe fixtures still printed the unqualified claim.
+    short = []
+    if skipped:
+        short.append(f"{len(skipped)} tracked file(s) SKIPPED")
+    if excluded:
+        short.append(f"{len(excluded)} exempt file(s) not scanned")
+    scope = "" if not short else " — " + ", ".join(short) + "; not a full scan"
     if fixed_files:
         print(f"\n{fixed_files} file(s) fixed; the files scanned are ASCII-only.{scope}")
     else:
-        print(f"Tracked JSON is ASCII-only, with no escape sequences.{scope}")
+        print(f"The files scanned are ASCII-only, with no escape sequences.{scope}")
     return 0
 
 

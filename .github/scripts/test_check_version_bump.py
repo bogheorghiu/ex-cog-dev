@@ -136,7 +136,7 @@ def test_plugin_dirs_derived_from_tree():
     """
     import tempfile
 
-    print("\n9. PLUGIN_DIRS is derived from the tree, not hand-listed")
+    print("\n12. PLUGIN_DIRS is derived from the tree, not hand-listed")
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
         for name in ("alpha", "beta", "fifth-toolkit"):
