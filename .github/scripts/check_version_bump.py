@@ -17,16 +17,29 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 # Top-level plugin dirs in this marketplace and the prefix that "belongs" to
 # each. A change to any tracked file under the prefix requires a version bump
 # in that plugin's manifest.
-PLUGIN_DIRS = {
-    "vasana-system": "vasana-system/",
-    "research-toolkit": "research-toolkit/",
-    "makers-toolkit": "makers-toolkit/",
-    "security-toolkit": "security-toolkit/",
-}
+#
+# DERIVED FROM THE TREE, never hand-listed. A plugin IS a top-level directory
+# with a `.claude-plugin/plugin.json`, so that glob is the definition - and a
+# hardcoded list of the four that existed when this was written would fail in
+# the one direction that matters: a fifth plugin would be absent from the map,
+# the guard would find no relevant change under a name it does not know, and it
+# would pass green while a REQUIRED rule was being broken. Silent under-coverage
+# in a gate reads exactly like compliance.
+def discover_plugin_dirs(root=None):
+    """Map plugin name -> path prefix, for every top-level plugin in the repo."""
+    base = Path(root) if root else Path(__file__).resolve().parents[2]
+    return {
+        manifest.parents[1].name: f"{manifest.parents[1].name}/"
+        for manifest in sorted(base.glob("*/.claude-plugin/plugin.json"))
+    }
+
+
+PLUGIN_DIRS = discover_plugin_dirs()
 
 # Deliberate opt-out for genuine no-ops: a PR may skip the guard by putting this
 # marker in its title or applying this label. The CI workflow forwards the PR

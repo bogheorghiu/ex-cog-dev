@@ -503,6 +503,16 @@ echo "has OTHER-ENV-TERM" > b.txt; git add .; git commit -qm c2
 run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" "PII_DENYLIST=OTHER-ENV-TERM"
 expect_block "PII_DENYLIST terms are used when set"
 
+# UNION, not precedence: with the env var set, the local file's terms must STILL match. Under the
+# old fallback semantics the env var replaced the file, so exporting PII_DENYLIST silently dropped
+# every term in the operator's own denylist — this commit contains only a file term, and the env
+# var is set to a term it does not contain.
+newrepo envunion
+echo x > a.txt; git add .; git commit -qm c1; BASE=$(git rev-parse HEAD)
+echo "has $TERM_STR" > b.txt; git add .; git commit -qm c2
+run_hook "$R" origin "refs/heads/main $(git rev-parse HEAD) refs/heads/main $BASE" "PII_DENYLIST=OTHER-ENV-TERM"
+expect_block "the local file's terms still match when PII_DENYLIST is set (union, not replace)"
+
 echo ""
 echo -e "${YELLOW}--- Linked worktrees ---${NC}"
 

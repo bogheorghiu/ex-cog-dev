@@ -71,6 +71,7 @@ jobs:
           python3 .github/scripts/test_check_version_bump.py
           python3 .github/scripts/test_prose_review_post.py
           python3 .github/scripts/test_prose_review_cleanup.py
+          python3 .github/scripts/test_check_json_ascii.py
 
       - name: Skill-structure linters (vasana-system, security-toolkit)
         run: |
