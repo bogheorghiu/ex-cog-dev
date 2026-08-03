@@ -208,15 +208,15 @@ jobs:
             Everything you need has already been gathered into the .prose-review/
             directory. Read those files; you have no shell and no network.
 
-            Produce .prose-review/findings.json and .prose-review/refuted.json. Do not
+            Produce the output files the protocol asks for on the path you take. Do not
             attempt to post anything.
 
             You get ONE turn. This is non-interactive: nothing reads your messages and
             you will not be resumed. Do not end your response while subagents are still
             outstanding, and do not end on a description of what you are about to do —
             when you stop, the run stops, and anything unwritten is lost. Wait for your
-            subagents, finish the reconciliation yourself, and write BOTH files
-            BEFORE your final message.
+            subagents, finish the reconciliation yourself, and write every file the
+            protocol owes for your path BEFORE your final message.
           # Writing is scoped to the two files the reviewer produces — the findings it
           # wants published, and the record of what it argued down. Unscoped, it could
           # rewrite the validator's own inputs — forging manifest.json's bindings, or
