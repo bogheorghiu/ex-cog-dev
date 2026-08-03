@@ -327,7 +327,11 @@ jobs:
                   # authoritative `permission_denials_count` printed above it. The count is
                   # the number; this says which.
                   if block.get("type") == "tool_result" and block.get("is_error"):
-                      denials.append(json.dumps(block)[:400])
+                      # Screen the FULL block first, then truncate. Truncating before
+                      # screening could cut a split credential at the 400-char boundary so a
+                      # partial token prefix reaches the public log, which is the one
+                      # disclose channel a diagnostic exists to keep covered.
+                      denials.append(screened(json.dumps(block))[:400])
           print(f"tool calls ({len(calls)}):")
           for c in calls:
               print(f"  - {screened(c)}")
@@ -359,8 +363,13 @@ jobs:
       # bind the file, a comment a little over length -- not a bad finding. Dropping it
       # silently wastes work the reviewer already did and teaches nothing, so it gets
       # told exactly what failed and one pass to correct it.
+      # Guarded with `steps.validate.outcome == 'success'` -- same status function the
+      # Post step uses. Without it, an unset `outputs.rejected` (validate ended early or
+      # did not write GITHUB_OUTPUT) evaluates as empty, `'' != '0'` is true, and an
+      # unneeded repair round runs; naming the outcome makes "validate actually ran
+      # clean" an explicit precondition. Over-run is not fail-open, but it is waste.
       - name: Repair rejected findings
-        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
+        if: steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
         uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -384,6 +393,11 @@ jobs:
           # and since leaving a tool off the allow list removes nothing, these two
           # entries are what actually withholds delegation here. The lists differ on
           # purpose and in this direction only; do not "sync" them.
+          #
+          # Scope note: the writable set is findings.json ONLY. rejected.json is the
+          # validator's own audit trail (read as input at prose_review_post.py's
+          # validate) — it is never the reviewer's output, so no Write/Edit rule may
+          # cover it. Keep a future `Edit(.prose-review/*)` from silently including it.
           claude_args: >-
             --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"

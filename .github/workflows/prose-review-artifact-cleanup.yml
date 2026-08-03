@@ -54,10 +54,18 @@ jobs:
           # HEAD_BRANCH is attacker-chosen on a fork PR; -f passes it as a URL-encoded
           # query parameter instead of splicing it into the URL, where a "&" in a branch
           # name could inject extra parameters.
-          run_ids=$(gh api -X GET "repos/$repo/actions/workflows/prose-review.yml/runs" \
+          run_ids=""
+          if ! run_ids=$(gh api -X GET "repos/$repo/actions/workflows/prose-review.yml/runs" \
             -f head_branch="$HEAD_BRANCH" -f event=pull_request \
             --paginate \
-            --jq ".workflow_runs[] | select(.pull_requests[]?.number == ($PR_NUMBER | tonumber)) | .id")
+            --jq ".workflow_runs[] | select(.pull_requests[]?.number == ($PR_NUMBER | tonumber)) | .id"); then
+            # A TRANSIENT gh api failure must not abort the whole cleanup: the worst
+            # case of a partial/empty sweep is an artifact left to its 30-day expiry,
+            # which is exactly the same fallback the post-mortem already relies on.
+            # Aborting here would instead lose the merge-time deletion entirely.
+            echo "::warning::could not list prose-review runs for PR #$PR_NUMBER; leaving artifacts to 30-day expiry"
+            run_ids=""
+          fi
 
           if [ -z "$run_ids" ]; then
             echo "No prose-review runs found for PR #$PR_NUMBER (branch $HEAD_BRANCH); nothing to delete."
@@ -69,12 +77,14 @@ jobs:
             # Artifact IDs first, names logged for the record. The name prefix is a
             # belt-and-suspenders guard: these runs only ever upload prose-review-*,
             # but a future second upload step should not be silently swept up here.
-            gh api "repos/$repo/actions/runs/$run_id/artifacts" --paginate \
-              --jq '.artifacts[] | select(.name | startswith("prose-review-")) | "\(.id) \(.name)"' |
+            # Count artifacts actually deleted (the inner while is a subshell, so
+            # accumulate on the outer loop's own counter) -- "deleted" is artifacts,
+            # not runs; a run can carry several.
             while read -r artifact_id artifact_name; do
               echo "Deleting $artifact_name (run $run_id)"
               gh api -X DELETE "repos/$repo/actions/artifacts/$artifact_id"
-            done
-            deleted=$((deleted + 1))
+              deleted=$((deleted + 1))
+            done < <(gh api "repos/$repo/actions/runs/$run_id/artifacts" --paginate \
+              --jq '.artifacts[] | select(.name | startswith("prose-review-")) | "\(.id) \(.name)"')
           done
-          echo "Swept $deleted run(s) for PR #$PR_NUMBER."
+          echo "Swept $deleted artifact(s) across the prose-review runs for PR #$PR_NUMBER."
