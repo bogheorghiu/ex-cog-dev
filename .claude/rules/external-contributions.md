@@ -88,7 +88,7 @@ does not cover is worth very little to an attacker.
 
 Two things follow. Whatever bounds the artifact's lifetime bounds this directly, which is
 why deleting a pull request's artifacts when it closes is worth more here than tidiness
-(issue #205). And a future change that widens what the reviewer reads — a new gathered
+(issue #206). And a future change that widens what the reviewer reads — a new gathered
 input, a fetched URL, an issue body — widens this with it, silently, because nothing
 about an upload step looks like a security boundary.
 
