@@ -55,28 +55,49 @@ rather than round it to zero. Whether they should exist at all is issue #197.
 
 ## What now depends on this posture
 
-Condition (2) has weakened, deliberately, and it is condition (1) that now carries the
-load. The prose-review job publishes its work directory as a build artifact, so three
-model-written files — `findings.json`, `rejected.json`, `refuted.json` — are downloadable
-by anyone who can read this repository. They pass a credential screen and nothing else:
-not the rule binding, line, length or severity checks that make a posted comment safe.
+**Neither condition fully holds for the prose-review job, and the decision to run it
+anyway rests on how much is left rather than on either being satisfied.** Say it plainly,
+because the version of this section written first claimed condition (1) held and was
+wrong within a day.
 
-That was accepted (issue #197) on exactly one ground: **the reviewer never runs on a diff
-this repository did not author.** A fork pull request is skipped by the gate before the
-model starts, and it would get no secrets anyway. So the injection that would put
-attacker-chosen bytes into a published artifact has no way in.
+Condition (2) has weakened deliberately: the job publishes its work directory as a build
+artifact, so three model-written files — `findings.json`, `rejected.json`,
+`refuted.json` — are downloadable by anyone who can read this repository. They pass a
+credential screen and nothing else, not the rule binding, line, length or severity checks
+that make a posted comment safe.
 
-**Which makes the artifact channel one of the things a change in posture would unsafe** —
-and the least obvious one, because nothing about an upload step looks like a security
-boundary. Listing it here is the point: the dependency was invisible until the reviewer
-found the prose still claiming the model had no public output at all.
+**Condition (1) does not hold here, and saying otherwise was the first mistake.** The
+*diff* is owner-authored — fork pull requests are skipped by the gate before the model
+starts. But the diff is not the only thing the reviewer reads. `prior-comments.json` is
+every review comment on the pull request, and `falsified.md` is every comment on the
+ledger issue. This repository is public and unlocked, so **any GitHub user can write to
+both**, and stage 2 and stage 4 read them.
+
+So untrusted text does reach the reviewer, and the artifact is accepted (issue #197) on
+narrower ground: the only payload worth the trouble is a credential, and the credential
+screen is the control built for exactly that — hardened against literal, shaped, escaped,
+raw-byte and composed forms, and failing closed on a file it cannot clear. What an
+injection could still achieve is arbitrary attacker text in a build artifact that expires
+in thirty days. That is real, and small, and it is not zero.
+
+**So the honest statement of this repository's posture is narrower than "we take no
+outside code".** We take no outside *code*; we take outside *text* on every public thread
+this workflow reads. What holds the line for the artifact is therefore not the shape of
+the job but a single control — the credential screen — plus the fact that the residue it
+does not cover is worth very little to an attacker.
+
+Two things follow. Whatever bounds the artifact's lifetime bounds this directly, which is
+why deleting a pull request's artifacts when it closes is worth more here than tidiness
+(issue #205). And a future change that widens what the reviewer reads — a new gathered
+input, a fetched URL, an issue body — widens this with it, silently, because nothing
+about an upload step looks like a security boundary.
 
 ## If the posture ever changes
 
 It would need all of: a review path that runs on untrusted input with no credentials at
 all; a maintainer gate before anything privileged runs; a re-read of what each workflow's
-token can reach; **and a decision about the artifact**, since publishing model-written
-files stops being free the moment an outsider can influence what goes in them. Until
+token can reach; **and a decision about the artifact**, which already carries outside-authored
+text and would then carry outside-authored code too. Until
 then, an outside PR gets a reply pointing at the issue tracker.
 
 **Background.** Issue #86 records the original analysis and its discussion. This rule is

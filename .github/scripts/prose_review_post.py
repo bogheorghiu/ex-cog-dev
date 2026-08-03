@@ -482,11 +482,12 @@ def scrub(work: Path) -> int:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Undecodable, so nothing can be REDACTED in place -- offsets in a lenient
-            # decode do not map back to the original bytes. The literal check still works
-            # on the raw bytes, and the shape check still works on a lenient decode; what
-            # is missing is a safe way to write the result, which is why this branch ends
-            # fatal rather than redacting.
+            # Two passes here, and they end differently. LITERAL values are redacted in
+            # the raw bytes, which needs no decoding and so is exact. Everything the
+            # literal pass cannot reach -- a shaped token, an escaped one -- is only
+            # DETECTABLE, on a lenient decode whose offsets do not map back to the
+            # original bytes, so there is nothing safe to write and that path ends fatal.
+            #
             # An earlier version skipped the file outright, reasoning that "neither screen
             # applies to what it cannot decode". That was false for the literal half, and
             # it left one invalid byte enough to smuggle a credential past a screen that
