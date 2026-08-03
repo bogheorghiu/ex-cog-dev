@@ -35,6 +35,7 @@ htmlcov/
 .vscode/
 pii-denylist.local
 pii-denylist.txt
+.pii-denylist.synced
 
 # Claude Code sandbox deny-guard placeholders. When a session runs in an
 # in-repo worktree, the sandbox materializes zero-byte read-only guard FILES
