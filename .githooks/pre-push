@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # pre-push PII guard — blocks a push whose commits contain a denylisted personal name.
 #
-# This file carries NO names, so it is safe to commit. The names are read at push time from, in
-# order: the PII_DENYLIST env var (cloud env-vars field, same name as the CI secret), else the
-# gitignored file pii-denylist.local (looked up in BOTH this working tree's root AND the main
-# clone's root — a linked worktree does not have the untracked file at its own top level).
+# This file carries NO names, so it is safe to commit. The names are read at push time from the
+# UNION of two sources: the PII_DENYLIST env var (cloud env-vars field, same name as the CI
+# secret) and the gitignored file pii-denylist.local (looked up in BOTH this working tree's root
+# AND the main clone's root — a linked worktree does not have the untracked file at its own top
+# level). Union, not precedence: when the env var shadowed the file, exporting it silently
+# dropped every term in the operator's own denylist while the gate still reported itself armed.
 #
 # Activate per clone — PREFER core.hooksPath:
 #     git config core.hooksPath .githooks
@@ -55,6 +57,12 @@ trap '[ -n "$CLEANUP" ] && rm -f "$CLEANUP"' EXIT
 # empty output, which the callers then read as "no terms" and reported as INACTIVE — the same
 # silent disarming this file exists to prevent. grep exits 1 when every line was a comment or a
 # blank, which is a legitimate empty result; only >=2 is grep's own error and must propagate.
+# WHOLE-WORD MATCHING (-w on every scan below) is not a nicety. Without it the match is a
+# SUBSTRING match, so a short term blocks on every common word that contains it — a three-letter
+# name would refuse every commit mentioning it inside an unrelated word. That direction is not
+# "safely conservative": a gate that blocks constantly is a gate that gets switched off, and a
+# disabled gate scans nothing. -w keeps it usable, which is what keeps it installed. List
+# diacritic and ASCII spellings as separate terms, since -F takes patterns literally.
 norm() {
   tr '|' '\n' \
     | tr -d '\r' \
@@ -120,29 +128,43 @@ CLEANUP="$DENY"
 # has, by definition, no terms to check against). A clone living under a directory named after the
 # person would otherwise make the gate print the very term it withholds everywhere else.
 DENY_SRC="none"
+env_armed=""
 if [ -n "${PII_DENYLIST:-}" ]; then
   if ! printf '%s\n' "${PII_DENYLIST}" | norm > "$DENY"; then
     echo "pre-push BLOCKED: the denylist could not be written to a temporary file, so this push" >&2
     echo "  cannot be verified. Check that TMPDIR is writable and has free space, then retry." >&2
     exit 1
   fi
-  [ -s "$DENY" ] && DENY_SRC="the PII_DENYLIST env var"
+  [ -s "$DENY" ] && env_armed=yes
 fi
-if [ ! -s "$DENY" ] && [ -n "$FILE_SRC" ]; then
-  # Env var absent, or set but normalizing to zero patterns — fall through to the file rather than
-  # letting a stray empty env var mask a valid local denylist.
+if [ -n "$FILE_SRC" ]; then
+  # UNION with the env var, not fallback. When the env var took precedence, exporting
+  # PII_DENYLIST silently dropped every term in the local file — the operator's own denylist,
+  # unmatched, with the gate still reporting itself armed. Both sources are appended into the
+  # same pattern file; a duplicate term is harmless to grep. And because the file's terms now
+  # ALWAYS count, an unreadable file blocks even when the env var is set — those unread terms
+  # would otherwise silently not be scanned for.
   if [ ! -r "$FILE_SRC" ]; then
     echo "pre-push BLOCKED: the denylist file exists but cannot be read, so this push cannot be verified." >&2
     echo "  Fix the permissions on your pii-denylist.local (or .txt) — in this repo's root, or the" >&2
-    echo "  main clone's root for a linked worktree — or set PII_DENYLIST instead, then retry." >&2
+    echo "  main clone's root for a linked worktree — then retry." >&2
     exit 1
   fi
-  if ! norm < "$FILE_SRC" > "$DENY"; then
+  sz_before="$(wc -c < "$DENY" 2>/dev/null || echo 0)"
+  if ! norm < "$FILE_SRC" >> "$DENY"; then
     echo "pre-push BLOCKED: the denylist could not be written to a temporary file, so this push" >&2
     echo "  cannot be verified. Check that TMPDIR is writable and has free space, then retry." >&2
     exit 1
   fi
-  [ -s "$DENY" ] && DENY_SRC="the local pii-denylist file"
+  sz_after="$(wc -c < "$DENY" 2>/dev/null || echo 0)"
+  if [ "$sz_after" -gt "$sz_before" ] 2>/dev/null; then
+    if [ -n "$env_armed" ]; then DENY_SRC="the PII_DENYLIST env var and the local pii-denylist file"
+    else DENY_SRC="the local pii-denylist file"; fi
+  elif [ -n "$env_armed" ]; then
+    DENY_SRC="the PII_DENYLIST env var"
+  fi
+elif [ -n "$env_armed" ]; then
+  DENY_SRC="the PII_DENYLIST env var"
 fi
 if [ ! -s "$DENY" ]; then
   # Honest inactive: no terms survived normalization from either source. A comments-only or
@@ -150,6 +172,31 @@ if [ ! -s "$DENY" ]; then
   echo "pre-push: no usable denylist terms — env var and local file are absent, or hold only" >&2
   echo "  comments/blanks. PII pre-push guard INACTIVE (the CI denylist gate still applies)." >&2
   exit 0
+fi
+
+# --- CI-secret drift WARNING (informative only: never blocks, never writes) ---
+# The CI denylist job reads a repo secret that no API can read back. The gitignored marker
+# .pii-denylist.synced, beside the denylist file, holds the sha256 of the file as it was when the
+# operator last wrote it to that secret via .githooks/overwrite-ci-denylist. When the file no
+# longer matches that hash, CI is scanning with older terms than this hook just used — worth
+# saying out loud, and nothing more. An earlier version of this hook WROTE the secret here on
+# every drift; overwriting a value nobody can read back is destruction of the current value, so
+# it now happens only when the operator runs the overwrite tool and types its confirmation.
+#
+# ORDERING IS LOAD-BEARING: this runs only AFTER the denylist has been resolved and read
+# successfully, so the file is known-readable and sha256sum cannot reach the failure branch where
+# a tool reports trouble by printing the PATH — the one string the gate withholds everywhere else
+# (a clone living in a directory named after the person would have the gate echo the term).
+if [ -n "$FILE_SRC" ] && [ -r "$FILE_SRC" ]; then
+  MARKER="$(dirname "$FILE_SRC")/.pii-denylist.synced"
+  CUR_HASH="$(sha256sum "$FILE_SRC" 2>/dev/null | cut -d' ' -f1)"
+  if [ -n "$CUR_HASH" ]; then
+    if [ ! -f "$MARKER" ] || [ "$(cat "$MARKER" 2>/dev/null)" != "$CUR_HASH" ]; then
+      echo "pre-push NOTE: the local denylist differs from what was last written to the CI secret" >&2
+      echo "  (or has never been written from it) — CI may scan with STALE terms. When ready, run" >&2
+      echo "  .githooks/overwrite-ci-denylist yourself; pushing no longer updates the secret." >&2
+    fi
+  fi
 fi
 
 # scan_eval <status-of-git> <status-of-grep> <what> — sets SCAN_RESULT=match|clean, or blocks.
@@ -194,7 +241,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
   # The ref NAME reaches the remote as a name, and it is echoed on a block — so check it first.
   ref_safe=yes
-  printf '%s\n' "$local_ref" "$remote_ref" | grep -a -i -F -f "$DENY" >/dev/null
+  printf '%s\n' "$local_ref" "$remote_ref" | grep -a -i -F -w -f "$DENY" >/dev/null
   case "${PIPESTATUS[1]}" in
     0) ref_safe=no ;;
     1) ;;
@@ -260,7 +307,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         continue
       }
       if [ "$tag_type" = "tag" ]; then
-        git cat-file -p "$local_sha" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
+        git cat-file -p "$local_sha" 2>/dev/null | grep -a -i -F -w -f "$DENY" >/dev/null
         scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the annotated tag object"
         if [ "$SCAN_RESULT" = match ]; then
           echo "pre-push BLOCKED ($ref_label): a denylisted personal name is in the tag's message." >&2
@@ -287,7 +334,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   # Statuses are read from PIPESTATUS, not from the pipeline: under pipefail a non-zero `git log`
   #   overrides grep's verdict, which is exactly how a MATCH can read as "no match".
   git log -p -m --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv \
-      "${range[@]}" 2>/dev/null | grep -a -i -F -f "$DENY" >/dev/null
+      "${range[@]}" 2>/dev/null | grep -a -i -F -w -f "$DENY" >/dev/null
   scan_eval "${PIPESTATUS[0]}" "${PIPESTATUS[1]}" "the outgoing commits"
   if [ "$SCAN_RESULT" = match ]; then
     echo "pre-push BLOCKED ($ref_label): a denylisted personal name is in the commits being pushed." >&2
