@@ -76,9 +76,11 @@ both**, and stage 2 and stage 4 read them.
 So untrusted text does reach the reviewer, and the artifact is accepted (issue #197) on
 narrower ground: the only payload worth the trouble is a credential, and the credential
 screen is the control built for exactly that — hardened against literal, shaped, escaped,
-raw-byte and composed forms, and failing closed on a file it cannot clear. What an
-injection could still achieve is arbitrary attacker text in a build artifact that expires
-in thirty days. That is real, and small, and it is not zero.
+raw-byte and composed forms, and failing closed on a file it cannot clear. It guards BOTH
+public surfaces: the artifact, and the reviewer's closing text printed to the run log,
+which the diagnostic step screens with the same function. What an injection could still
+achieve is arbitrary attacker text on either — a build artifact that expires in thirty
+days, or a log line. That is real, and small, and it is not zero.
 
 **So the honest statement of this repository's posture is narrower than "we take no
 outside code".** We take no outside *code*; we take outside *text* on every public thread

@@ -257,28 +257,19 @@ def main() -> int:
     for rule in artifact_rules + conversation_rules:
         shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
 
-    # --- Both files the reviewer is required to produce -------------------------------
-    # Seeded here, rather than left for the reviewer to create, so a reader can tell "the
-    # reviewer wrote nothing" apart from "the reviewer found nothing" -- which a missing
-    # file cannot express, since both arrive as an absence. findings.json's seed digest
-    # goes in the manifest, so an untouched file is recognisable as untouched rather than
-    # reported as a vanished one; refuted.json gets no digest, for the reason two
-    # paragraphs down.
+    # --- The file the reviewer is required to produce ------------------------------
+    # Seeded so a reader can tell "the reviewer wrote nothing" from "the reviewer found
+    # nothing" -- a missing file cannot express that, since both arrive as an absence. The
+    # seed carries an empty `summary` that any real result overwrites, and its digest goes
+    # in the manifest, so an untouched file is recognisable as untouched.
     #
-    # refuted.json gets a seed but no digest. A digest would tell an untouched file from
-    # an edited one, and for this file it cannot: the protocol asks for `[]` when nothing
-    # was refuted, which is what the seed already is. Seeding still earns its place --
-    # present-and-empty is distinguishable from ABSENT, so a round that never reached
-    # stage 3 no longer reads like one that got there and found nothing to argue down.
-    #
-    # No digest for it in the manifest, deliberately. Writing the file is what buys the
-    # present-vs-absent distinction; hashing it would buy nothing on top, since the two
-    # states a digest could separate are byte-identical. An entry no reader consults is
-    # structure the request does not need.
+    # refuted.json is deliberately NOT seeded. Seeding it would destroy the same
+    # distinction rather than create it: unseeded, a round that never reached stage 3
+    # leaves no file while a round that refuted nothing writes `[]` -- two states, two
+    # artifacts. Seed it and both are `[]`. An earlier version seeded it and claimed the
+    # opposite; the trace is one line long and runs the other way.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
-    refuted_seed = json.dumps([], indent=2)
-    (out_dir / "refuted.json").write_text(refuted_seed, encoding="utf-8")
 
     manifest = {
         "pr": int(pr_number),

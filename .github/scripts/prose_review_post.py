@@ -328,7 +328,7 @@ REDACTED = "[REDACTED-CREDENTIAL]"
 
 
 def _collapse_with_map(value: str) -> tuple[str, list[tuple[int, int]]]:
-    """Collapse escapes, and record which span of the ORIGINAL each collapsed char came from.
+    r"""Collapse escapes, and record which span of the ORIGINAL each collapsed char came from.
 
     The map is what lets a redaction touch only the matched span. Rewriting the whole
     string as its collapsed form would decode every unrelated escape too -- and `\u0022`
@@ -364,7 +364,7 @@ def _secret_spans(text: str) -> list[tuple[int, int]]:
 
 
 def screened(value: str) -> str:
-    """Redact credential material from a string about to reach a public surface.
+    r"""Redact credential material from a string about to reach a public surface.
 
     Used by every path that prints or publishes model-written bytes -- the artifact
     screen, the dropped-finding warnings, and the workflow's diagnostic step -- so all
@@ -404,11 +404,10 @@ def _string_carries_secret(value: str) -> bool:
     return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
 
 
-# A surrogate PAIR is matched as one unit, before the single-escape alternative. Decoding
-# the halves independently yields two lone surrogates, which `str.encode("utf-8")` refuses
-# -- so a file holding any non-BMP character (json.dumps writes every emoji this way under
-# its default ensure_ascii) plus credential material would raise on the write instead of
-# being redacted, turning a match fatal in a file where redaction is perfectly possible.
+# A surrogate PAIR is matched as one unit, before the single-escape alternative, so that a
+# non-BMP character decodes to the one character it encodes rather than two halves of it.
+# json.dumps writes every emoji this way under its default ensure_ascii, and a collapsed
+# view that mangles them is a view the screens read wrongly.
 ESCAPE_SEQUENCE = re.compile(
     r"\\u([dD][89abAB][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})"
     r"|\\u([0-9a-fA-F]{4})"
@@ -418,12 +417,12 @@ ESCAPE_SEQUENCE = re.compile(
 def _decode_escape(match: re.Match) -> str:
     """Turn one escape -- or one surrogate pair -- back into the character it encodes.
 
-    An UNPAIRED surrogate is left as the literal escape text it already was. Decoding it
-    yields a lone surrogate, which `str.encode("utf-8")` refuses, so the write would raise
-    and withhold the round -- the same crash pair-matching was added to prevent, reached
-    by the half of the input pair-matching does not cover. Nothing is lost by leaving it:
-    a lone surrogate cannot be part of a credential, so the screens have nothing to find
-    behind it.
+    An UNPAIRED surrogate is left as the literal escape text it already was, because a
+    lone surrogate is not a character any consumer of this view can handle -- and nothing
+    is lost, since it cannot be part of a credential either. Historical note, because the
+    shape of this function looks over-careful without it: an earlier design wrote the
+    collapsed text back to disk, and lone surrogates made that write raise. The write is
+    gone; correct matching is what the care is for now.
     """
     high, low, single = match.groups()
     if single is None:
@@ -441,8 +440,8 @@ def scrub(work: Path) -> int:
     this job now has -- the header above lists them -- and this function covers exactly
     one more: the work directory uploaded as an artifact. The third, the reviewer's
     closing text printed to a world-readable log, cannot be reached from here at all --
-    those bytes are emitted before this runs -- so the diagnostic step imports the same
-    two patterns and applies them there. Counting the
+    those bytes are emitted before this runs -- so the diagnostic step imports `screened()`
+    and applies it there. Counting the
     artifact as "the second channel" and stopping there is how an audit of what must be
     covered misses the one that gets no cover at all.
 
@@ -538,7 +537,7 @@ def scrub(work: Path) -> int:
             continue
 
         # An escaped credential hides from both screens without hiding from a reader:
-        # written as `\\uXXXX` sequences a token matches neither the literal nor the shape
+        # written as `\uXXXX` sequences a token matches neither the literal nor the shape
         # as raw text, and anything that decodes the file gets a live one back. Escaped and
         # raw are the SAME VALUE -- the property this repo already met from the other
         # direction in the ensure_ascii incident -- so a screen reading only bytes is
