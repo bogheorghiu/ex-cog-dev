@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-# Twin: skills/dev-job-defense-ties/scripts/config.py — keep logic-identical
-# (repo convention on twin copies; see repo CLAUDE.md). Only the constants
+# Twin: skills/dev-job-defense-ties/scripts/config.py — keep logic-identical.
+# Stated here rather than pointed at CLAUDE.md: that document scopes its
+# duplication note to skills/test_skill_structure.py specifically, so a reader
+# sent there for a general convention finds one that does not cover this pair.
+# Only the constants
 # APP / ENV_OVERRIDE and the two describe() label lines (app name + category
 # list) differ — all executable logic stays identical.
 """Config store for the research-toolkit investigation profile.

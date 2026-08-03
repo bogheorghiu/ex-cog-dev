@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# Twin: skills/dev-job-defense-ties/scripts/test_config.py — keep logic-identical
-# (repo convention on twin copies; see repo CLAUDE.md).
+# Twin: skills/dev-job-defense-ties/scripts/test_config.py — keep logic-identical.
+# The obligation is stated here, not delegated to CLAUDE.md, whose duplication
+# note covers skills/test_skill_structure.py and not this pair.
 """Unit tests for config.py — the deterministic config store.
 
 Written test-first (TDD): this file is the behavioral spec for the tool. No
