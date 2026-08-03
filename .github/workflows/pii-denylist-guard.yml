@@ -236,7 +236,7 @@ jobs:
           set +e
           git log -p -m --all --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv 2>/dev/null \
             | grep -a -i -F -w -c -f "${RUNNER_TEMP}/denylist.txt" > "${RUNNER_TEMP}/hist.txt"
-          gitst=${PIPESTATUS[0]}; grepst=${PIPESTATUS[1]}
+          pst=("${PIPESTATUS[@]}"); gitst=${pst[0]}; grepst=${pst[1]}
           set -e
           if [ "${grepst}" -ge 2 ]; then
             echo "::error::The history scan itself failed (grep exit ${grepst}) — history was NOT verified. Failing closed."
