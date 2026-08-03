@@ -16,8 +16,8 @@ nothing fires when the artifact changes: no compiler, no test, no diff-reviewer 
 pair together. So the copy drifts silently and keeps *reading* as authoritative while
 wrong. Structure cannot rot this way, because structure *is* the thing.
 
-Measured, not hypothetical: PR #195 ran ~22 review rounds, and of its 47 posted findings
-**~27 were prose restating what the code already said** — four separate copies of
+Measured, not hypothetical: PR #195 ran ~24 review rounds, and of its 21 posted findings
+**17 were prose restating what the code already said** — four separate copies of
 "findings.json is the only writable path"; "a second public channel" while the file's own
 header counted three; a test header enumerating disk-touching tests that was wrong twice
 within one commit. Every one was true when written and falsified by a later commit.
@@ -33,7 +33,7 @@ within one commit. Every one was true when written and falsified by a later comm
 
 2. **Prefer changing the code so the sentence is unnecessary.** A comment justified
    `if-no-files-found: ignore` with a case the step's own `if:` condition already
-   excluded — a wrong *reason*, the corpus's second class (~7 of 47). The fix was not a
+   excluded — a wrong *reason*, the corpus's second class (~7 of 21). The fix was not a
    better sentence but a tighter condition that left nothing to explain. A stated reason
    is prose too and rots the same way; one that survives this step still gets the
    `verify-claims.md` re-read, because nothing else compiles it.
@@ -74,9 +74,9 @@ code is exactly what Rule 1 obliges you to write.
 
 ## What this rule does not prevent
 
-Named so the rule is not oversold. Of PR #195's 47 findings, ~9 were real code bugs and
-the remainder process findings — no prose rule touches those. This rule reaches the ~27
-restatements directly and, through step 2, part of the ~7 wrong-reasons.
+Named so the rule is not oversold. Of the corpus's 21 posted findings, 3 were real code
+defects and the last was a process rule — no prose rule touches those. This rule reaches
+the 17 restatements directly and, through step 2, part of the 7 wrong-reasons.
 
 **Lineage.** The classic maxim "comments explain why, not what" (self-documenting code;
 DRY applied across the code–prose boundary), extended one step: even the why is first
