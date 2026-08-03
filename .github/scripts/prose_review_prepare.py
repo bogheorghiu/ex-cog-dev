@@ -265,17 +265,11 @@ def main() -> int:
     # reported as a vanished one; refuted.json gets no digest, for the reason two
     # paragraphs down.
     #
-    # refuted.json is seeded for a WEAKER reason, stated exactly because the strong one
-    # does not hold. Its seed is `[]`, and the protocol tells the reviewer to write `[]`
-    # when it refuted nothing -- the same two bytes -- so no digest can separate "skipped
-    # stage 3" from "refuted nothing". findings.json's seed discriminates only because it
-    # carries an empty `summary` that any real result must overwrite.
-    #
-    # What seeding refuted.json does buy is the weaker distinction: present-and-empty is
-    # at least distinguishable from ABSENT, so a round that never reached stage 3 at all
-    # no longer looks like a round that got there and found nothing to argue down. That
-    # matters because this pull request exists so a PERSON can tell a well-calibrated
-    # filter from a harsh one, and nothing downstream branches on the file.
+    # refuted.json gets a seed but no digest. A digest would tell an untouched file from
+    # an edited one, and for this file it cannot: the protocol asks for `[]` when nothing
+    # was refuted, which is what the seed already is. Seeding still earns its place --
+    # present-and-empty is distinguishable from ABSENT, so a round that never reached
+    # stage 3 no longer reads like one that got there and found nothing to argue down.
     #
     # No digest for it in the manifest, deliberately. Writing the file is what buys the
     # present-vs-absent distinction; hashing it would buy nothing on top, since the two

@@ -477,10 +477,6 @@ def scrub(work: Path) -> int:
     succeeding -- withholds the round, and losing one round's archive is the cheaper of
     the two ways to be wrong.
     """
-    # Counts FILES CHANGED, not redaction operations. A file can be touched twice -- once
-    # to collapse escapes, once to redact what that revealed -- and counting each would
-    # over-report every time, since the collapse only fires when the redaction is certain
-    # to follow. The number is for a human reading the log, so it has to mean what it says.
     redacted_files = 0
     for path in sorted(p for p in work.rglob("*") if p.is_file()):
         try:
