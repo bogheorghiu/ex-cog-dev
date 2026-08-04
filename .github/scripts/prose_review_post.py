@@ -12,8 +12,13 @@ around —
   3. the line it targets is really in this diff.
 
 A finding failing any of these is never posted at all, rather than posted and audited
-afterwards. It also means the model has no write channel: the only thing that reaches a
-public surface is text this script chose to send.
+afterwards. So the only thing reaching the PULL REQUEST is text this script chose to
+send. That is narrower than "the only thing reaching a public surface": the workflow
+also publishes the work directory as a build artifact and prints the reviewer's closing
+text to a world-readable log, both carrying model-written bytes that these checks never
+see. Both get the credential screen and nothing more, and it is the SAME screen: the
+artifact through `scrub()` below, the log through `screened()` imported into the step
+that prints it. Issue #197 carries whether those channels should exist at all.
 
 Links are generated here too, so a malformed permalink is not something the reviewer can
 get wrong.
@@ -70,7 +75,9 @@ MAX_QUOTED_LINES = int(os.environ.get("PROSE_REVIEW_MAX_QUOTED_LINES", "6"))
 BARE_REF = re.compile(r"(?<!issue )(?<!request )(?<!PR )(?<![\w/])#\d+", re.IGNORECASE)
 
 # A finding becomes a public comment, so its text is the one output channel out of this
-# job — and the job holds two live tokens. The reviewer is given `Read` without a path
+# job that these checks control — the artifact and the run log are the other two, and both
+# get only `screened()` below (see the header). The job holds two
+# live tokens on all three. The reviewer is given `Read` without a path
 # scope (it has to be able to read the repo it reviews), which means /proc/self/environ
 # is reachable to it, so this is a real channel and not a theoretical one. The reviewer
 # has no legitimate reason to ever quote a credential, so anything matching here is
@@ -199,7 +206,14 @@ def validate(findings: list[dict], manifest: dict, commentable: dict[str, set[in
             rejected.append((raw, f"missing required field(s): {', '.join(missing)}"))
             continue
 
-        blob = f"{raw['summary']} {raw['detail']}"
+        # Matched on the escape-COLLAPSED text, for the same reason the artifact screen
+        # is: an escaped token matches neither check as raw text and decodes to a live one
+        # for anything that reads it. That fix reached `scrub()` and the log and stopped
+        # here, which left the STRONGEST channel the weakest -- a review comment is public
+        # the moment it posts, and `scrub()` runs in a later workflow step, so nothing can
+        # take it back. Collapse only for the decision; the finding is rejected whole, so
+        # no collapsed text is ever published.
+        blob = _collapse_with_map(f"{raw['summary']} {raw['detail']}")[0]
         # Neither branch echoes what it matched, and the literal check is deliberately
         # first: it is the one that is certain rather than heuristic.
         if any(secret in blob for secret in SECRET_LITERALS):
@@ -279,7 +293,9 @@ def screen_header(summary: str) -> str:
     repaired: unlike a finding there is no repair round for it, and the failure is
     logged, so nothing is silently rewritten.
     """
-    text = summary.strip()
+    # Collapsed before matching, same reason as validate(): this text becomes the review
+    # body, which is public on post.
+    text = _collapse_with_map(summary.strip())[0]
     if not text:
         return NEUTRAL_HEADER
     quoted = quoted_line_count(text)
@@ -317,10 +333,258 @@ def comment_body(finding: dict, repo: str, head_sha: str) -> str:
     )
 
 
+REDACTED = "[REDACTED-CREDENTIAL]"
+
+
+def _collapse_with_map(value: str) -> tuple[str, list[tuple[int, int]]]:
+    r"""Collapse escapes, and record which span of the ORIGINAL each collapsed char came from.
+
+    The map is what lets a redaction touch only the matched span. Rewriting the whole
+    string as its collapsed form would decode every unrelated escape too -- and `\u0022`
+    decoding to a bare `"` turns a valid JSON file into an invalid one, which is the
+    archive this branch exists to preserve.
+    """
+    out: list[str] = []
+    origin: list[tuple[int, int]] = []
+    pos = 0
+    for match in ESCAPE_SEQUENCE.finditer(value):
+        literal = value[pos:match.start()]
+        out.append(literal)
+        origin.extend((pos + i, pos + i + 1) for i in range(len(literal)))
+        decoded = _decode_escape(match)
+        out.append(decoded)
+        origin.extend((match.start(), match.end()) for _ in decoded)
+        pos = match.end()
+    tail = value[pos:]
+    out.append(tail)
+    origin.extend((pos + i, pos + i + 1) for i in range(len(tail)))
+    return "".join(out), origin
+
+
+def _secret_spans(text: str) -> list[tuple[int, int]]:
+    """Every span of `text` holding a live credential or something shaped like one."""
+    spans = [(m.start(), m.end()) for m in SECRET_SHAPES.finditer(text)]
+    for secret in SECRET_LITERALS:
+        at = text.find(secret)
+        while at != -1:
+            spans.append((at, at + len(secret)))
+            at = text.find(secret, at + 1)
+    return sorted(spans)
+
+
+def screened(value: str) -> str:
+    r"""Redact credential material from a string about to reach a public surface.
+
+    Used by every path that prints or publishes model-written bytes -- the artifact
+    screen, the dropped-finding warnings, and the workflow's diagnostic step -- so all
+    three apply exactly the same rules. A second copy would drift from the first, which is
+    the defect this branch spent a dozen rounds on.
+
+    Matching happens on the escape-COLLAPSED text and redaction happens on the ORIGINAL,
+    through a position map. Both halves are load-bearing. Matching raw would miss an
+    escaped token, which matches neither the literal nor the shape as text -- the bypass
+    already closed once for the artifact and once for the log. Returning the collapsed
+    text would decode every unrelated escape as a side effect, and a `\u0022` becoming a
+    bare quote makes a JSON archive unparseable.
+
+    A string with nothing to redact comes back unchanged, byte for byte.
+    """
+    collapsed, origin = _collapse_with_map(value)
+    spans = _secret_spans(collapsed)
+    if not spans:
+        return value
+
+    # Merge overlaps, then splice from the end so earlier offsets stay valid.
+    merged: list[tuple[int, int]] = []
+    for lo, hi in spans:
+        if merged and lo <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], hi))
+        else:
+            merged.append((lo, hi))
+
+    out = value
+    for lo, hi in reversed(merged):
+        out = out[: origin[lo][0]] + REDACTED + out[origin[hi - 1][1] :]
+    return out
+
+
+def _string_carries_secret(value: str) -> bool:
+    """True if this string holds a live credential or something shaped like one."""
+    return any(s in value for s in SECRET_LITERALS) or bool(SECRET_SHAPES.search(value))
+
+
+# A surrogate PAIR is matched as one unit, before the single-escape alternative, so that a
+# non-BMP character decodes to the one character it encodes rather than two halves of it.
+# json.dumps writes every emoji this way under its default ensure_ascii, and a collapsed
+# view that mangles them is a view the screens read wrongly.
+ESCAPE_SEQUENCE = re.compile(
+    r"\\u([dD][89abAB][0-9a-fA-F]{2})\\u([dD][c-fC-F][0-9a-fA-F]{2})"
+    r"|\\u([0-9a-fA-F]{4})"
+)
+
+
+def _decode_escape(match: re.Match) -> str:
+    """Turn one escape -- or one surrogate pair -- back into the character it encodes.
+
+    An UNPAIRED surrogate is left as the literal escape text it already was, because a
+    lone surrogate is not a character any consumer of this view can handle -- and nothing
+    is lost, since it cannot be part of a credential either. Historical note, because the
+    shape of this function looks over-careful without it: an earlier design wrote the
+    collapsed text back to disk, and lone surrogates made that write raise. The write is
+    gone; correct matching is what the care is for now.
+    """
+    high, low, single = match.groups()
+    if single is None:
+        return chr(0x10000 + (int(high, 16) - 0xD800) * 0x400 + (int(low, 16) - 0xDC00))
+    code = int(single, 16)
+    if 0xD800 <= code <= 0xDFFF:
+        return match.group(0)
+    return chr(code)
+
+
+def scrub(work: Path) -> int:
+    """Redact credential material from every file that is about to be published.
+
+    The findings screen guards the review comment. That is one of THREE public surfaces
+    this job now has -- the header above lists them -- and this function covers exactly
+    one more: the work directory uploaded as an artifact. The third, the reviewer's
+    closing text printed to a world-readable log, cannot be reached from here at all --
+    those bytes are emitted before this runs -- so the diagnostic step imports `screened()`
+    and applies it there. Counting the
+    artifact as "the second channel" and stopping there is how an audit of what must be
+    covered misses the one that gets no cover at all.
+
+    ALL THREE model-written files in the artifact reach it unscreened. The findings screen
+    decides which entries become a comment; it never rewrites a file, so `findings.json`
+    is uploaded exactly as the model left it -- including any entry the screen refused.
+    `rejected.json` records each rejected finding IN FULL, one of them rejected precisely
+    for containing a live credential. `refuted.json` is written under an Edit rule and read
+    by nothing. Counting two here rather than three would be the same under-count the
+    paragraph above warns about, one file down instead of one channel.
+
+    Screening those three by name would be the wrong shape. This branch's own history is a
+    claim about which files exist going stale as files were added, so the guard is a choke
+    point over the directory instead: every file that will be uploaded, whatever wrote it
+    and whenever it appeared. A new output is covered on the day it is invented rather
+    than on the day someone remembers to add it here.
+
+    A match is REDACTED, not fatal, wherever redacting is possible -- which is every
+    decodable file. Redacting is the only thing that changes what gets published, and a
+    match is the screen working rather than an error, so it is loud (an error annotation
+    naming the file) and the round is still archived with the credential removed.
+
+    TWO cases are deliberately fatal, and both for the same reason -- the file cannot be
+    cleared, not that a match occurred. A file that is not valid UTF-8 and still carries
+    credential material after the byte pass: positions in a lenient decode do not map back
+    to the original bytes, so there is nothing safe to write. And a file that cannot be
+    READ at all: an OSError is caught nowhere here, because skipping past an unread file
+    would leave it in the directory the next step publishes.
+
+    An unexpected crash lands the same way for a third reason: a screen that can be
+    bypassed by crashing is not a screen. In all three, the upload -- gated on this step
+    succeeding -- withholds the round, and losing one round's archive is the cheaper of
+    the two ways to be wrong.
+    """
+    redacted_files = 0
+    for path in sorted(p for p in work.rglob("*") if p.is_file()):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            # Two passes here, and they end differently. LITERAL values are redacted in
+            # the raw bytes, which needs no decoding and so is exact. Everything the
+            # literal pass cannot reach -- a shaped token, an escaped one -- is only
+            # DETECTABLE, on a lenient decode whose offsets do not map back to the
+            # original bytes, so there is nothing safe to write and that path ends fatal.
+            #
+            # An earlier version skipped the file outright, reasoning that "neither screen
+            # applies to what it cannot decode". That was false for the literal half, and
+            # it left one invalid byte enough to smuggle a credential past a screen that
+            # then published it.
+            #
+            # An OSError is still caught nowhere here on purpose: a file the screen could
+            # not READ is not a file it has cleared, and skipping past it would leave it in
+            # the directory the next step publishes -- the bypass-by-crashing the paragraph
+            # above refuses. Letting it escape fails the step, and the upload is gated on
+            # this step succeeding.
+            data = path.read_bytes()
+            scrubbed = data
+            for secret in SECRET_LITERALS:
+                scrubbed = scrubbed.replace(secret.encode("utf-8"), REDACTED.encode("utf-8"))
+            if scrubbed != data:
+                path.write_bytes(scrubbed)
+                redacted_files += 1
+                print(f"::error::redacted credential bytes from "
+                      f"{path.relative_to(work)} (undecodable file) before upload")
+
+            # The byte pass catches a LITERAL and nothing else -- it cannot collapse an
+            # escape and cannot run the shape regex. So the two bypasses this screen has
+            # already closed COMPOSE: one invalid byte routes a file down this branch, and
+            # an escaped shaped token then passes it untouched. Verified.
+            #
+            # There is no safe in-place redaction here, because the offsets in a lenient
+            # decode do not map back to the original bytes. So this fails closed, which is
+            # the posture the docstring already sets: an undecodable file is not something
+            # this pipeline produces, and one that also carries a credential is deliberate.
+            # The message names the file and never what matched.
+            # BOTH decodings, because each hides what the other reveals. With
+            # errors="replace" every bad byte becomes U+FFFD, which is in none of the
+            # shape pattern's character classes -- so one `\xff` dropped into the middle
+            # of a token splits it into two runs and neither matches. With
+            # errors="ignore" the bad byte vanishes and the token reads whole again.
+            # Checking only the first was the gap; checking only the second would lose a
+            # token whose bytes really are separated by content.
+            views = [
+                scrubbed.decode("utf-8", errors="replace"),
+                scrubbed.decode("utf-8", errors="ignore"),
+            ]
+            if any(_string_carries_secret(ESCAPE_SEQUENCE.sub(_decode_escape, v))
+                   for v in views):
+                raise RuntimeError(
+                    f"{path.relative_to(work)} is not valid UTF-8 and still carries "
+                    f"credential material after the byte pass; refusing to publish"
+                )
+            continue
+
+        # An escaped credential hides from both screens without hiding from a reader:
+        # written as `\uXXXX` sequences a token matches neither the literal nor the shape
+        # as raw text, and anything that decodes the file gets a live one back. Escaped and
+        # raw are the SAME VALUE -- the property this repo already met from the other
+        # direction in the ensure_ascii incident -- so a screen reading only bytes is
+        # strictly weaker than the one guarding the comment path, which decodes first.
+        #
+        # Done by collapsing the escapes rather than by parsing JSON, deliberately. An
+        # earlier version parsed, and fell through to the raw pass when the parse failed --
+        # which left a model-written file needing only ONE syntax error to carry an escaped
+        # credential past the screen intact. Nothing downstream would have caught it:
+        # `refuted.json` is read by nothing. Collapsing is also not JSON-specific and
+        # cannot be defeated by malformed input, because there is nothing to malform.
+        #
+        # Only rewritten when a credential is actually there, so an ordinary file keeps its
+        # bytes exactly.
+        redacted = screened(text)
+        if redacted != text:
+            path.write_text(redacted, encoding="utf-8")
+            redacted_files += 1
+            # The path, never the match: echoing what matched would republish the secret
+            # in the run log, the same mistake one channel further along.
+            print(f"::error::redacted credential material from "
+                  f"{path.relative_to(work)} before upload")
+    print(f"scrub: {redacted_files} file(s) redacted")
+    return 0
+
+
 def main() -> int:
+    work = Path(os.environ["PROSE_REVIEW_DIR"])
+    if os.environ.get("PROSE_REVIEW_SCRUB") == "1":
+        # Returns before anything below reads the PR because the scrub needs none of it --
+        # not because those files might be missing. This path is entered only from the
+        # screening step, which is gated on `prepare` succeeding, and that gate is the
+        # whole guarantee. Coupling a redaction pass to files it never opens would be one
+        # more way to break it.
+        return scrub(work)
+
     repo = os.environ["GITHUB_REPOSITORY"]
     pr_number = os.environ["PR_NUMBER"]
-    work = Path(os.environ["PROSE_REVIEW_DIR"])
 
     manifest = json.loads((work / "manifest.json").read_text(encoding="utf-8"))
     commentable = hunk_lines((work / "diff.patch").read_text(encoding="utf-8"))
@@ -339,8 +603,8 @@ def main() -> int:
     seed_digest = manifest.get("findings_seed_sha256")
     if seed_digest and hashlib.sha256(raw_text.encode("utf-8")).hexdigest() == seed_digest:
         # Distinguished from "found nothing", which is a legitimate empty result the
-        # reviewer states deliberately. An untouched seed means the reviewer ran and
-        # never wrote its one required output, so there is no review to validate and
+        # reviewer states deliberately. An untouched seed means the reviewer ran and never
+        # wrote the one output this script validates, so there is no review to validate and
         # nothing to learn from validating it. Named precisely so the run's log says
         # which of the two happened.
         print("::error::the reviewer did not write findings.json — the file is still "
@@ -362,7 +626,14 @@ def main() -> int:
     # Rejections are surfaced, never swallowed: a reviewer that keeps citing rules that
     # do not bind the file it is looking at is itself the finding.
     for finding, reason in rejected:
-        print(f"::warning::dropped finding on {finding.get('file', '?')}: {reason}")
+        # Screened because validate()'s own checks do not cover these fields: they run
+        # over `summary` and `detail`, while this line interpolates `file` and the reason
+        # strings interpolate `rule`, `line` and `severity`. scrub() cannot reach it
+        # either -- it rewrites files on disk and this is already printed by then, the
+        # same reason the closing text needed the screen imported into the step that
+        # prints it.
+        print(screened(f"::warning::dropped finding on "
+                       f"{finding.get('file', '?')}: {reason}"))
     (work / "rejected.json").write_text(
         json.dumps([{"finding": f, "reason": r} for f, r in rejected], indent=2),
         encoding="utf-8",
@@ -397,9 +668,11 @@ def main() -> int:
         f"{len(accepted)} comment(s) posted"
         + (f"; {len(rejected)} finding(s) dropped in validation." if rejected else ".")
         + "\n\n<sub>Adapted from Anthropic's `code-review` plugin. These comments are "
-        "advisory: none of them blocks a merge. A red check on this job means the "
-        "reviewer failed to produce a review at all, which is a different thing and "
-        "worth looking at. Reply, or apply the `no-prose-review` label to opt out.</sub>"
+        "advisory: none of them blocks a merge. A red check on this job never means a "
+        "finding is blocking -- it means the job itself failed, either producing no "
+        "review at all or withholding this run's archive from publication, which is a "
+        "different thing and worth looking at. Reply, or apply the `no-prose-review` "
+        "label to opt out.</sub>"
     )
 
     review = {

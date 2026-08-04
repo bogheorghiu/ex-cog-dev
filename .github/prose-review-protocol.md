@@ -44,8 +44,7 @@ there are the base branch's versions; the diff is the authority on what this cha
 to them.
 
 `.prose-review/findings.json` **already exists**, seeded as `{"summary": "", "findings":
-[]}`. Edit it — it is the one path you may write, and it is deliberately present so you
-never have to create it.
+[]}`. Edit it — it is deliberately present so you never have to create it.
 
 **Every path through this protocol ends by writing that file** — including skipping the
 review at stage 1, finding nothing, and finding nothing new at stage 4. None of those is
@@ -75,10 +74,21 @@ You also have **no shell and no network**. `Bash`, `WebFetch` and `WebSearch` ar
 explicitly disallowed, and every call to them is refused; reach for `Read`, `Grep` and
 `Glob` instead.
 
-**You do not post anything.** You write one file, `.prose-review/findings.json`, and
-a validation script decides what reaches the pull request. A finding that cites a rule
-which does not bind the file it targets is dropped before it is ever published, so
-inventing a rule scope wastes the finding rather than landing it.
+**You do not post anything.** Nothing you write reaches the pull request directly. Which
+files you owe depends on the path you take through this protocol — a round skipped at
+stage 1 writes `findings.json` alone, and `refuted.json` exists only if stage 3 ran.
+Writing it anyway on a skipped round is not harmless: an absent `refuted.json` is how a
+reader tells "stage 3 never happened" from "stage 3 happened and refuted nothing". `.prose-review/findings.json` is screened by a validation script before any of
+it becomes a comment: a finding citing a rule that does not bind the file it targets is
+dropped before it is ever published, so inventing a rule scope wastes the finding rather
+than landing it.
+
+`.prose-review/refuted.json` never becomes a comment either — but do not read that as
+private. **Both files are uploaded as a build artifact that anyone can download**, on a
+public repository, screened only for credentials. So write refuted.json to the same
+standard you write a comment to: quote no more of the source than a comment would, and
+put nothing in it you would not publish. It is unscreened for everything except
+credentials, which makes you the only check on it.
 
 ## Stage 1 — Should this run at all?
 
@@ -130,6 +140,19 @@ the finding, the rule text, and the file. Its only question:
 > Is this rule actually in scope for this file, and is it actually violated?
 
 It answers yes or no with its reasoning. A finding that fails validation is discarded.
+
+**Write down what you discarded.** Every candidate that does not survive this stage goes
+into `.prose-review/refuted.json`, as a JSON array of objects with `file`, `line`,
+`claim` (the finding as stage 2 put it) and `refutation` (the validator's argument, in
+its own words, not summarised). Write the file even when the array is empty.
+
+This is not for you and you never read it back — each round finds blind, which is the
+point. It is for the person reading afterwards, and it is the only place each argument
+survives VERBATIM: your closing text carries the same reasoning as your own summary of
+it, in a log someone has to scroll, while this is a downloadable file holding what you
+actually said. Without such a record a round that posts nothing reads the same whether it
+found nothing or refuted everything it found, and those are opposite facts about the
+change under review.
 
 This is a distinct agent on purpose. The stage-2 agent has already committed to the
 finding, and asking it to check its own work is the same confirmation bias that stage 2
@@ -208,7 +231,8 @@ the minimum quotation needed — this job's logs are publicly readable.
 
 ## Output
 
-Write `.prose-review/findings.json` and nothing else:
+Write `.prose-review/findings.json`, and `.prose-review/refuted.json` as described in
+stage 3. Nothing else:
 
 ```json
 {

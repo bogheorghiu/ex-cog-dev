@@ -51,18 +51,22 @@ sentence, in the PR body — which is this repo's governing rule (*state the why
 to a review verdict. What is not acceptable is running it, seeing findings, and pushing
 without mentioning them.
 
-## If `/code-review` is not available, say so — do not quietly skip it
+## If `/code-review` is not available, hand it to the operator — do not quietly skip it
 
 The plugin can be missing: not installed in this environment, a marketplace that will not
 resolve, a headless or containerised session that never loaded it. When that happens,
-**tell the operator, in the turn where you noticed**, and name what is going unreviewed —
-the files and why they qualified under the trigger above.
+**say so in the turn where you noticed**, name what is going unreviewed — the files, and
+why they qualified under the trigger above — and **ask the operator to run it in their own
+session**, where the plugin does load. Wait for what it finds before opening the PR, unless
+they tell you not to.
 
-The reason to be loud is that a skipped review and a clean review produce the identical
-observable: no findings. Left unsaid, "I could not run it" becomes "it found nothing" by
-the time anyone reads the PR, and the gap this rule exists to close is open again with a
-green check over it. Announcing it costs one sentence and hands the operator a real
-choice — install it, review by hand, or accept the gap on the record.
+Two reasons, and the second is the one that decides it. First, a skipped review and a clean
+review produce the identical observable: no findings. Left unsaid, "I could not run it"
+becomes "it found nothing" by the time anyone reads the PR, and the gap this rule exists to
+close is open again with a green check over it. Second, announcing produces a *disclosure*
+while asking produces a *review* — the operator is one command away from the thing you
+cannot do, so the honest move costs them a minute and closes the gap instead of documenting
+it.
 
 ## Scope note
 

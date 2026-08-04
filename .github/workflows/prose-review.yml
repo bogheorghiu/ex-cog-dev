@@ -19,7 +19,19 @@
 #   3. Claude writes findings to a file. It does NOT post. A validation script checks
 #      every finding against the derived rule bindings and the diff, and posts only what
 #      passes. That makes "cite the rule correctly" a machine check rather than a
-#      request the model can skip, and leaves the model with no write channel at all.
+#      request the model can skip, and leaves the model no way to reach the PULL REQUEST
+#      except through text that script chose to send.
+#      NOT the same as "no public output at all", and the difference is new: this job
+#      also publishes the work directory as a build artifact and prints the reviewer's
+#      closing text to a log, both world-readable on a public repo, and both carrying
+#      model-written bytes. Both now get the CREDENTIAL screen and only that -- the
+#      artifact from `scrub()` just before upload, the log from `screened()` imported into
+#      the diagnostic step, since a scrub over files on disk cannot reach bytes already
+#      printed. Neither gets rule binding, line, length or severity, which are what
+#      make the comment path safe. So the model has two weakly-screened public channels and
+#      no channel to the pull request without a strong screen. Issue #197 carries whether
+#      that trade is the right one; this comment's job is to stop the file asserting the
+#      older, simpler claim that it no longer earns.
 #
 # The job ALWAYS starts and exits 0 when gated off, rather than being skipped by a
 # job-level `if:`. Same reasoning as guard-main-settings.yml: a skipped job reports no
@@ -128,7 +140,7 @@ jobs:
 
       - name: Check out the repository
         if: steps.gate.outputs.review == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           # By default checkout writes the base64 GITHUB_TOKEN into .git/config, which
@@ -138,6 +150,7 @@ jobs:
           persist-credentials: false
 
       - name: Gather the review inputs
+        id: prepare
         if: steps.gate.outputs.review == 'true'
         run: python3 .github/scripts/prose_review_prepare.py
 
@@ -195,15 +208,17 @@ jobs:
             Everything you need has already been gathered into the .prose-review/
             directory. Read those files; you have no shell and no network.
 
-            Produce .prose-review/findings.json. Do not attempt to post anything.
+            Produce the output files the protocol asks for on the path you take. Do not
+            attempt to post anything.
 
             You get ONE turn. This is non-interactive: nothing reads your messages and
             you will not be resumed. Do not end your response while subagents are still
             outstanding, and do not end on a description of what you are about to do —
             when you stop, the run stops, and anything unwritten is lost. Wait for your
-            subagents, finish the reconciliation yourself, and write findings.json
-            BEFORE your final message.
-          # Writing is scoped to the one file the reviewer produces. Unscoped, it could
+            subagents, finish the reconciliation yourself, and write every file the
+            protocol owes for your path BEFORE your final message.
+          # Writing is scoped to the two files the reviewer produces — the findings it
+          # wants published, and the record of what it argued down. Unscoped, it could
           # rewrite the validator's own inputs — forging manifest.json's bindings, or
           # editing prose_review_post.py, which the next step then runs with GH_TOKEN —
           # which would route around every check that makes citation enforceable.
@@ -211,7 +226,10 @@ jobs:
           # It must be `Edit(path)`, not `Write(path)`: the CLI rejects the latter with
           # "not matched by file permission checks — only Edit(path) rules are", and an
           # Edit rule covers every file-editing tool including Write. Probed both ways:
-          # the reviewer can write findings.json and is refused any other path.
+          # a path with an Edit rule is writable, a path without one is refused. Stated
+          # as the invariant rather than as the list, because the list is on the line
+          # below and a prose copy of it goes stale the moment it grows — which is what
+          # happened here when this change added the second file.
           #
           # Both `Task` and `Agent` are listed because the SDK refers to the
           # subagent-spawn tool under both names; whichever the runtime registers, one
@@ -235,15 +253,17 @@ jobs:
           # it themselves.
           claude_args: >-
             --model opus
-            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Task,Agent"
+            --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json),Edit(.prose-review/refuted.json),Task,Agent"
             --disallowedTools "Bash,WebFetch,WebSearch"
 
-      # What the reviewer actually DID. The action's own log reports `is_error: false` and
-      # a turn count and nothing else, which is uninformative in the one case that
-      # matters: the model finishing without producing its output. Three rounds were spent
-      # guessing at that from the outside. This prints the tool calls and any permission
-      # denial from the execution log the action leaves in the runner temp dir, so the
-      # next occurrence is read rather than inferred.
+      # What the reviewer actually DID. The action closes by printing a result object --
+      # `is_error`, `duration_ms`, `num_turns`, `total_cost_usd`, `permission_denials_count`
+      # -- which is every aggregate and no identity: how many calls were refused, never
+      # which. That is uninformative in the one case that matters: the model finishing
+      # without producing its output. Three rounds were spent guessing at that from the
+      # outside. This prints the tool calls and any permission denial from the execution
+      # log the action leaves in the runner temp dir, so the next occurrence is read
+      # rather than inferred.
       #
       # Deliberately narrow: tool names, the paths of file-writing calls, denial messages,
       # and the model's closing text. Not the full transcript -- this job's logs are
@@ -256,11 +276,22 @@ jobs:
       - name: What the reviewer did
         if: always() && steps.gate.outputs.review == 'true'
         continue-on-error: true
+        env:
+          # Only so the screen below can compare against the real values. Never printed.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           log=$(find "${RUNNER_TEMP}" -name 'claude-execution-output.json' -print -quit 2>/dev/null || true)
           if [ -z "$log" ]; then echo "no execution log found under RUNNER_TEMP"; exit 0; fi
           python3 - "$log" <<'PY'
-          import json, sys
+          import json, sys, os
+          # The one screen, imported rather than copied. This step prints model-written
+          # text into a world-readable log, which is the third public surface and the only
+          # one nothing guarded -- scrub() runs over the work directory several steps
+          # later, so it cannot reach bytes already emitted here. A second copy of the
+          # patterns would drift from the first, which is this branch's whole history.
+          sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], ".github", "scripts"))
+          from prose_review_post import screened
           try:
               entries = json.load(open(sys.argv[1], encoding="utf-8"))
           except Exception as exc:
@@ -281,16 +312,39 @@ jobs:
                       calls.append(f"{name} {path}".strip())
                   elif block.get("type") == "text":
                       last_text = block.get("text", "") or last_text
-                  if "denied" in json.dumps(block)[:4000].lower():
-                      denials.append(json.dumps(block)[:400])
+                  # A refusal is an ERRORED tool_result -- that alone, with no test on
+                  # its wording. Matching the bare word `denied` anywhere in a block once
+                  # counted diff text, subagent prompts, and twice the reviewer grepping
+                  # this repository for `denied` while reading this very line. Requiring
+                  # the wording instead was the opposite error: the CLI has phrasings
+                  # containing neither word -- "The user doesn't want to proceed with this
+                  # tool use." -- so it could print zero on a round the result object
+                  # counts three for.
+                  #
+                  # The trade runs one way: this can now OVER-report, since an ordinary
+                  # errored call -- a Read of a path that turned out not to exist -- lands
+                  # here too. That is the safe direction for a shortlist read against the
+                  # authoritative `permission_denials_count` printed above it. The count is
+                  # the number; this says which.
+                  if block.get("type") == "tool_result" and block.get("is_error"):
+                      # Screen the FULL block first, then truncate. Truncating before
+                      # screening could cut a split credential at the 400-char boundary so a
+                      # partial token prefix reaches the public log, which is the one
+                      # disclose channel a diagnostic exists to keep covered.
+                      denials.append(screened(json.dumps(block))[:400])
           print(f"tool calls ({len(calls)}):")
           for c in calls:
-              print(f"  - {c}")
-          print(f"\npermission denials seen in content ({len(denials)}):")
+              print(f"  - {screened(c)}")
+          print(f"\nrefused tool calls ({len(denials)}); compare against "
+                f"permission_denials_count in the result object above:")
           for d in denials[:5]:
-              print(f"  ! {d}")
-          print("\nreviewer's closing text (truncated):")
-          print(last_text[:1500] or "  (none)")
+              print(f"  ! {screened(d)}")
+          # Printed whole. At 1500 characters this cut the reviewer's account of its own
+          # round mid-sentence. What that account holds and refuted.json does not is the
+          # reviewer's narrative of its own round -- and, decisively, the round where it
+          # wrote no file at all, which is precisely when there is nothing else to read.
+          print("\nreviewer's closing text:")
+          print(screened(last_text) if last_text else "  (none)")
           PY
 
       - name: Validate the findings
@@ -309,8 +363,13 @@ jobs:
       # bind the file, a comment a little over length -- not a bad finding. Dropping it
       # silently wastes work the reviewer already did and teaches nothing, so it gets
       # told exactly what failed and one pass to correct it.
+      # Guarded with `steps.validate.outcome == 'success'` -- same status function the
+      # Post step uses. Without it, an unset `outputs.rejected` (validate ended early or
+      # did not write GITHUB_OUTPUT) evaluates as empty, `'' != '0'` is true, and an
+      # unneeded repair round runs; naming the outcome makes "validate actually ran
+      # clean" an explicit precondition. Over-run is not fail-open, but it is waste.
       - name: Repair rejected findings
-        if: steps.gate.outputs.review == 'true' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
+        if: steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
         uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -334,6 +393,11 @@ jobs:
           # and since leaving a tool off the allow list removes nothing, these two
           # entries are what actually withholds delegation here. The lists differ on
           # purpose and in this direction only; do not "sync" them.
+          #
+          # Scope note: the writable set is findings.json ONLY. rejected.json is the
+          # validator's own audit trail (read as input at prose_review_post.py's
+          # validate) — it is never the reviewer's output, so no Write/Edit rule may
+          # cover it. Keep a future `Edit(.prose-review/*)` from silently including it.
           claude_args: >-
             --model opus
             --allowedTools "Read,Grep,Glob,Edit(.prose-review/findings.json)"
@@ -352,3 +416,57 @@ jobs:
           # values this step's environment actually holds.
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: python3 .github/scripts/prose_review_post.py
+
+      # This job holds two live tokens and has three public surfaces (see the header): the
+      # PR comment, this artifact, and the closing text in the log. The findings screen
+      # guards the first; this step guards the second; the third is guarded by the same
+      # patterns imported into the diagnostic step, because it is printed before this runs
+      # and a scrub over files on disk cannot reach it. `rejected.json`
+      # stores each rejected finding in full -- including one rejected precisely FOR
+      # containing a credential -- and `refuted.json` is model-written and screened by
+      # nothing else. The upload below runs only if this step SUCCEEDS, so the screen
+      # cannot be bypassed by crashing: a bug here costs one round's archive, which is the
+      # cheaper of the two ways to be wrong.
+      - name: Screen the artifact before publishing it
+        id: scrub
+        if: always() && steps.prepare.outcome == 'success'
+        env:
+          PROSE_REVIEW_SCRUB: "1"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python3 .github/scripts/prose_review_post.py
+
+      # The round's reasoning outlives the round only if something stores it. Two rounds
+      # produced nine candidate findings and argued all nine down; five of those arguments
+      # survive anywhere at all, and only because they fit inside a log line. Run logs are
+      # not the answer either -- a run's log was already unreadable a day later when
+      # someone went back for exactly these numbers.
+      #
+      # `always()` because a round that FAILS is the one whose inputs you most want, and
+      # the condition names the SCREENING step rather than the gate. That chains: the
+      # screen already runs only when `prepare` succeeded, so naming it carries the "the
+      # directory exists" guarantee AND adds "it has been screened", which naming
+      # `prepare` here would not. Two rounds are deliberately not kept, and for ONE
+      # reason covering both: nothing has been cleared for publication. That is obvious
+      # for a failed screen. It is worth stating for a failed `prepare` because the
+      # tempting reason -- "it produced no inputs yet" -- is false: `prepare` writes
+      # pr.json, diff.patch and changed-files.txt before the API fetch that is the
+      # likeliest thing to abort it, so a failed round can be holding the whole diff.
+      # What disqualifies it is that the screen never ran over it, not that it is empty.
+      #
+      # `include-hidden-files: true` is what makes it actually upload. The directory is
+      # dot-named, and upload-artifact has excluded hidden paths by default since v4.4.0
+      # -- including a dot-named root passed directly as `path:`, not merely hidden files
+      # under it. Run 30350716136 uploaded nothing and said so: "No files were found with
+      # the provided path: .prose-review". Two rounds had already passed green while
+      # storing nothing, because the earlier `if-no-files-found: ignore` suppressed that
+      # warning; dropping it is what surfaced the bug. Left at the default `warn` on
+      # purpose, so the same silence cannot come back.
+      - name: Keep the round's inputs and reasoning
+        if: always() && steps.scrub.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.PROSE_REVIEW_DIR }}
+          include-hidden-files: true
+          retention-days: 30
