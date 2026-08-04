@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Gather every input the prose reviewer needs, deterministically, before it runs.
 
-Why this exists: the reviewer is given no shell and no network. It reads files and
-writes one findings file. Everything it needs to see -- the diff, which files changed,
+Why this exists: the reviewer is given no shell and no network. It reads files and writes
+files, and does nothing else. Everything it needs to see -- the diff, which files changed,
 the PR's own text, what previous rounds already said, and which of this repo's rules
 bind which file -- is assembled here, by code, and handed over as plain files.
 
@@ -257,15 +257,17 @@ def main() -> int:
     for rule in artifact_rules + conversation_rules:
         shutil.copyfile(REPO_ROOT / rule["path"], rules_snapshot / f"{rule['name']}.md")
 
-    # --- The file the reviewer is required to produce -------------------------------
-    # Seeded here, rather than left for the reviewer to create, for two reasons. The
-    # reviewer's only write permission is `Edit(.prose-review/findings.json)`, and an
-    # edit wants a file that already exists -- leaving it absent means its single
-    # required output is also the one path where it has to reach for a different tool.
-    # And a seeded file gives the validator a way to tell "the reviewer wrote nothing"
-    # apart from "the reviewer found nothing", which a missing file cannot express: the
-    # seed's digest goes in the manifest, so an untouched file is recognisable rather
-    # than being reported as a vanished one.
+    # --- The file the reviewer is required to produce ------------------------------
+    # Seeded so a reader can tell "the reviewer wrote nothing" from "the reviewer found
+    # nothing" -- a missing file cannot express that, since both arrive as an absence. The
+    # seed carries an empty `summary` that any real result overwrites, and its digest goes
+    # in the manifest, so an untouched file is recognisable as untouched.
+    #
+    # refuted.json is deliberately NOT seeded. Seeding it would destroy the same
+    # distinction rather than create it: unseeded, a round that never reached stage 3
+    # leaves no file while a round that refuted nothing writes `[]` -- two states, two
+    # artifacts. Seed it and both are `[]`. An earlier version seeded it and claimed the
+    # opposite; the trace is one line long and runs the other way.
     findings_seed = json.dumps({"summary": "", "findings": []}, indent=2)
     (out_dir / "findings.json").write_text(findings_seed, encoding="utf-8")
 
