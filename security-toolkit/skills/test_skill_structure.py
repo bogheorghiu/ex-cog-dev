@@ -136,6 +136,24 @@ def parse_frontmatter(fm):
     return name, desc
 
 
+def frontmatter_keys(fm):
+    """Return the set of top-level keys in a frontmatter block.
+
+    Lines starting with whitespace are block-scalar continuations and never
+    count; only `key:` at column 0 does. Used by the PORTABILITY.md R1 check:
+    skill frontmatter carries name + description only, so CC-only composition
+    keys (`skills:`, `tools:`, `model:`) can never hide in a SKILL.md.
+    """
+    keys = set()
+    for line in fm.splitlines():
+        if line[:1] in (" ", "\t"):
+            continue
+        m = re.match(r"^([A-Za-z_][\w-]*):", line)
+        if m:
+            keys.add(m.group(1))
+    return keys
+
+
 def yaml_validity_error(fm):
     """Return an error string if the frontmatter isn't valid YAML, else None.
 
@@ -189,6 +207,17 @@ for path in skill_files:
     check("name + description both present", bool(name) and bool(desc))
     if not name or not desc:
         continue
+
+    # PORTABILITY.md R1: skill frontmatter carries name + description only.
+    # CC-only composition keys (skills:, tools:, model:) belong in agent
+    # files, never SKILL.md — a converter must be able to render frontmatter
+    # mechanically, and anything else is a harness assumption in the one
+    # place the model reads every turn.
+    extra_keys = frontmatter_keys(fm) - {"name", "description"}
+    check(
+        f"frontmatter keys within {{name, description}}{'' if not extra_keys else f' — extra: {sorted(extra_keys)}'}",
+        not extra_keys,
+    )
 
     check(f"name matches directory ('{name}' == '{slug}')", name == slug)
     check(f"name is kebab-case and <= {NAME_MAX} chars", bool(NAME_RE.match(name)) and len(name) <= NAME_MAX)
