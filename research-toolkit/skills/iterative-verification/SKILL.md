@@ -311,7 +311,7 @@ Round 4+: GENERATE the exact opposite of the resolution.
 
 Exit when generating the next antithesis produces nothing that changes the synthesis. Minimum 4 rounds for contested claims.
 
-Reference: `METHODOLOGY-comprehensive-investigation.md` Section 6 for extended protocol with agent team structure.
+Reference (operator-local, if you have it): `.claude/local/research/METHODOLOGY-comprehensive-investigation.md` Section 6 for extended protocol with agent team structure.
 
 ## Integration with Ralph-Wiggum
 

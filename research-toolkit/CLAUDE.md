@@ -1,6 +1,6 @@
 # Research Toolkit - Plugin Context
 
-> Development source for the public plugin at `bogheorghiu/ex-cog`.
+> Development source for the plugin shipped from the public `ex-cog-dev` marketplace.
 
 > **Motto:** *Relentless self-reflexive dialectical thinking that questions its own premises.*
 

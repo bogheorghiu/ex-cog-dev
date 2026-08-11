@@ -82,6 +82,15 @@ jobs:
           uv run --no-project --with pyyaml python vasana-system/skills/test_skill_structure.py
           uv run --no-project --with pyyaml python security-toolkit/skills/test_skill_structure.py
 
+      - name: Agent-frontmatter guard (PyYAML)
+        run: |
+          set -euo pipefail
+          # PyYAML rather than the stdlib approximation, for the same reason as the step
+          # above: the construct this guard rejects - a quoted scalar followed by trailing
+          # text - is one an approximate parser can accept. The suite's final check runs
+          # the guard against the live tree, so registering the suite gates the repo.
+          uv run --no-project --with pyyaml python .github/scripts/test_check_agent_frontmatter.py
+
       - name: MCP backend functional tests (via uvx)
         env:
           EDGE_GRAPH_PATH: /tmp/edge-graph-ci-test

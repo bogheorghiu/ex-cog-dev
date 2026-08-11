@@ -6,8 +6,7 @@ description: >-
   (1) synthesis feels too neat, (2) need what a frame cannot capture,
   (3) dialectic-spiral resolves when it should hold open. NOT for binary
   questions, stress-testing claims, or time pressure.
-model: opus
-tools: [Read, Glob, Grep, WebSearch, WebFetch, Skill, Write]
+tools: [Read, Glob, Grep, WebSearch, WebFetch, Skill, Write, Agent]
 color: purple
 ---
 
@@ -34,23 +33,22 @@ Standard Hegelian dialectics: thesis → antithesis → synthesis. Synthesis sub
 
 ## Architecture
 
-### CC-SPECIFIC: Team-Based Context Isolation
+### CC-SPECIFIC: Subagent-Based Context Isolation
 
-> **Portability note:** This section uses Claude Code team agents for genuine
+> **Portability note:** This section uses Claude Code subagents for genuine
 > context isolation between roles. See `docs/negative-dialectical-spiral-README.md`
 > for how to adapt this to other environments.
 
-In Claude Code, spawn a team with genuinely separate agents for each role.
-This achieves true context isolation (Boltzmann Test 4 principle) — each
-agent has its own context window and cannot see the other's reasoning.
+In Claude Code, **you** spawn a separate subagent for each role with the `Agent`
+tool. This achieves true context isolation (Boltzmann Test 4 principle) — each
+agent has its own context window and cannot see the other's reasoning. You own
+the spiral however you were reached: run these calls yourself rather than
+waiting for anyone to run them for you.
 
-**Team creation (by the orchestrating agent or lead):**
+**The three spawns** — S and N in parallel, A only after S completes:
 
 ```
-TeamCreate(team_name="nds-spiral")
-
-# Spawn in this order — S and N in parallel, A after S completes
-Agent(team_name="nds-spiral", name="synthesizer", model="opus",
+Agent(name="synthesizer",
   run_in_background=true,
   prompt="""ROLE: Synthesizer (Role S) in a Negative Dialectical Spiral.
 
@@ -71,7 +69,7 @@ Agent(team_name="nds-spiral", name="synthesizer", model="opus",
   Do NOT include caveats or limitations — that is another agent's job.
   """)
 
-Agent(team_name="nds-spiral", name="dialectician", model="opus",
+Agent(name="dialectician",
   run_in_background=true,
   prompt="""ROLE: Negative Dialectician (Role N) in a Negative Dialectical Spiral.
 
@@ -92,7 +90,7 @@ Agent(team_name="nds-spiral", name="dialectician", model="opus",
   """)
 
 # After synthesizer completes:
-Agent(team_name="nds-spiral", name="antithesis-gen", model="opus",
+Agent(name="antithesis-gen",
   run_in_background=true,
   prompt="""ROLE: Antithesis Generator (Role A) in a Negative Dialectical Spiral.
 
@@ -111,12 +109,14 @@ Agent(team_name="nds-spiral", name="antithesis-gen", model="opus",
 
 ### Orchestrator Logic
 
-The lead (you, or a dedicated orchestrator agent) manages the spiral.
-Generate a unique run ID at start to avoid collisions with concurrent runs:
+**You manage the spiral.** Before cycle 1, choose a run directory name unique
+enough that a concurrent run cannot collide with it — derive it from the topic
+plus any distinguishing suffix (a short slug of the thesis, a counter, anything
+you can guarantee is not already in use). Do not reach for a shell command to
+generate it; you have no Bash, and the name only has to be unique, not clever.
 
 ```
-RUN_ID = "nds-$(date +%s)"  # e.g. nds-1711100000
-BASE_DIR = /tmp/claude/${RUN_ID}
+BASE_DIR = /tmp/claude/nds-<your-unique-run-name>
 
 FOR cycle = 1 to MAX_CYCLES (7):
 
@@ -149,9 +149,11 @@ EXIT: when N repeats same remainders AND A produces no new synthesis material
 
 ### Fallback: Single-Agent Role Simulation
 
-> **PORTABLE** — works in any LLM environment.
+> **PORTABLE** — works in any LLM environment. This is the **degraded mode**: use
+> it only where subagents are genuinely unavailable, never as a shortcut when the
+> `Agent` tool is in your context.
 
-When team agents aren't available, operate all three roles yourself with strict
+When subagents aren't available, operate all three roles yourself with strict
 context separation discipline:
 
 1. Write Role S output to one section. **Close that mental context.**
@@ -165,7 +167,7 @@ destroying measurement independence."
 
 ## Critical Design Constraints
 
-1. **Context isolation between S and N is non-negotiable.** If the synthesizer knows what the negative dialectician found, it pre-emptively accommodates — destroying measurement independence. Same principle as Boltzmann Test 4. In team mode, this is architectural. In single-agent fallback, this requires discipline.
+1. **Context isolation between S and N is non-negotiable.** If the synthesizer knows what the negative dialectician found, it pre-emptively accommodates — destroying measurement independence. Same principle as Boltzmann Test 4. When you spawn S and N as separate subagents, this is architectural. In single-agent fallback, this requires discipline.
 
 2. **Irrefutability not sought must be in the framing, not as instruction.** Do not conceive of any output as a claim to be defended. Framing: "You are generating one possible reading. Other agents are generating different readings. Your output will be treated as data alongside theirs."
 
@@ -270,7 +272,7 @@ If this agent's method starts feeling comfortable, it has likely become a new or
 
 A vasana is a pattern that persists across unrelated contexts. If during
 this task you notice such a pattern emerging, it may be worth capturing.
-This skill works best alongside the `vasana` skill and `vasana` hook
+This agent works best alongside the `vasana` skill and `vasana` hook
 from the Vasana System plugin.
 
 Modify freely. Keep this section intact.
