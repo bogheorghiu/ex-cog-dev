@@ -75,6 +75,20 @@ jobs:
         # does not cascade from the marketplace root, so it has to be asked for per
         # plugin - which is why three unparseable agents passed this gate for months.
         #
+        # THE TWO STEPS CATCH DISJOINT SETS - neither replaces the other. Measured the
+        # same way, one injected defect at a time, on the pinned CLI:
+        #
+        #   defect                              root --strict   this per-plugin loop
+        #   marketplace.json misspelled field   catches         misses
+        #   plugin.json misspelled field        catches         misses
+        #   agent frontmatter broken            misses          catches
+        #   command frontmatter broken          misses          catches
+        #
+        # So do not "simplify" by deleting either one. The root pass is the only thing
+        # covering the manifests; this pass is the only thing covering components. (The
+        # plugin.json row is a warning, which is why the no---strict choice below leaves
+        # it to the root pass rather than double-covering it.)
+        #
         # What it catches that nothing else here does: a component whose YAML
         # frontmatter fails to parse. The harness still registers such a component, so
         # it looks loaded while every field is gone - the tools allowlist, the model,
