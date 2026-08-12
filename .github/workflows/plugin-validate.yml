@@ -66,3 +66,55 @@ jobs:
         run: |
           set -euo pipefail
           claude plugin validate . --strict
+
+      - name: Validate each plugin's components (agents, commands, skills, hooks)
+        # The step above validates MANIFESTS only. Measured on CLI 2.1.212, the pinned
+        # version: against a tree carrying three agents whose frontmatter cannot be
+        # parsed, `claude plugin validate . --strict` exits 0. Pointed at a plugin
+        # DIRECTORY the same binary exits 1 and names each file. Component validation
+        # does not cascade from the marketplace root, so it has to be asked for per
+        # plugin - which is why three unparseable agents passed this gate for months.
+        #
+        # THE TWO STEPS CATCH DISJOINT SETS - neither replaces the other. Measured the
+        # same way, one injected defect at a time, on the pinned CLI:
+        #
+        #   defect                              root --strict   this per-plugin loop
+        #   marketplace.json misspelled field   catches         misses
+        #   plugin.json misspelled field        catches         misses
+        #   agent frontmatter broken            misses          catches
+        #   command frontmatter broken          misses          catches
+        #
+        # So do not "simplify" by deleting either one. The root pass is the only thing
+        # covering the manifests; this pass is the only thing covering components. (The
+        # plugin.json row is a warning, which is why the no---strict choice below leaves
+        # it to the root pass rather than double-covering it.)
+        #
+        # What it catches that nothing else here does: a component whose YAML
+        # frontmatter fails to parse. The harness still registers such a component, so
+        # it looks loaded while every field is gone - the tools allowlist, the model,
+        # and the description the main loop matches on to reach it at all. Two shapes
+        # have shipped in this repo: a quoted scalar followed by trailing text, and a
+        # colon+space inside a plain scalar.
+        #
+        # No --strict here, deliberately. Frontmatter failures are errors and fail
+        # without it; --strict additionally promotes the "CLAUDE.md at the plugin root
+        # is not loaded as project context" warning to an error, which two plugins
+        # would trip today for reasons unrelated to this check.
+        #
+        # The plugin list is derived from the tree, so a new plugin is covered without
+        # editing this file.
+        run: |
+          set -euo pipefail
+          failed=0
+          for manifest in */.claude-plugin/plugin.json; do
+            plugin="$(dirname "$(dirname "$manifest")")"
+            echo "::group::$plugin"
+            if claude plugin validate "$plugin"; then
+              echo "ok: $plugin"
+            else
+              echo "::error::$plugin failed component validation"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$failed"

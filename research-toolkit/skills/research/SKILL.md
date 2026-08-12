@@ -57,6 +57,7 @@ Consult `reference/topic-based-escalation.md` for the full escalation table. Qui
 - "Analyze this Substack" → **substack-research**
 - "Transcribe this video" → **video-transcript-extraction**
 - "Challenge my findings" → **adversarial-critic** agent + **dialectic-spiral**
+- "Synthesis feels too neat / need what the frame can't capture" → **negative-dialectical-spiral** agent (holds the contradiction open instead of resolving it)
 - Multiple domains → Suggest **investigation-orchestrator** agent (spawns a multi-agent team for coordinated research)
 
 ## Which Investigation Deserves the Depth

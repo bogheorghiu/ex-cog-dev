@@ -94,7 +94,7 @@ Before searching anything:
 1. **Define the question** (one sentence) and **who benefits from each possible answer** (cui bono pre-analysis)
 2. **Make priors explicit** — what do you expect to find? (So you can test your assumptions, not confirm them)
 3. **Set falsification criteria** — what would change your mind?
-4. **Create criteria file** per `iterative-default.md`:
+4. **Create criteria file** per the `iterative-verification` skill (the live home of the loop):
 
 ```markdown
 # Criteria: [investigation name]
