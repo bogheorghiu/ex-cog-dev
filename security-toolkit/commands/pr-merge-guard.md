@@ -1,5 +1,7 @@
 ---
-description: Show or change the PR-merge guard (whether Claude is blocked from running `gh pr merge`). Off by default. Usage: /pr-merge-guard [status|on|off]
+description: >-
+  Show or change the PR-merge guard (whether Claude is blocked from running `gh pr merge`). Off
+  by default. Usage: /pr-merge-guard [status|on|off]
 argument-hint: "[status|on|off]"
 allowed-tools: Bash(mkdir:*), Bash(rm:*), Bash(printf:*), Bash(cat:*), Bash(test:*), Bash(echo:*)
 ---
