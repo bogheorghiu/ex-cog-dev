@@ -107,10 +107,16 @@ just the line.
 
 **The probe file has to be inside the working tree.** Writing it to `/tmp` and
 staging it makes `git add` fail with *"is outside repository"*, so nothing is
-staged; the hook then scans an empty diff, matches nothing, and the commit
-proceeds. You would read that as "the gate is broken" when the gate never got
-anything to look at — a false negative in the one step that exists to rule false
-negatives out.
+staged and the hook has an empty diff to scan — it matches nothing and produces
+no block.
+
+What you actually see is a non-zero exit from `git commit`, because with an empty
+index git refuses on its own ("nothing added to commit"). That is the trap: the
+failed command looks like the gate doing its job, when the gate never ran on
+anything. Read the output, not the exit code — a real block says
+`pre-commit BLOCKED: a denylisted term is in the staged changes`. Anything else
+means the probe never reached the hook, which is a false negative in the one step
+that exists to rule false negatives out.
 
 If it did *not* block with the probe staged inside the repo, the gate really is
 not installed the way you think — check that `git config core.hooksPath` returns
