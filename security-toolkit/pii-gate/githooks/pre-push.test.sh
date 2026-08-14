@@ -10,20 +10,6 @@
 # and the suite prints all of them on every run — so `bash pre-push.test.sh` is the current
 # answer, while a hand-kept list is a second copy that nothing updates. This one had already
 # gone stale twice: a miscounted grep call-site claim, then three cases missing outright.
-# - Binary/NUL bytes in one commit must not blind the scan of another
-# - Merge commits: a name added only in a conflict resolution
-# - A path marked -diff in .gitattributes must not hide a name from the diff
-# - The COMMITTER identity, which the default log format does not print
-# - The all-zeros sentinel at SHA-256 width (64 chars), not just SHA-1's 40
-# - Annotated tags: a name in the tag's own message; an unreadable tag object blocks
-# - Push-range scoping: already-pushed history is not re-scanned
-# - Second remote: commits already on origin still get scanned
-# - Denylist normalization: CRLF, '|' separators, indented entries, comment-only and blank-only files
-# - Both accepted denylist filenames (.local and .txt, which .gitignore has always covered)
-# - An empty PII_DENYLIST must not mask a valid local denylist
-# - Linked worktrees resolve the denylist to the main clone's root
-# - Bare repos resolve the denylist to the common git dir itself, which IS the repo root there
-# - Staleness: a private copy that has drifted from the tracked hook warns
 #
 # A synthetic term is used throughout — this suite contains no personal data.
 

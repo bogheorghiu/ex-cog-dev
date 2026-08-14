@@ -227,10 +227,16 @@ rather than approximated.
 
 Reach for gitleaks for the other half — **secrets**, not names. It runs both in
 pre-commit (over staged changes) and in the workflow's separate `secrets` job
-(over full history), always with its own built-in rules, and is never handed the
-denylist — so it cannot find a personal name and will return clean while one sits
-in your history. Two scans, two different questions; neither substitutes for the
-other.
+(over full history). It is never handed the denylist in either place, so it cannot
+find a personal name and will return clean while one sits in your history. Two
+scans, two different questions; neither substitutes for the other.
+
+The two venues do not use the same ruleset. CI runs gitleaks with its built-in
+rules. pre-commit passes `--config "$HOME/.config/gitleaks/config.toml"` when
+that file exists, and falls back to the built-ins when it does not — so if you
+keep a personal gitleaks config, your commit-time scan is the one it governs, and
+a supplied config replaces the defaults unless it sets `[extend] useDefault`.
+Worth knowing before you conclude the two layers look for the same things.
 
 Say plainly that a retrofit does not undo an earlier exposure. If a real name is
 already in pushed history, the honest options are history rewrite plus a force

@@ -38,7 +38,7 @@ Everything the gate does and how to run it lives in `skills/pii-gate/SKILL.md` a
 
 **This repo both runs the gate and ships it, and the running copy is the reference.** `.githooks/` and `.github/workflows/pii-denylist-guard.yml` are what actually gate this repository; `pii-gate/` is the copy consumers install. The shipped copy is exercised by nobody here — it is inert data until someone installs it — so drift in it fails first for a consumer, in their repo. `payload-parity.test.sh` compares the two on every PR: hooks byte-for-byte, workflows job-list and body. Change one side and the check tells you to change the other.
 
-**Turn it on and prove it blocks.** An empty or comments-only denylist leaves the denylist layers honestly INACTIVE, and they say so — so every green run before the first *armed* run is no evidence. The skill walks through arming it once on purpose and watching a commit get blocked.
+**Installing it is not arming it.** The skill's "Prove it can fail" section is the step that matters and the one most likely to be skipped; it explains why a green run means nothing until the gate has blocked once, and walks through making it block on purpose.
 
 ## `hooks.json` quoting convention
 
