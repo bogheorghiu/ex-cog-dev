@@ -3,10 +3,13 @@
 #
 # This file carries NO names, so it is safe to commit. The names are read at push time from the
 # UNION of two sources: the PII_DENYLIST env var (cloud env-vars field, same name as the CI
-# secret) and the gitignored file pii-denylist.local (looked up in BOTH this working tree's root
-# AND the main clone's root — a linked worktree does not have the untracked file at its own top
-# level). Union, not precedence: when the env var shadowed the file, exporting it silently
-# dropped every term in the operator's own denylist while the gate still reported itself armed.
+# secret) and a gitignored denylist file. That file may be named pii-denylist.local OR
+# pii-denylist.txt, and three directories are searched in order — this working tree's root, the
+# git common dir, and its parent — taking the first hit. The extra locations exist because a
+# linked worktree does not have the untracked file at its own top level, and a bare repo's common
+# dir IS its root. Union, not precedence, between env var and file: when the env var shadowed the
+# file, exporting it silently dropped every term in the operator's own denylist while the gate
+# still reported itself armed.
 #
 # Activate per clone — PREFER core.hooksPath:
 #     git config core.hooksPath .githooks

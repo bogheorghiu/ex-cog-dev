@@ -9,12 +9,14 @@
 #   2. If no global pre-commit exists, run gitleaks directly on the staged
 #      changes (personal config if present, else the built-in rules).
 #   3. Denylist scan of the staged diff. Terms come from the UNION of the
-#      PII_DENYLIST env var ('|'- or newline-separated) and the gitignored
-#      file pii-denylist.local at the repo root (main checkout root also
-#      checked when committing from a linked worktree). Union, not
-#      precedence: an exported env var used to silently drop every term in
-#      the local file. With neither source present this layer is inert —
-#      the CI denylist gate still applies.
+#      PII_DENYLIST env var ('|'- or newline-separated) and a gitignored
+#      denylist file, named either pii-denylist.local or pii-denylist.txt,
+#      searched in three directories in order — the repo root, the git
+#      common dir, and its parent — taking the first hit. The extra
+#      locations cover committing from a linked worktree and a bare repo.
+#      Union, not precedence: an exported env var used to silently drop
+#      every term in the local file. With neither source present this layer
+#      is inert — the CI denylist gate still applies.
 #
 # The denylist source is normalized by the SAME norm() the pre-push hook and CI
 # use — same separator handling, same CR stripping, same trimming, same comment

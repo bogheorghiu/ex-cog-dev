@@ -69,13 +69,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DENYLIST}" ]; then
-            # Says "nothing was checked", not just "inactive": this branch also covers PULL REQUESTS
-            # FROM FORKS, where GitHub withholds secrets by design. That is exactly the
-            # untrusted-source case, and an "INACTIVE" line inside an otherwise green check reads to
-            # a reviewer as "passed". Whether a fork PR should instead FAIL here is a maintainer
-            # policy call — it would block every fork contribution — so this states the gap loudly
-            # rather than deciding it.
-            echo "::warning::PII_DENYLIST secret is unavailable — the denylist gate DID NOT RUN and this tree was NOT checked for personal names. A green check here means nothing was verified. Expected on pull requests from forks (secrets are withheld); otherwise set the secret in Settings → Secrets and variables → Actions."
+            # Says "nothing was checked", not just "inactive": an "INACTIVE" line inside an otherwise
+            # green check reads to a reviewer as "passed", so the wording has to carry the gap.
+            # In practice this branch means the secret is unset, not that secrets were withheld:
+            # the triggers here are push and workflow_dispatch only, so a fork pull request never
+            # creates a run in this repo at all (the header says the same). Earlier wording sent
+            # the reader looking for a fork PR that cannot exist.
+            echo "::warning::PII_DENYLIST secret is unavailable — the denylist gate DID NOT RUN and this tree was NOT checked for personal names. A green check here means nothing was verified. Set it in Settings → Secrets and variables → Actions."
             exit 0
           fi
           # Write terms to a temp file (never echoed), normalized EXACTLY as .githooks/pre-push's
@@ -192,9 +192,11 @@ jobs:
         run: ./gitleaks git --redact --no-banner .
 
   parity:
-    # The one job here that scans the GATE rather than the repository: it checks that the other
-    # three — the tree scan, the history scan and gitleaks — still agree with the hooks about what
-    # a denylist is and where it lives. Every finding
+    # The one job here that scans the GATE rather than the repository. It runs layer-parity, which
+    # checks that the two hooks, the overwrite tool, .gitignore and this file's own denylist and
+    # history jobs still agree about what a denylist is and where it lives. It does NOT cover the
+    # secrets job: gitleaks scans with its own built-in rules and is never handed the denylist, so
+    # there is no agreement relation for it to be in. Every finding
     # in this gate's review was one layer hardened and a sibling left behind — a defect invisible to
     # any test that exercises a component alone, because each component was individually correct.
     # Nothing was comparing them, so parity survived only as long as an editor remembered. This job
@@ -223,7 +225,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${DENYLIST}" ]; then
-            echo "::warning::PII_DENYLIST secret is unavailable — HISTORY WAS NOT SCANNED for personal names. A green check here means nothing was verified. Expected on pull requests from forks (secrets are withheld); otherwise set the secret in Settings → Secrets and variables → Actions."
+            echo "::warning::PII_DENYLIST secret is unavailable — HISTORY WAS NOT SCANNED for personal names. A green check here means nothing was verified. Set it in Settings → Secrets and variables → Actions."
             exit 0
           fi
           # Normalized EXACTLY as norm() does in .githooks/pre-push, for the reason every layer is:

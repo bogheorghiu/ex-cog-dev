@@ -55,7 +55,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dc.test.sh
 ```
 
-The PII gate carries three more. Two are written as repo-root-relative paths because they live outside the plugin, so no plugin-root path can name them:
+The PII gate carries three more. All three are written repo-root-relative, because the last two live outside the plugin and no plugin-root path can name them:
 
 ```bash
 bash security-toolkit/pii-gate/payload-parity.test.sh   # shipped copy == running copy

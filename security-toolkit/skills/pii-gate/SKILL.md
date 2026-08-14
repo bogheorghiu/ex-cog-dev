@@ -57,14 +57,26 @@ case below it writes nothing at all and exits non-zero. There are three:
 2. **The repo runs hooks somewhere else that would go quiet** — a `.husky`
    directory, a machine-wide hooks dir, or the default `.git/hooks`. Pointing
    `core.hooksPath` at `.githooks` makes git stop looking there. Nothing is
-   deleted, so the fix is to **copy those hooks into `.githooks/`** alongside the
-   gate's, or re-run with `PII_GATE_REPLACE_HOOKSPATH=1` to accept that they stop
-   running in this repo.
+   deleted; they simply stop running.
 3. **`.githooks/` already holds hooks that are not this gate's.** Here the files
    would be **overwritten**, not merely silenced — so this is the one to slow
-   down on. Move or rename them first. `PII_GATE_REPLACE_HOOKSPATH=1` also
-   applies, but it means *replacing* those files: if they are untracked, nothing
-   in the installer can give them back.
+   down on.
+
+**Keeping another hook alongside the gate means merging, not copying.** The gate
+owns five filenames in `.githooks/` — `pre-commit`, `pre-push`,
+`overwrite-ci-denylist` and the two test suites — and git dispatches one hook per
+event, so a second `pre-commit` cannot sit beside the gate's under any name git
+will call. Copying `.husky/pre-commit` into `.githooks/` therefore just trades
+refusal 2 for refusal 3, and the override would then overwrite the very file you
+were trying to keep.
+
+What actually works, in preference order: fold the other hook's *body* into the
+gate's `.githooks/pre-commit` (the gate's own runs a global `pre-commit` first
+for exactly this reason, so there is a precedent to follow); or move the other
+hook to a name git does not dispatch and call it from the gate's; or, if you have
+decided you do not need it here, re-run with `PII_GATE_REPLACE_HOOKSPATH=1` and
+accept the loss — which for refusal 3 means an overwrite that nothing in the
+installer can undo.
 
 The one case it passes over quietly is a *global* hooks dir whose only hook is a
 `pre-commit` — this gate chains that one, so nothing is lost. Re-running over an
