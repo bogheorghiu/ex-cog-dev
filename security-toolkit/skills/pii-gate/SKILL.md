@@ -130,21 +130,29 @@ this in CI. The local equivalent greps history against *your denylist*:
 ```
 DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
 git log -p -m --all --text --no-ext-diff --no-textconv --pretty=fuller \
-  | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
+  | grep -a -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
 ```
 
-Three of those flags are load-bearing, and the gate passes all three for reasons
-worth knowing before you drop one:
+Every flag there is load-bearing, and the gate passes each for a reason worth
+knowing before you drop one. Each defeats a different way the scan can come back
+clean about content it was never shown:
 
 - `--no-ext-diff --no-textconv` stop a repo-local `.gitattributes` diff driver
-  from blanking content before grep is shown it. Without them your scan is
-  honestly clean about text it never saw.
+  from rewriting or blanking content before grep is shown it.
+- `--text` covers the neighbouring case: a path marked `-diff` in
+  `.gitattributes` makes git emit "Binary files ... differ" instead of the diff,
+  and the gate records this as measured — without `--text` the name is simply
+  absent from the stream.
 - `--pretty=fuller` prints the **Commit** (committer) identity, which the default
   format omits — it shows Author only. A commit whose *committer* identity
   carries the name is invisible without it, and amends and rebases are exactly
   where the two identities diverge.
 - `-m` makes `git log -p` emit a diff for merge commits, so a name introduced
   only in a conflict resolution is still scanned.
+- `grep -a` forces the stream to be treated as text. Its opposite, `-I`, declares
+  the *whole* stream binary at the first NUL byte and abandons it — so a single
+  generated blob anywhere in your history would hide a name in every other
+  commit.
 
 **Never hand the raw denylist to `grep -f`** — here or anywhere. Every layer of
 the gate strips comments and blank lines before scanning, and a hand-run command
