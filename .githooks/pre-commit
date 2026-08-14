@@ -41,8 +41,23 @@ set -uo pipefail
 # is false against the literal "~/...", so the global hook is silently never chained — while the
 # installer, which exempts a global pre-commit precisely because this line chains it, says it did.
 GLOBAL_HOOKS="$(git config --global --type=path --get core.hooksPath || true)"
+# Never chain to OURSELVES. Setting core.hooksPath globally to the RELATIVE value `.githooks` is a
+# real idiom for repos that keep committed hooks, and git runs hooks with the work-tree root as the
+# working directory, so `$GLOBAL_HOOKS/pre-commit` resolves straight back to this file. Without the
+# identity test below each commit re-execs this hook until fork exhaustion, then unwinds through
+# `|| exit 1` and blocks the commit — measured under a 50-process cap. Resolve both sides to
+# absolute paths before comparing, since one is relative by construction. If they are the same
+# file, there is nothing to chain and we fall through to running gitleaks directly.
+CHAIN_PRECOMMIT=""
 if [ -n "$GLOBAL_HOOKS" ] && [ -x "$GLOBAL_HOOKS/pre-commit" ]; then
-  "$GLOBAL_HOOKS/pre-commit" || exit 1
+  _self="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)/$(basename "${BASH_SOURCE[0]}")"
+  _cand="$(cd "$GLOBAL_HOOKS" 2>/dev/null && pwd || true)/pre-commit"
+  if [ "$_cand" != "/pre-commit" ] && [ "$_cand" != "$_self" ]; then
+    CHAIN_PRECOMMIT="$_cand"
+  fi
+fi
+if [ -n "$CHAIN_PRECOMMIT" ]; then
+  "$CHAIN_PRECOMMIT" || exit 1
 elif command -v gitleaks >/dev/null 2>&1; then
   CFG="$HOME/.config/gitleaks/config.toml"
   if [ -f "$CFG" ]; then

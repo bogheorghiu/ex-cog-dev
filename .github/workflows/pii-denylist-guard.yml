@@ -49,15 +49,11 @@ on:
 permissions:
   contents: read
 
-# The `jobs:` block below is the inventory; each job's own comment says what it does. What that
-# cannot say is why they share one file rather than sitting in separate workflows: the scanning
-# jobs answer one question between them — did something that must not be public reach this repo —
-# and a reviewer reading one green check should not have to know that a second gate lives
-# elsewhere. `parity` rides along because it guards those jobs rather than the repo, and a drifted
-# gate is worth failing in the same place its results are read.
-#
-# gitleaks is version-pinned and sha256-verified before it executes, and it scans the FULL history
-# rather than the tip, so a token leaked in any past commit fails the run.
+# Why these live in ONE file rather than several: the scanning jobs answer one question between
+# them — did something that must not be public reach this repo — and a reviewer reading one green
+# check should not have to know that a second gate lives elsewhere. `parity` rides along because it
+# guards those jobs rather than the repo, and a drifted gate is worth failing in the same place its
+# results are read.
 
 jobs:
   denylist:

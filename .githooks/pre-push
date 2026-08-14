@@ -34,9 +34,12 @@
 # FACT of a match is reported. Ref names travel to the remote and get echoed on a block, so they
 # are denylist-checked themselves and withheld from the message when they match. The denylist's own
 # location is reported as a KIND ("the local pii-denylist file"), never as a path: a clone can live
-# under a directory named after the person, and the one branch that most needs to name the file —
-# the unreadable-denylist block — is by definition the branch with no terms to check the path
-# against. So no path is printed at all.
+# under a directory named after the person. The branch that most needs to name the file — the
+# unreadable-denylist block — is reached when the path cannot be checked RELIABLY: env-var terms
+# are folded into the pattern file before that test, so terms may or may not be loaded there, and a
+# rule that printed the path only sometimes is one nobody can reason about. So no path is printed
+# at all. (An earlier version of this sentence claimed that branch by definition has no terms
+# loaded; the union with PII_DENYLIST makes that false.)
 set -uo pipefail
 
 REMOTE_NAME="${1:-}"        # git passes the target remote's name (or URL) as $1
@@ -127,8 +130,8 @@ DENY="$(mktemp)" || {
 }
 CLEANUP="$DENY"
 # A KIND, never a path. This string is echoed on a block, and the denylist's own path is the one
-# piece of text the gate cannot denylist-check when it needs to most (the unreadable-file branch
-# has, by definition, no terms to check against). A clone living under a directory named after the
+# piece of text the gate cannot rely on being able to denylist-check when it needs to most (on the
+# unreadable-file branch the loaded terms depend on whether PII_DENYLIST was also set). A clone living under a directory named after the
 # person would otherwise make the gate print the very term it withholds everywhere else.
 DENY_SRC="none"
 env_armed=""
