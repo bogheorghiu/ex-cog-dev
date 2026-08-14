@@ -111,8 +111,13 @@ if [ "$RUN_JOBS" != "$PAY_JOBS" ]; then
   echo "      shipped: $(echo "$PAY_JOBS" | tr '\n' ' ')"
 fi
 
-grep -q 'gitleaks' "$PAY_WF"
-chk "shipped workflow still installs gitleaks (secret scanning is not implied by the denylist job)" $?
+# Anchored on the RUN line, not the word. `grep -q 'gitleaks'` also matched the file's header
+# comment above `jobs:`, so deleting the secrets job outright left this check green — it could
+# not fail for the case it names. That is the same comment-vs-code trap this file already
+# diagnoses for the seed path below, missed here because the sabotage pass rewrote every
+# occurrence at once and so never produced a file where only the job was gone.
+grep -qE '^[[:space:]]*run:[[:space:]]*\./gitleaks[[:space:]]' "$PAY_WF"
+chk "shipped workflow still EXECUTES gitleaks (secret scanning is not implied by the denylist job)" $?
 grep -q 'sha256sum -c' "$PAY_WF"
 chk "shipped workflow still verifies the gitleaks download against a pinned hash" $?
 

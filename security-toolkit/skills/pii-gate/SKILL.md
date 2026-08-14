@@ -103,8 +103,16 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
-git log -p -m --all --text | grep -i -F -w -f pii-denylist.local
+git log -p -m --all --text \
+  | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
 ```
+
+**Never hand the raw denylist to `grep -f`** — here or anywhere. Every layer of
+the gate strips comments and blank lines before scanning, and a hand-run command
+that skips that step is not the same scan. The shipped template is *entirely*
+comments, eight of them a bare `#`; loaded as a pattern, `#` matches any line
+containing one, so this command would drown a real hit in every comment in your
+history. The `grep -v` is the normalization, not tidiness.
 
 Reach for gitleaks for the other half — **secrets**, not names. It runs in the
 workflow's separate `secrets` job with its own built-in rules and is never handed
@@ -145,12 +153,12 @@ git ls-files \
   | grep -i -F -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
 ```
 
-Strip the comments and blank lines first, as above — that inner `grep -v` is not
-decoration. Feeding the raw denylist to `grep -f` hands it a blank line as an
-*empty pattern*, and an empty pattern matches every line, so you get your whole
-file list back and no idea which path was the real hit. (GNU grep 3.11, verified;
-the `-w` history command above is immune, because an empty pattern has no word
-boundaries to match.)
+Same normalization as the history command above, for an overlapping reason. Two
+distinct ways the raw file misfires, both verified on GNU grep 3.11: a **blank**
+line becomes an empty pattern that matches every line (this scan, which has no
+`-w`, then returns your entire file list), and a **comment** line becomes a
+literal pattern — a bare `#` matches anything containing one, which `-w` does not
+prevent, since `#` is not a word character. Strip both, always.
 
 The local hooks are armed **per clone** (`core.hooksPath`), so a fresh clone that
 skipped that step has no local coverage while still being able to push. That is

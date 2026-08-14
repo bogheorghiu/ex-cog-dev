@@ -52,18 +52,20 @@ Tests are co-located with each hook:
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/detect-prompt-injection.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
+bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dc.test.sh
 ```
 
-The PII gate carries two more. Both are written as repo-root-relative paths simply because one of them lives outside the plugin, so no plugin-root path can name it:
+The PII gate carries three more. Two are written as repo-root-relative paths because they live outside the plugin, so no plugin-root path can name them:
 
 ```bash
 bash security-toolkit/pii-gate/payload-parity.test.sh   # shipped copy == running copy
 bash .githooks/pre-push.test.sh                         # the gate's own 52 fail-closed cases
+bash .githooks/layer-parity.test.sh                     # the gate's layers agree with each other
 ```
 
-They check different things, and only the first one looks at the payload: `payload-parity` compares `security-toolkit/pii-gate/` against `.githooks/` (and resolves its own location, so it runs from any working directory), while `pre-push.test.sh` drives *this repo's running hook* against throwaway scratch repos and never reads the payload at all.
+They answer three different questions, and only the first looks at the payload. `payload-parity` compares `security-toolkit/pii-gate/` against `.githooks/` (and resolves its own location, so it runs from any working directory). `pre-push.test.sh` drives *this repo's running hook* against throwaway scratch repos. `layer-parity` checks that the hooks, the gitignore and the CI workflow still agree about what a denylist is and where it lives — it ships to consumers too, and the workflow's `parity` job runs it on every push.
 
-All currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
+All currently passing, and every hook here now has one: `block-dc-config.sh` and `block-dc-execute.sh` are both covered by `hooks/block-dc.test.sh`, which CI runs alongside the rest. (This sentence previously said those two were untested; that stopped being true when that suite landed.)
 
 Skills are prose artifacts, so their *structure* is what gets unit-tested: `skills/test_skill_structure.py` (a twin of the research-toolkit/vasana-system linters, kept logic-identical) asserts every SKILL.md's frontmatter parses, `name == dir`, description ≤ 1024 chars, and exactly one `## Vasana` section — CI runs it on every PR. Triggering (does the skill actually fire on the right turns?) is a separate, tiered measurement — see `.claude/rules/skill-verification.md`.
 

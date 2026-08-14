@@ -49,7 +49,22 @@ done
 
 git -C "$TOP" config core.hooksPath .githooks
 
-if [ ! -f "$TOP/pii-denylist.local" ]; then
+# Seed only when the repo has NO denylist under EITHER accepted name. Testing just
+# `pii-denylist.local` repeats the mistake fixed in the gitignore block above, and here it is
+# worse than a missing ignore line: retrofitting a repo whose denylist is named
+# `pii-denylist.txt` would drop an EMPTY `pii-denylist.local` beside it, and both hooks search
+# `.local` before `.txt` and stop at the first hit — so the gate would read the empty file,
+# normalize it to nothing, and report itself INACTIVE while the operator's real terms sat
+# unread one filename away. Step 3 below would then write that empty template into the CI
+# secret. Retrofitting an existing repo is a supported case, so this path has to be right.
+existing_denylist=""
+for n in pii-denylist.local pii-denylist.txt; do
+  if [ -f "$TOP/$n" ]; then existing_denylist="$n"; break; fi
+done
+
+if [ -n "$existing_denylist" ]; then
+  echo "Keeping this repo's existing $existing_denylist (not overwritten)."
+else
   # Seed from the EMPTY shipped template by default. If you keep a standing
   # denylist of your own (the same personal terms recur across your repos),
   # point PII_DENYLIST_DEFAULT at it and the installer seeds from that
@@ -68,7 +83,7 @@ fi
 echo "PII gate installed into $TOP:"
 echo "  .githooks/{pre-commit,pre-push,overwrite-ci-denylist,pre-push.test.sh,layer-parity.test.sh} + CI workflow + gitignore entries; core.hooksPath set."
 echo "Next:"
-echo "  1. Populate $TOP/pii-denylist.local (one term per line; '#' comments ok)."
+echo "  1. Populate $TOP/${existing_denylist:-pii-denylist.local} (one term per line; '#' comments ok)."
 echo "  2. Commit the gate files BEFORE adding a remote."
 echo "  3. Once a GitHub remote exists, run .githooks/overwrite-ci-denylist yourself to set the PII_DENYLIST secret (typed confirmation; pre-push only warns on drift, it never writes the secret)."
 echo "  4. Prove it can fail: add a throwaway term, commit a file containing it, watch the hook BLOCK. A gate that has never blocked anything is not evidence."
