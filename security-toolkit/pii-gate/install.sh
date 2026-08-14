@@ -89,25 +89,25 @@ fi
 # (a) The hooks dir is somewhere ELSE: pointing core.hooksPath at .githooks makes git stop looking
 #     there, so every hook in it goes quiet. Nothing is deleted, but nothing runs either.
 #
-# (b) The hooks dir IS the .githooks we are about to write into. Then core.hooksPath does not
-#     change and nothing goes quiet — but the `cp` below OVERWRITES files. A repo already using the
-#     ordinary committed-hooks convention, with its own hand-written .githooks/pre-commit, would
-#     have it replaced and be told the install succeeded. This case used to skip the guard
-#     entirely, because the guard was gated on the path differing from .githooks — so the strictly
-#     MORE destructive shape was the unguarded one.
+# (b) The `cp` below OVERWRITES whatever is in $TOP/.githooks, whether or not git is currently
+#     looking there. A repo using the ordinary committed-hooks convention keeps its hooks in
+#     .githooks and activates them per clone, so in a FRESH clone core.hooksPath is still unset —
+#     HOOKSDIR is .git/hooks, holding nothing but samples — while .githooks/pre-commit is very much
+#     real and about to be replaced. So this check must NOT be tied to where git is looking; the cp
+#     is unconditional, and the guard over it has to be too. Gating it on HOOKSDIR was how the more
+#     destructive shape stayed unguarded twice running.
 #
 # Ours-vs-theirs is decided by content, not by filename, so an idempotent re-run stays silent.
 ORPHANED=""
 OVERWRITES=""
-if [ "$HOOKSDIR" = "$TOP/.githooks" ]; then
-  for n in $(cd "$SRC/githooks" && ls); do
-    [ -f "$TOP/.githooks/$n" ] || continue
-    # Our own files all reference the denylist by name; a foreign hook will not.
-    if ! grep -q 'pii-denylist' "$TOP/.githooks/$n" 2>/dev/null; then
-      OVERWRITES="$OVERWRITES $n"
-    fi
-  done
-elif [ -d "$HOOKSDIR" ]; then
+for n in $(cd "$SRC/githooks" && ls); do
+  [ -f "$TOP/.githooks/$n" ] || continue
+  # Our own files all reference the denylist by name; a foreign hook will not.
+  if ! grep -q 'pii-denylist' "$TOP/.githooks/$n" 2>/dev/null; then
+    OVERWRITES="$OVERWRITES $n"
+  fi
+done
+if [ "$HOOKSDIR" != "$TOP/.githooks" ] && [ -d "$HOOKSDIR" ]; then
   for h in "$HOOKSDIR"/*; do
     [ -f "$h" ] && [ -x "$h" ] || continue
     case "$(basename "$h")" in

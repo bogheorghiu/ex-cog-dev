@@ -192,7 +192,9 @@ jobs:
         run: ./gitleaks git --redact --no-banner .
 
   parity:
-    # A third gate, and the only one that checks the OTHER TWO rather than the tree. Every finding
+    # The one job here that scans the GATE rather than the repository: it checks that the other
+    # three — the tree scan, the history scan and gitleaks — still agree with the hooks about what
+    # a denylist is and where it lives. Every finding
     # in this gate's review was one layer hardened and a sibling left behind — a defect invisible to
     # any test that exercises a component alone, because each component was individually correct.
     # Nothing was comparing them, so parity survived only as long as an editor remembered. This job

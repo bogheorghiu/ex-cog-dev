@@ -34,7 +34,11 @@
 set -uo pipefail
 
 # --- Layer 1/2: gitleaks (via global hook when present) ---
-GLOBAL_HOOKS="$(git config --global --get core.hooksPath || true)"
+# --type=path, not --get: core.hooksPath is pathname-typed, so git expands a leading `~` when it
+# resolves it and `--get` returns the raw bytes. With `hooksPath = ~/.githooks` the -x test below
+# is false against the literal "~/...", so the global hook is silently never chained — while the
+# installer, which exempts a global pre-commit precisely because this line chains it, says it did.
+GLOBAL_HOOKS="$(git config --global --type=path --get core.hooksPath || true)"
 if [ -n "$GLOBAL_HOOKS" ] && [ -x "$GLOBAL_HOOKS/pre-commit" ]; then
   "$GLOBAL_HOOKS/pre-commit" || exit 1
 elif command -v gitleaks >/dev/null 2>&1; then

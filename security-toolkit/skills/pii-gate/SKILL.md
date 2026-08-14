@@ -47,16 +47,29 @@ under whichever name it uses.
 Re-running it updates the hooks and workflow in place and never touches an
 existing denylist.
 
-**It can refuse, and a refusal is information rather than a fault.** It writes
-nothing and exits non-zero when the target is a linked worktree (`core.hooksPath`
-is shared across worktrees while these files are not, so installing there would
-disable hooks in all the others), or when the repo already runs hooks that
-pointing `core.hooksPath` at `.githooks` would stop firing — from a `.husky`
-directory, a machine-wide hooks dir, or the default `.git/hooks`. It names the
-hooks at stake. Copy them into `.githooks/` alongside the gate, or re-run with
-`PII_GATE_REPLACE_HOOKSPATH=1` to accept losing them in this repo. The one case
-it passes over quietly is a *global* hooks dir whose only hook is a
-`pre-commit` — this gate chains that one, so nothing is lost.
+**It can refuse, and a refusal is information rather than a fault.** In every
+case below it writes nothing at all and exits non-zero. There are three:
+
+1. **The target is a linked worktree.** `core.hooksPath` is shared across
+   worktrees while these files are not, so installing there would disable hooks
+   in all the others. Run it against the main worktree instead; the message names
+   the path.
+2. **The repo runs hooks somewhere else that would go quiet** — a `.husky`
+   directory, a machine-wide hooks dir, or the default `.git/hooks`. Pointing
+   `core.hooksPath` at `.githooks` makes git stop looking there. Nothing is
+   deleted, so the fix is to **copy those hooks into `.githooks/`** alongside the
+   gate's, or re-run with `PII_GATE_REPLACE_HOOKSPATH=1` to accept that they stop
+   running in this repo.
+3. **`.githooks/` already holds hooks that are not this gate's.** Here the files
+   would be **overwritten**, not merely silenced — so this is the one to slow
+   down on. Move or rename them first. `PII_GATE_REPLACE_HOOKSPATH=1` also
+   applies, but it means *replacing* those files: if they are untracked, nothing
+   in the installer can give them back.
+
+The one case it passes over quietly is a *global* hooks dir whose only hook is a
+`pre-commit` — this gate chains that one, so nothing is lost. Re-running over an
+installation of this gate is likewise silent: it tells its own hooks from
+someone else's by content, not by filename.
 
 ## Then, in order
 
