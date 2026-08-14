@@ -1,0 +1,28 @@
+# PII denylist — personal terms that must never land in this repo.
+#
+# THIS TEMPLATE SHIPS EMPTY ON PURPOSE. It carries no terms, and it never
+# should: a denylist committed to a repo IS the leak it exists to prevent.
+# The installer copies this file to `pii-denylist.local` at your repo root,
+# which is gitignored. You fill that copy in; it stays on your machine.
+#
+# One term per line; matching is case-insensitive, fixed-string, WHOLE-WORD
+# (a term inside a longer word doesn't match), everywhere: staged diffs,
+# pushed history, and the CI-scanned tree. No wildcards — list each variant
+# (diacritic and ASCII spellings) as its own term.
+#
+# Blank lines and lines starting with '#' are ignored.
+#
+# The hooks self-protect: force-staging your filled-in copy would match its
+# own terms and block the commit.
+#
+# After editing, the LOCAL hooks use the new terms immediately — nothing to
+# run. The CI secret PII_DENYLIST does NOT update by itself: pushing only
+# WARNS when this file has drifted from the last value written to it. To
+# update CI, run
+#   .githooks/overwrite-ci-denylist
+# deliberately (needs an authenticated gh and a terminal; typed confirmation).
+# Operator-run on purpose: an Actions secret is write-only, so an overwrite
+# destroys a value that nobody — no API, no admin — can read back first.
+#
+# Put the people this repo touches first, then family names / any personal
+# context that must never land in the tree.

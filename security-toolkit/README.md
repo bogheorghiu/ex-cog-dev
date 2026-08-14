@@ -2,7 +2,7 @@
 
 Threat-detection and dangerous-action-blocking hooks for Claude Code, plus security skills.
 
-All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required. The plugin also ships one command (`/pr-merge-guard`) and one skill (`pr-merge-guard`) for the optional PR-merge guard — see [The PR-merge guard](#the-pr-merge-guard) — and the [`windows-wsl-security-verification`](#the-windows-wsl-security-verification-skill) skill.
+All hooks register automatically via `hooks/hooks.json` once the plugin is installed — no manual `settings.json` editing required. The plugin also ships one command (`/pr-merge-guard`) and one skill (`pr-merge-guard`) for the optional PR-merge guard — see [The PR-merge guard](#the-pr-merge-guard) — plus the [`windows-wsl-security-verification`](#the-windows-wsl-security-verification-skill) and [`pii-gate`](#the-pii-gate-skill-and-installer) skills.
 
 ## What this is — and isn't
 
@@ -28,6 +28,18 @@ What it carries beyond a checklist: the discriminators that keep triage honest i
 
 Honest limits, stated in the skill itself: it is **Windows/WSL-specific** (macOS and bare-Linux siblings are future work, not covered here); it **verifies, it does not harden** (it hands off to a hardening track at the end); and a clean result **raises confidence without proving** a machine clean — a good rootkit's job is to hide.
 
+## The `pii-gate` skill and installer
+
+The other three surfaces here guard a *session*. This one guards a *repository*: `pii-gate/` is a drop-in gate that blocks personal names from reaching a remote — a pre-commit hook (staged diff), a pre-push hook (every outgoing commit, plus the ref name, commit message, author identity and tag message), and a CI workflow (tracked tree, full history, and gitleaks for secrets). The skill fires on `git init`, adding a remote, or a first push; `pii-gate/install.sh <repo>` does the install.
+
+Everything the gate does and how to run it lives in `skills/pii-gate/SKILL.md` and the installer's own output — not repeated here. Three things this README is the right place for:
+
+**The shipped denylist template is empty, permanently.** `pii-gate/pii-denylist.local.template` carries no terms and must never carry any: a denylist committed to a repo *is* the leak it exists to prevent. The installer copies it to a gitignored `pii-denylist.local` that the operator fills in. An optional `PII_DENYLIST_DEFAULT` env var can point at a private standing list, and is unset by default so the installer can never ship one maintainer's terms to everyone who runs it. `pii-gate/payload-parity.test.sh` asserts the zero-terms property on every PR.
+
+**This repo both runs the gate and ships it, and the running copy is the reference.** `.githooks/` and `.github/workflows/pii-denylist-guard.yml` are what actually gate this repository; `pii-gate/` is the copy consumers install. The shipped copy is exercised by nobody here — it is inert data until someone installs it — so drift in it fails first for a consumer, in their repo. `payload-parity.test.sh` compares the two on every PR: hooks byte-for-byte, workflows job-list and body. Change one side and the check tells you to change the other.
+
+**Turn it on and prove it blocks.** An empty or comments-only denylist leaves the denylist layers honestly INACTIVE, and they say so — so every green run before the first *armed* run is no evidence. The skill walks through arming it once on purpose and watching a commit get blocked.
+
 ## `hooks.json` quoting convention
 
 The hook commands are written as `"\"${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh\""` — JSON-escaped outer double-quotes wrap the shell-level double-quoted path. The inner quotes are intentional: they protect against word-splitting when `$CLAUDE_PLUGIN_ROOT` resolves to a path containing spaces. Don't "simplify" them away.
@@ -42,7 +54,14 @@ bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
 ```
 
-All three currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
+The PII gate carries two more, both run from the repo root rather than the plugin root because each compares the payload against something outside it:
+
+```bash
+bash security-toolkit/pii-gate/payload-parity.test.sh   # shipped copy == running copy
+bash .githooks/pre-push.test.sh                         # the gate's own 52 fail-closed cases
+```
+
+All currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
 
 Skills are prose artifacts, so their *structure* is what gets unit-tested: `skills/test_skill_structure.py` (a twin of the research-toolkit/vasana-system linters, kept logic-identical) asserts every SKILL.md's frontmatter parses, `name == dir`, description ≤ 1024 chars, and exactly one `## Vasana` section — CI runs it on every PR. Triggering (does the skill actually fire on the right turns?) is a separate, tiered measurement — see `.claude/rules/skill-verification.md`.
 

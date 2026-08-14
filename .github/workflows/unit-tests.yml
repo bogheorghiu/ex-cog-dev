@@ -51,6 +51,10 @@ jobs:
           bash vasana-system/hooks/count-skill-firings.test.sh
           bash research-toolkit/hooks/count-skill-firings.test.sh
           bash .githooks/pre-push.test.sh
+          # The gate this repo RUNS (.githooks/) against the copy it SHIPS
+          # (security-toolkit/pii-gate/). The shipped copy is inert here, so
+          # drift in it would fail first for a consumer, in their repo.
+          bash security-toolkit/pii-gate/payload-parity.test.sh
 
       - name: Stdlib Python suites
         run: |
