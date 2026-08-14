@@ -30,6 +30,58 @@ if [ "$GIT_DIR_PATH" != "$COMMON_DIR_PATH" ]; then
   exit 1
 fi
 
+# Never take over an existing hooks path blind. A repo using husky, or a machine-wide hooks dir,
+# would lose those hooks with no warning and no record of what was there — this installer doing
+# quietly to someone else's guardrails what this whole gate exists to prevent.
+#
+# Read the EFFECTIVE value, across every scope. `--local --get` cannot see a --global or --system
+# setting by definition, so the machine-wide case was precisely the one an earlier version could
+# not detect: the refusal never fired, a repo-level core.hooksPath was written, and it overrode the
+# global one.
+#
+# The test is not "is one set" but "would anything STOP FIRING". This gate's pre-commit chains a
+# global pre-commit, so that hook survives the takeover; nothing chains the others. So enumerate
+# what is actually in that directory, subtract the chained one, and refuse only if something real
+# is left — naming it. A blanket refusal would block the ordinary case of a machine whose global
+# hooks dir holds only a pre-commit, which is the common setup and loses nothing.
+CURRENT_HOOKSPATH="$(git -C "$TOP" config --get core.hooksPath || true)"
+LOCAL_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
+if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
+  if [ -n "$LOCAL_HOOKSPATH" ]; then
+    HOOKSPATH_SCOPE="this repo"
+  else
+    HOOKSPATH_SCOPE="your global/system git config"
+  fi
+  # Resolve relative to the repo, as git itself does.
+  case "$CURRENT_HOOKSPATH" in
+    /*) HOOKSDIR="$CURRENT_HOOKSPATH" ;;
+     *) HOOKSDIR="$TOP/$CURRENT_HOOKSPATH" ;;
+  esac
+  ORPHANED=""
+  if [ -d "$HOOKSDIR" ]; then
+    for h in "$HOOKSDIR"/*; do
+      [ -f "$h" ] && [ -x "$h" ] || continue
+      case "$(basename "$h")" in
+        pre-commit) continue ;;            # chained by this gate's own pre-commit
+        *.sample|*.md|*.txt) continue ;;
+      esac
+      ORPHANED="$ORPHANED $(basename "$h")"
+    done
+  fi
+  if [ -n "$ORPHANED" ]; then
+    if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
+      echo "REFUSING: core.hooksPath is already set to ${CURRENT_HOOKSPATH} (by ${HOOKSPATH_SCOPE})." >&2
+      echo "  Pointing it at .githooks would take precedence, and these hooks would STOP FIRING" >&2
+      echo "  for this repo:${ORPHANED}" >&2
+      echo "  (pre-commit is not in that list because this gate chains it.)" >&2
+      echo "  Copy them into ${TOP}/.githooks, or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to" >&2
+      echo "  accept losing them here. Nothing has been written yet." >&2
+      exit 1
+    fi
+    echo "NOTE: overriding core.hooksPath ${CURRENT_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
+  fi
+fi
+
 mkdir -p "$TOP/.githooks" "$TOP/.github/workflows"
 # pre-push.test.sh ships with the hooks on purpose: the suite is what makes a change to pre-push
 # checkable in the repo that runs it, and a copy that drifts from its tests is the thing this gate
@@ -65,17 +117,6 @@ done
 # Never clobber an existing hooks path blind. A repo using husky (or a machine-wide hooks dir)
 # would lose those hooks with no warning and no record of what was there — this installer would
 # be doing quietly to someone else's guardrails what this whole gate exists to prevent.
-CURRENT_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
-if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
-  if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
-    echo "REFUSING: this repo already sets core.hooksPath = ${CURRENT_HOOKSPATH}" >&2
-    echo "  The gate needs .githooks. Chain or migrate those hooks first, then re-run with" >&2
-    echo "  PII_GATE_REPLACE_HOOKSPATH=1 to confirm replacing ${CURRENT_HOOKSPATH}." >&2
-    echo "  (Everything else above is already installed; only this last step was skipped.)" >&2
-    exit 1
-  fi
-  echo "NOTE: replacing core.hooksPath ${CURRENT_HOOKSPATH} -> .githooks (PII_GATE_REPLACE_HOOKSPATH=1)."
-fi
 git -C "$TOP" config core.hooksPath .githooks
 
 # Seed only when the repo has NO denylist under EITHER accepted name. Testing just

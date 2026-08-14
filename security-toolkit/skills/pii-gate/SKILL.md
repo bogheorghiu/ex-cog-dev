@@ -103,14 +103,22 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
-git log -p -m --all --text --no-ext-diff --no-textconv \
+git log -p -m --all --text --no-ext-diff --no-textconv --pretty=fuller \
   | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
 ```
 
-`--no-ext-diff --no-textconv` are not optional either: the hooks and the CI
-history job both pass them so that a repo-local `.gitattributes` diff driver
-cannot blank the content before grep is shown it. Without them your scan is
-honestly clean about text it never saw.
+Three of those flags are load-bearing, and the gate passes all three for reasons
+worth knowing before you drop one:
+
+- `--no-ext-diff --no-textconv` stop a repo-local `.gitattributes` diff driver
+  from blanking content before grep is shown it. Without them your scan is
+  honestly clean about text it never saw.
+- `--pretty=fuller` prints the **Commit** (committer) identity, which the default
+  format omits — it shows Author only. A commit whose *committer* identity
+  carries the name is invisible without it, and amends and rebases are exactly
+  where the two identities diverge.
+- `-m` makes `git log -p` emit a diff for merge commits, so a name introduced
+  only in a conflict resolution is still scanned.
 
 **Never hand the raw denylist to `grep -f`** — here or anywhere. Every layer of
 the gate strips comments and blank lines before scanning, and a hand-run command
