@@ -49,8 +49,10 @@ on:
 permissions:
   contents: read
 
-# This file carries TWO independent gates. The denylist job below is the one this file is named
-# for. The `secrets` job after it runs gitleaks over the FULL history (built-in rules), so a leaked
+# This file carries FOUR jobs. Three scan this repository: `denylist` (the tracked tree, the one this
+# file is named for), `history` (every commit's diff), and `secrets`. The fourth, `parity`, scans the
+# gate itself rather than the repo — it fails when the layers stop agreeing with each other.
+# The `secrets` job runs gitleaks over the FULL history (built-in rules), so a leaked
 # token in any past commit fails the run rather than only one in the tip; its binary is
 # version-pinned and sha256-verified before it executes. They are kept in one workflow because they
 # answer the same question — did something that must not be public reach this repo — and a reviewer
@@ -270,7 +272,7 @@ jobs:
           n=$(cat "${RUNNER_TEMP}/hist.txt")
           rm -f "${RUNNER_TEMP}"/denylist.txt "${RUNNER_TEMP}"/hist.txt
           if [ "${n}" -gt 0 ]; then
-            echo "::error::${n} line(s) in this repository's HISTORY contain a denylisted personal term. The tree can be clean while the commits are not. To see which, run the same scan locally (same flags, and strip comment/blank lines from the denylist first — a bare # line is a pattern that matches almost everything): git log -p -m --all --text --no-ext-diff --no-textconv --pretty=fuller | grep -a -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' your-denylist)"
+            echo "::error::${n} line(s) in this repository's HISTORY contain a denylisted personal term. The tree can be clean while the commits are not. To see which, run this locally — the same flags this job used, and strip comment/blank lines from the denylist first, because a bare # line is a pattern that matches almost everything: git log -p -m --all --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv | grep -a -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' your-denylist)"
             exit 1
           fi
           echo "History denylist scan: clean across $(git rev-list --all --count) commits."

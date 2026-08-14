@@ -52,59 +52,99 @@ fi
 # it would stop firing like any other hook. Refuse only if something real is left, and name it: a
 # blanket refusal would block the common machine whose global hooks dir holds just a pre-commit,
 # which loses nothing.
+#
+# Resolution goes through `--type=path`, NOT the raw value. core.hooksPath is pathname-typed, so
+# git expands a leading `~` when it resolves it, while `--get` hands back the stored bytes. A
+# global `hooksPath = ~/.githooks` — an ordinary hand-edited-dotfile idiom — therefore missed the
+# absolute-path arm, became "$TOP/~/.githooks", found no directory, and let the takeover proceed in
+# silence. Measured: git really does run a hook under `~/myhooks`, so that was a live hook being
+# lost. `--type=path` leaves a relative value like `.githooks` untouched, so it costs nothing here.
 CURRENT_HOOKSPATH="$(git -C "$TOP" config --get core.hooksPath || true)"
+RESOLVED_HOOKSPATH="$(git -C "$TOP" config --type=path --get core.hooksPath || true)"
 LOCAL_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
 GLOBAL_HOOKSPATH="$(git -C "$TOP" config --global --get core.hooksPath || true)"
-if [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
-  CHAINED_PRECOMMIT=0
-  if [ -z "$CURRENT_HOOKSPATH" ]; then
-    HOOKSPATH_SCOPE="git's default"
-    HOOKSDIR="$(git -C "$TOP" rev-parse --path-format=absolute --git-path hooks)"
-    DISPLAY_HOOKSPATH="$HOOKSDIR"
+CHAINED_PRECOMMIT=0
+if [ -z "$CURRENT_HOOKSPATH" ]; then
+  HOOKSPATH_SCOPE="git's default"
+  HOOKSDIR="$(git -C "$TOP" rev-parse --path-format=absolute --git-path hooks)"
+  DISPLAY_HOOKSPATH="$HOOKSDIR"
+else
+  if [ -n "$LOCAL_HOOKSPATH" ]; then
+    HOOKSPATH_SCOPE="this repo"
+  elif [ -n "$GLOBAL_HOOKSPATH" ] && [ "$GLOBAL_HOOKSPATH" = "$CURRENT_HOOKSPATH" ]; then
+    HOOKSPATH_SCOPE="your global git config"
+    CHAINED_PRECOMMIT=1
   else
-    if [ -n "$LOCAL_HOOKSPATH" ]; then
-      HOOKSPATH_SCOPE="this repo"
-    elif [ -n "$GLOBAL_HOOKSPATH" ] && [ "$GLOBAL_HOOKSPATH" = "$CURRENT_HOOKSPATH" ]; then
-      HOOKSPATH_SCOPE="your global git config"
-      CHAINED_PRECOMMIT=1
-    else
-      HOOKSPATH_SCOPE="your system git config"
+    HOOKSPATH_SCOPE="your system git config"
+  fi
+  case "$RESOLVED_HOOKSPATH" in
+    /*) HOOKSDIR="$RESOLVED_HOOKSPATH" ;;
+     *) HOOKSDIR="$TOP/$RESOLVED_HOOKSPATH" ;;
+  esac
+  DISPLAY_HOOKSPATH="$CURRENT_HOOKSPATH"
+fi
+
+# Two different destructive shapes, so two checks.
+#
+# (a) The hooks dir is somewhere ELSE: pointing core.hooksPath at .githooks makes git stop looking
+#     there, so every hook in it goes quiet. Nothing is deleted, but nothing runs either.
+#
+# (b) The hooks dir IS the .githooks we are about to write into. Then core.hooksPath does not
+#     change and nothing goes quiet — but the `cp` below OVERWRITES files. A repo already using the
+#     ordinary committed-hooks convention, with its own hand-written .githooks/pre-commit, would
+#     have it replaced and be told the install succeeded. This case used to skip the guard
+#     entirely, because the guard was gated on the path differing from .githooks — so the strictly
+#     MORE destructive shape was the unguarded one.
+#
+# Ours-vs-theirs is decided by content, not by filename, so an idempotent re-run stays silent.
+ORPHANED=""
+OVERWRITES=""
+if [ "$HOOKSDIR" = "$TOP/.githooks" ]; then
+  for n in $(cd "$SRC/githooks" && ls); do
+    [ -f "$TOP/.githooks/$n" ] || continue
+    # Our own files all reference the denylist by name; a foreign hook will not.
+    if ! grep -q 'pii-denylist' "$TOP/.githooks/$n" 2>/dev/null; then
+      OVERWRITES="$OVERWRITES $n"
     fi
-    # Resolve relative to the repo, as git itself does.
-    case "$CURRENT_HOOKSPATH" in
-      /*) HOOKSDIR="$CURRENT_HOOKSPATH" ;;
-       *) HOOKSDIR="$TOP/$CURRENT_HOOKSPATH" ;;
+  done
+elif [ -d "$HOOKSDIR" ]; then
+  for h in "$HOOKSDIR"/*; do
+    [ -f "$h" ] && [ -x "$h" ] || continue
+    case "$(basename "$h")" in
+      pre-commit)
+        # Exempt only when this gate will actually chain it — see CHAINED_PRECOMMIT above.
+        if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then continue; fi
+        ;;
+      *.sample|*.md|*.txt) continue ;;
     esac
-    DISPLAY_HOOKSPATH="$CURRENT_HOOKSPATH"
+    ORPHANED="$ORPHANED $(basename "$h")"
+  done
+fi
+
+if [ -n "$OVERWRITES" ]; then
+  if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
+    echo "REFUSING: ${TOP}/.githooks already holds hooks that are not this gate's:${OVERWRITES}" >&2
+    echo "  Installing would overwrite them, and nothing here can give them back." >&2
+    echo "  Move or merge them first, then re-run — or re-run with PII_GATE_REPLACE_HOOKSPATH=1" >&2
+    echo "  to accept replacing them. Nothing has been written yet." >&2
+    exit 1
   fi
-  ORPHANED=""
-  if [ -d "$HOOKSDIR" ]; then
-    for h in "$HOOKSDIR"/*; do
-      [ -f "$h" ] && [ -x "$h" ] || continue
-      case "$(basename "$h")" in
-        pre-commit)
-          # Exempt only when this gate will actually chain it — see CHAINED_PRECOMMIT above.
-          if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then continue; fi
-          ;;
-        *.sample|*.md|*.txt) continue ;;
-      esac
-      ORPHANED="$ORPHANED $(basename "$h")"
-    done
-  fi
-  if [ -n "$ORPHANED" ]; then
-    if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
-      echo "REFUSING: this repo already runs hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE})." >&2
-      echo "  Pointing it at .githooks would take precedence, and these hooks would STOP FIRING" >&2
-      echo "  for this repo:${ORPHANED}" >&2
-      if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then
-        echo "  (pre-commit is not in that list because this gate chains a GLOBAL one.)" >&2
-      fi
-      echo "  Copy them into ${TOP}/.githooks, or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to" >&2
-      echo "  accept losing them here. Nothing has been written yet." >&2
-      exit 1
+  echo "NOTE: replacing non-gate hooks in .githooks:${OVERWRITES} (PII_GATE_REPLACE_HOOKSPATH=1)."
+fi
+
+if [ -n "$ORPHANED" ]; then
+  if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
+    echo "REFUSING: this repo already runs hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE})." >&2
+    echo "  Pointing it at .githooks would take precedence, and these hooks would STOP FIRING" >&2
+    echo "  for this repo:${ORPHANED}" >&2
+    if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then
+      echo "  (pre-commit is not in that list because this gate chains a GLOBAL one.)" >&2
     fi
-    echo "NOTE: taking over hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
+    echo "  Copy them into ${TOP}/.githooks, or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to" >&2
+    echo "  accept losing them here. Nothing has been written yet." >&2
+    exit 1
   fi
+  echo "NOTE: taking over hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
 fi
 
 mkdir -p "$TOP/.githooks" "$TOP/.github/workflows"

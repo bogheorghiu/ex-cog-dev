@@ -60,12 +60,18 @@ it passes over quietly is a *global* hooks dir whose only hook is a
 
 ## Then, in order
 
-1. **The operator populates `pii-denylist.local` — never you.** One term per
-   line; `#` comments and blanks ignored. Do not invent, guess, or type personal
-   terms into it yourself, and do not read the finished file back into the
-   conversation: the point of the gate is that those terms live in exactly one
-   gitignored file and nowhere else. Ask them to fill it in and tell you when
-   it's done.
+1. **The operator populates the denylist — never you.** One term per line; `#`
+   comments and blanks ignored. Do not invent, guess, or type personal terms into
+   it yourself, and do not read the finished file back into the conversation: the
+   point of the gate is that those terms live in exactly one gitignored file and
+   nowhere else. Ask them to fill it in and tell you when it's done.
+
+   **Use the filename the installer printed**, which is `pii-denylist.local` on a
+   fresh repo but `pii-denylist.txt` on a retrofit that already had one. Creating
+   a `.local` beside an existing `.txt` is the shadowing trap described under the
+   arming probe below: the hooks take the first name they find, so the operator's
+   real list would go unread while the gate reported itself active on the new,
+   nearly-empty file.
 2. **Commit the gate files before adding a remote.**
 3. **Once a GitHub remote exists**, the operator runs
    `.githooks/overwrite-ci-denylist` themselves to set the `PII_DENYLIST` Actions
