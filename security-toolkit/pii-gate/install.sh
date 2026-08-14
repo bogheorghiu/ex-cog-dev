@@ -46,11 +46,20 @@ fi
 # hooks dir holds only a pre-commit, which is the common setup and loses nothing.
 CURRENT_HOOKSPATH="$(git -C "$TOP" config --get core.hooksPath || true)"
 LOCAL_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
+GLOBAL_HOOKSPATH="$(git -C "$TOP" config --global --get core.hooksPath || true)"
 if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
+  # Which scope set it decides whether pre-commit is really exempt below: this gate's pre-commit
+  # chains `git config --global --get core.hooksPath` and ONLY that. A repo-scoped hooks dir
+  # (husky sets exactly this) or a system-scoped one is not chained, so its pre-commit would stop
+  # firing like any other hook — and exempting it unconditionally made that silent.
+  CHAINED_PRECOMMIT=0
   if [ -n "$LOCAL_HOOKSPATH" ]; then
     HOOKSPATH_SCOPE="this repo"
+  elif [ -n "$GLOBAL_HOOKSPATH" ] && [ "$GLOBAL_HOOKSPATH" = "$CURRENT_HOOKSPATH" ]; then
+    HOOKSPATH_SCOPE="your global git config"
+    CHAINED_PRECOMMIT=1
   else
-    HOOKSPATH_SCOPE="your global/system git config"
+    HOOKSPATH_SCOPE="your system git config"
   fi
   # Resolve relative to the repo, as git itself does.
   case "$CURRENT_HOOKSPATH" in
@@ -62,7 +71,10 @@ if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
     for h in "$HOOKSDIR"/*; do
       [ -f "$h" ] && [ -x "$h" ] || continue
       case "$(basename "$h")" in
-        pre-commit) continue ;;            # chained by this gate's own pre-commit
+        pre-commit)
+          # Exempt only when this gate will actually chain it — see CHAINED_PRECOMMIT above.
+          if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then continue; fi
+          ;;
         *.sample|*.md|*.txt) continue ;;
       esac
       ORPHANED="$ORPHANED $(basename "$h")"
@@ -73,7 +85,9 @@ if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
       echo "REFUSING: core.hooksPath is already set to ${CURRENT_HOOKSPATH} (by ${HOOKSPATH_SCOPE})." >&2
       echo "  Pointing it at .githooks would take precedence, and these hooks would STOP FIRING" >&2
       echo "  for this repo:${ORPHANED}" >&2
-      echo "  (pre-commit is not in that list because this gate chains it.)" >&2
+      if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then
+        echo "  (pre-commit is not in that list because this gate chains a GLOBAL one.)" >&2
+      fi
       echo "  Copy them into ${TOP}/.githooks, or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to" >&2
       echo "  accept losing them here. Nothing has been written yet." >&2
       exit 1
@@ -114,9 +128,6 @@ for n in pii-denylist.local pii-denylist.txt .pii-denylist.synced; do
   fi
 done
 
-# Never clobber an existing hooks path blind. A repo using husky (or a machine-wide hooks dir)
-# would lose those hooks with no warning and no record of what was there — this installer would
-# be doing quietly to someone else's guardrails what this whole gate exists to prevent.
 git -C "$TOP" config core.hooksPath .githooks
 
 # Seed only when the repo has NO denylist under EITHER accepted name. Testing just

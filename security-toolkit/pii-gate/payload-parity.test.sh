@@ -87,8 +87,14 @@ if [ "$RUNNING" != "$SHIPPED" ]; then
   echo "      in installer  : $(echo "$SHIPPED" | tr '\n' ' ')"
 fi
 
-# Executability survives git: a payload hook that arrives without +x is copied without +x, and a
-# hook git cannot execute does not run AND does not error. It is the silent-inactive failure.
+# Mode parity — the half `cmp` cannot see. `cmp` compares bytes, so two files can be byte-identical
+# and differ in whether git will execute them.
+#
+# Note what this does NOT guard, since an earlier version of this comment claimed it: an installed
+# hook arriving without +x, because install.sh chmods all five names unconditionally right after the
+# cp, and no other install path is documented. What it does buy is that separately-restated chmod
+# line — add a sixth hook to the cp and forget the chmod, and the consumer gets a hook git silently
+# never runs, which neither errors nor appears in any log.
 for h in $HOOKS; do
   [ -x "$PAY/githooks/$h" ]
   chk "$h is executable in the payload (git preserves the mode; a non-exec hook silently never runs)" $?

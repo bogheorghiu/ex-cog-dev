@@ -203,8 +203,11 @@ jobs:
 
   history:
     # Every commit's diff, on every ref — the coverage the tree scan structurally cannot provide.
-    # Cheap: measured at 7ms to walk this repo's entire history, so it runs on every push rather
-    # than being reserved for an occasional audit nobody remembers to trigger.
+    # It runs on every push rather than being reserved for an occasional audit nobody remembers to
+    # trigger. That is affordable because the walk is one `git log -p` over the history you already
+    # cloned — single-digit milliseconds on a small repo. On a large or long-lived history it costs
+    # more; measure it on YOUR repo before assuming, and if it becomes the slow step, gate this job
+    # on a branch filter rather than deleting it.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

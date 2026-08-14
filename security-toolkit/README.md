@@ -59,7 +59,7 @@ The PII gate carries three more. Two are written as repo-root-relative paths bec
 
 ```bash
 bash security-toolkit/pii-gate/payload-parity.test.sh   # shipped copy == running copy
-bash .githooks/pre-push.test.sh                         # the gate's own 52 fail-closed cases
+bash .githooks/pre-push.test.sh                         # the pre-push hook's own behaviour
 bash .githooks/layer-parity.test.sh                     # the gate's layers agree with each other
 ```
 
