@@ -75,7 +75,13 @@ if [ "$reply" != "Yes" ]; then
   echo "overwrite-ci-denylist: aborted — the CI secret was NOT changed." >&2
   exit 1
 fi
-if gh secret set PII_DENYLIST --app actions < "$FILE" >/dev/null 2>&1; then
+# Redirections apply LEFT TO RIGHT, so `< "$FILE"` must come AFTER 2>&1: with the input redirect
+# first, a failed open is reported by bash while fd 2 is still the terminal, and that message
+# carries the full path — the one thing this file's header promises never happens. Reachable as
+# a TOCTOU: sha256sum proved the file readable before the typed prompt, which leaves a
+# human-length window for it to move or lose permissions. The marker write below already
+# states this rule; this line did not follow it.
+if gh secret set PII_DENYLIST --app actions >/dev/null 2>&1 < "$FILE"; then
   # Group-level 2>/dev/null so a FAILED REDIRECTION is caught too: bash reports that by printing
   # the path, and it prints it before the command runs, so a redirect placed after > would be
   # too late to suppress it.

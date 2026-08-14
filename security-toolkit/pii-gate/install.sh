@@ -39,33 +39,44 @@ fi
 # not detect: the refusal never fired, a repo-level core.hooksPath was written, and it overrode the
 # global one.
 #
-# The test is not "is one set" but "would anything STOP FIRING". This gate's pre-commit chains a
-# global pre-commit, so that hook survives the takeover; nothing chains the others. So enumerate
-# what is actually in that directory, subtract the chained one, and refuse only if something real
-# is left — naming it. A blanket refusal would block the ordinary case of a machine whose global
-# hooks dir holds only a pre-commit, which is the common setup and loses nothing.
+# The test is not "is one set" but "would anything STOP FIRING" — and that question has an answer
+# even when core.hooksPath is UNSET. Setting it makes git look in .githooks INSTEAD of the default
+# $GIT_DIR/hooks, so a repo using the pre-commit framework, lefthook, husky v4, or a hand-copied
+# hook has live hooks there and no core.hooksPath at all. Gating the whole check on "a value is
+# set" skipped exactly that repo and killed its hooks in silence. Measured: a .git/hooks/pre-commit
+# fires with hooksPath unset and stops the moment it is set.
+#
+# So resolve the directory git is using NOW, whichever way it got there, and enumerate it.
+# This gate's pre-commit chains a GLOBAL hooks path and only that, so a pre-commit is exempt only
+# in that one case; everywhere else — repo scope (husky), system scope, or the default hooks dir —
+# it would stop firing like any other hook. Refuse only if something real is left, and name it: a
+# blanket refusal would block the common machine whose global hooks dir holds just a pre-commit,
+# which loses nothing.
 CURRENT_HOOKSPATH="$(git -C "$TOP" config --get core.hooksPath || true)"
 LOCAL_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
 GLOBAL_HOOKSPATH="$(git -C "$TOP" config --global --get core.hooksPath || true)"
-if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
-  # Which scope set it decides whether pre-commit is really exempt below: this gate's pre-commit
-  # chains `git config --global --get core.hooksPath` and ONLY that. A repo-scoped hooks dir
-  # (husky sets exactly this) or a system-scoped one is not chained, so its pre-commit would stop
-  # firing like any other hook — and exempting it unconditionally made that silent.
+if [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
   CHAINED_PRECOMMIT=0
-  if [ -n "$LOCAL_HOOKSPATH" ]; then
-    HOOKSPATH_SCOPE="this repo"
-  elif [ -n "$GLOBAL_HOOKSPATH" ] && [ "$GLOBAL_HOOKSPATH" = "$CURRENT_HOOKSPATH" ]; then
-    HOOKSPATH_SCOPE="your global git config"
-    CHAINED_PRECOMMIT=1
+  if [ -z "$CURRENT_HOOKSPATH" ]; then
+    HOOKSPATH_SCOPE="git's default"
+    HOOKSDIR="$(git -C "$TOP" rev-parse --path-format=absolute --git-path hooks)"
+    DISPLAY_HOOKSPATH="$HOOKSDIR"
   else
-    HOOKSPATH_SCOPE="your system git config"
+    if [ -n "$LOCAL_HOOKSPATH" ]; then
+      HOOKSPATH_SCOPE="this repo"
+    elif [ -n "$GLOBAL_HOOKSPATH" ] && [ "$GLOBAL_HOOKSPATH" = "$CURRENT_HOOKSPATH" ]; then
+      HOOKSPATH_SCOPE="your global git config"
+      CHAINED_PRECOMMIT=1
+    else
+      HOOKSPATH_SCOPE="your system git config"
+    fi
+    # Resolve relative to the repo, as git itself does.
+    case "$CURRENT_HOOKSPATH" in
+      /*) HOOKSDIR="$CURRENT_HOOKSPATH" ;;
+       *) HOOKSDIR="$TOP/$CURRENT_HOOKSPATH" ;;
+    esac
+    DISPLAY_HOOKSPATH="$CURRENT_HOOKSPATH"
   fi
-  # Resolve relative to the repo, as git itself does.
-  case "$CURRENT_HOOKSPATH" in
-    /*) HOOKSDIR="$CURRENT_HOOKSPATH" ;;
-     *) HOOKSDIR="$TOP/$CURRENT_HOOKSPATH" ;;
-  esac
   ORPHANED=""
   if [ -d "$HOOKSDIR" ]; then
     for h in "$HOOKSDIR"/*; do
@@ -82,7 +93,7 @@ if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
   fi
   if [ -n "$ORPHANED" ]; then
     if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
-      echo "REFUSING: core.hooksPath is already set to ${CURRENT_HOOKSPATH} (by ${HOOKSPATH_SCOPE})." >&2
+      echo "REFUSING: this repo already runs hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE})." >&2
       echo "  Pointing it at .githooks would take precedence, and these hooks would STOP FIRING" >&2
       echo "  for this repo:${ORPHANED}" >&2
       if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then
@@ -92,7 +103,7 @@ if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
       echo "  accept losing them here. Nothing has been written yet." >&2
       exit 1
     fi
-    echo "NOTE: overriding core.hooksPath ${CURRENT_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
+    echo "NOTE: taking over hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
   fi
 fi
 

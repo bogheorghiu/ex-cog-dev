@@ -39,11 +39,24 @@ bash "${CLAUDE_PLUGIN_ROOT}/pii-gate/install.sh" /path/to/repo
 ```
 
 That copies the hooks into `.githooks/`, adds the CI workflow, appends the
-gitignore entries, sets `core.hooksPath`, and seeds an **empty**
-`pii-denylist.local` at the repo root.
+gitignore entries, points `core.hooksPath` at `.githooks`, and — only if the repo
+has no denylist under either accepted name — seeds an **empty**
+`pii-denylist.local` at the repo root. A repo that already has one keeps it,
+under whichever name it uses.
 
 Re-running it updates the hooks and workflow in place and never touches an
 existing denylist.
+
+**It can refuse, and a refusal is information rather than a fault.** It writes
+nothing and exits non-zero when the target is a linked worktree (`core.hooksPath`
+is shared across worktrees while these files are not, so installing there would
+disable hooks in all the others), or when the repo already runs hooks that
+pointing `core.hooksPath` at `.githooks` would stop firing — from a `.husky`
+directory, a machine-wide hooks dir, or the default `.git/hooks`. It names the
+hooks at stake. Copy them into `.githooks/` alongside the gate, or re-run with
+`PII_GATE_REPLACE_HOOKSPATH=1` to accept losing them in this repo. The one case
+it passes over quietly is a *global* hooks dir whose only hook is a
+`pre-commit` — this gate chains that one, so nothing is lost.
 
 ## Then, in order
 
@@ -72,13 +85,25 @@ So once terms are in, arm it once on purpose:
 
 ```
 cd /path/to/repo                                   # the probe file must be INSIDE the repo
-echo "throwaway-term" >> pii-denylist.local
+DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
+echo "throwaway-term" >> "$DL"
 echo "throwaway-term" > probe.md && git add probe.md
 git commit -m probe        # MUST be blocked
 ```
 
 Watch it block, then `git rm --cached probe.md && rm probe.md` and remove the
-throwaway term from the denylist.
+throwaway term from `$DL`.
+
+**Append to the denylist the repo actually uses — that is what `$DL` is for.**
+The hooks accept two filenames and take the **first** one they find, checking
+`pii-denylist.local` before `pii-denylist.txt`, with no union between them. So on
+a repo retrofitted with a `pii-denylist.txt`, writing the probe term to
+`pii-denylist.local` *creates* that file and shadows the real one: the probe
+passes, having proved only itself, while every real term goes unread. Delete the
+throwaway term afterwards and you are left with an empty `.local` that normalizes
+to nothing — the gate reports INACTIVE with the operator's list sitting one
+filename away. If you did create a `.local` this way, remove the **file**, not
+just the line.
 
 **The probe file has to be inside the working tree.** Writing it to `/tmp` and
 staging it makes `git add` fail with *"is outside repository"*, so nothing is
@@ -103,8 +128,9 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
+DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
 git log -p -m --all --text --no-ext-diff --no-textconv --pretty=fuller \
-  | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
+  | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
 ```
 
 Three of those flags are load-bearing, and the gate passes all three for reasons
@@ -162,8 +188,9 @@ failure arrives without a filename. To find it, run the same substring match
 locally:
 
 ```
+DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
 git ls-files \
-  | grep -i -F -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
+  | grep -i -F -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
 ```
 
 Same normalization as the history command above, for an overlapping reason. Two
