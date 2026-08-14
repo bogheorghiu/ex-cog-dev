@@ -25,13 +25,27 @@ chmod +x "$TOP/.githooks/pre-commit" "$TOP/.githooks/pre-push" "$TOP/.githooks/o
          "$TOP/.githooks/pre-push.test.sh" "$TOP/.githooks/layer-parity.test.sh"
 cp "$SRC/workflows/pii-denylist-guard.yml" "$TOP/.github/workflows/pii-denylist-guard.yml"
 
-if ! grep -qx 'pii-denylist.local' "$TOP/.gitignore" 2>/dev/null; then
-  # BOTH filenames, because the hooks accept both and their error text advertises both. Ignoring
-  # only one leaves a contributor who follows that advice with an untracked file of real names —
-  # visible in git status, IDE trees, screen shares and backups. That is a surface no gate reaches,
-  # because no gate runs in the working tree.
-  printf '\n# PII denylist — personal terms, must NEVER be committed (see .githooks/)\npii-denylist.local\npii-denylist.txt\n.pii-denylist.synced\n' >> "$TOP/.gitignore"
-fi
+# BOTH denylist filenames, because the hooks accept both and their error text advertises both.
+# Ignoring only one leaves a contributor who follows that advice with an untracked file of real
+# names — visible in git status, IDE trees, screen shares and backups. That is a surface no gate
+# reaches, because no gate runs in the working tree.
+#
+# Each name is tested SEPARATELY. A single guard on `pii-denylist.local` looked equivalent and was
+# not: a repo that already ignored that one name skipped the whole block, so `pii-denylist.txt`
+# stayed committable — the exact hole the both-names append exists to close — and the shipped
+# workflow's `parity` job then failed on every push, since it asserts .gitignore covers every name
+# pre-push accepts.
+[ -f "$TOP/.gitignore" ] || : > "$TOP/.gitignore"
+gi_added=0
+for n in pii-denylist.local pii-denylist.txt .pii-denylist.synced; do
+  if ! grep -qx -- "$n" "$TOP/.gitignore"; then
+    if [ "$gi_added" -eq 0 ]; then
+      printf '\n# PII denylist — personal terms, must NEVER be committed (see .githooks/)\n' >> "$TOP/.gitignore"
+      gi_added=1
+    fi
+    printf '%s\n' "$n" >> "$TOP/.gitignore"
+  fi
+done
 
 git -C "$TOP" config core.hooksPath .githooks
 

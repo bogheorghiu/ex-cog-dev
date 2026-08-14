@@ -71,14 +71,25 @@ nothing to find.
 So once terms are in, arm it once on purpose:
 
 ```
+cd /path/to/repo                                   # the probe file must be INSIDE the repo
 echo "throwaway-term" >> pii-denylist.local
-echo "throwaway-term" > /tmp/probe.md && git add /tmp/probe.md   # or any staged file
+echo "throwaway-term" > probe.md && git add probe.md
 git commit -m probe        # MUST be blocked
 ```
 
-Watch it block, then remove the throwaway term. If it did *not* block, the gate
-is not installed the way you think it is — check `git config core.hooksPath`
-returns `.githooks`.
+Watch it block, then `git rm --cached probe.md && rm probe.md` and remove the
+throwaway term from the denylist.
+
+**The probe file has to be inside the working tree.** Writing it to `/tmp` and
+staging it makes `git add` fail with *"is outside repository"*, so nothing is
+staged; the hook then scans an empty diff, matches nothing, and the commit
+proceeds. You would read that as "the gate is broken" when the gate never got
+anything to look at — a false negative in the one step that exists to rule false
+negatives out.
+
+If it did *not* block with the probe staged inside the repo, the gate really is
+not installed the way you think — check that `git config core.hooksPath` returns
+`.githooks`.
 
 The same applies to CI: the workflow's first *armed* run (secret set, terms
 present) is its first real test. Read that run's log rather than inferring from a
@@ -89,8 +100,17 @@ green check.
 Install the gate first, then scan the **full history**, not just the tree — a
 tree scan reports clean on a branch where a name was added and later removed,
 because the tree genuinely is clean. The shipped workflow's `history` job does
-this in CI. Locally, gitleaks with `--no-git=false` over the whole history is the
-equivalent.
+this in CI. The local equivalent greps history against *your denylist*:
+
+```
+git log -p -m --all --text | grep -i -F -w -f pii-denylist.local
+```
+
+Reach for gitleaks for the other half — **secrets**, not names. It runs in the
+workflow's separate `secrets` job with its own built-in rules and is never handed
+the denylist, so it cannot find a personal name and will return clean while one
+sits in your history. Two scans, two different questions; neither substitutes for
+the other.
 
 Say plainly that a retrofit does not undo an earlier exposure. If a real name is
 already in pushed history, the honest options are history rewrite plus a force
@@ -106,9 +126,31 @@ name takes to the remote on its own), and CI (tree + full history + gitleaks).
 that errored rather than not-matched — each blocks instead of passing. "Could not
 check" must never read the same as "checked, clean."
 
-Matching is case-insensitive, fixed-string, **whole-word**. No wildcards, so list
-diacritic and ASCII spellings as separate terms. A matched term is never echoed
-by any layer — not in hook output, not in CI logs, which log counts only.
+Matching is case-insensitive, fixed-string, and **whole-word everywhere it reads
+content** — staged diffs, pushed history, and both CI content scans. No
+wildcards, so list diacritic and ASCII spellings as separate terms. A matched
+term is never echoed by any layer — not in hook output, not in CI logs.
+
+**One deliberate exception: CI's scan of tracked file *paths* is a substring
+match.** A filename concatenates where prose does not — `assets/<name>scan.png`
+offers no word boundary — so whole-word matching there would miss exactly the
+case that scan exists to catch. The consequence to know before it bites: with the
+term `Ana`, a tracked file named `banana.png` fails CI. That job logs counts
+only, never the offending path (a path can itself contain the term), so the
+failure arrives without a filename. To find it, run the same substring match
+locally:
+
+```
+git ls-files \
+  | grep -i -F -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
+```
+
+Strip the comments and blank lines first, as above — that inner `grep -v` is not
+decoration. Feeding the raw denylist to `grep -f` hands it a blank line as an
+*empty pattern*, and an empty pattern matches every line, so you get your whole
+file list back and no idea which path was the real hit. (GNU grep 3.11, verified;
+the `-w` history command above is immune, because an empty pattern has no word
+boundaries to match.)
 
 The local hooks are armed **per clone** (`core.hooksPath`), so a fresh clone that
 skipped that step has no local coverage while still being able to push. That is

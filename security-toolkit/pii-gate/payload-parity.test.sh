@@ -29,6 +29,19 @@ chk() { # description, status
   else printf '  %sFAIL%s  %s\n' "$RED" "$NC" "$1"; G=1; fi
 }
 
+# absent <grep args...> — "grep found nothing", asserted so that grep's OWN failure cannot pass.
+#
+# The obvious form, `! grep -q ...`, is fail-open: grep exits >=2 on an unreadable file, a bad
+# pattern or a missing path, and `!` turns that into 0 — so a scan that never ran reports the same
+# PASS as a scan that ran and found nothing. This is precisely the class the shipped hooks close
+# with PIPESTATUS handling, and this checker had it twice. Only exit 1, "ran and matched nothing",
+# is a pass here.
+absent() {
+  local st=0
+  grep "$@" >/dev/null 2>&1 || st=$?
+  [ "$st" -eq 1 ]
+}
+
 PAY=security-toolkit/pii-gate
 RUN_WF=.github/workflows/pii-denylist-guard.yml
 PAY_WF="$PAY/workflows/pii-denylist-guard.yml"
@@ -58,6 +71,20 @@ for h in $HOOKS; do
 done
 [ "$COUNT" -ge 5 ]
 chk "derived at least the 5 known gate files from the installer (got $COUNT)" $?
+
+# The comparison above runs installer -> .githooks only, which is drift-blind in the other
+# direction: a hook added to .githooks/ and never added to install.sh ships an INCOMPLETE gate to
+# consumers, and every check above still passes because nothing asked about it. Compare the two
+# sets instead. If a repo-only hook ever legitimately belongs in .githooks/ without shipping,
+# record it as a named exception here rather than loosening the comparison.
+RUNNING="$(cd .githooks && ls | sort)"
+SHIPPED="$(printf '%s\n' $HOOKS | sort)"
+[ "$RUNNING" = "$SHIPPED" ]
+chk "the installer ships exactly the files .githooks/ contains (no unshipped hook)" $?
+if [ "$RUNNING" != "$SHIPPED" ]; then
+  echo "      in .githooks/ : $(echo "$RUNNING" | tr '\n' ' ')"
+  echo "      in installer  : $(echo "$SHIPPED" | tr '\n' ' ')"
+fi
 
 # Executability survives git: a payload hook that arrives without +x is copied without +x, and a
 # hook git cannot execute does not run AND does not error. It is the silent-inactive failure.
@@ -118,7 +145,7 @@ chk "template carries 0 denylist terms (found $TERMS)" $?
 # secret-overwrite tool: a name on a comment line is documentation, not behaviour.
 grep -qE '^[[:space:]]*[A-Z_]+="\$\{PII_DENYLIST_DEFAULT' "$INSTALL"
 chk "installer ASSIGNS its optional seed path from PII_DENYLIST_DEFAULT (not merely mentions it)" $?
-! grep -qE 'DEFAULT="\$(HOME|\{HOME)' "$INSTALL"
+absent -E 'DEFAULT="\$(HOME|\{HOME)' "$INSTALL"
 chk "installer does not hard-code a seed path under \$HOME" $?
 
 echo ""
@@ -132,7 +159,7 @@ echo "${YEL}--- The payload must not leak the shipping repo's own paths ---${NC}
 # scanner that names what it looks for (the prompt-injection hook carries an allowlist for the
 # same reason) — and the honest fix is to exclude the detector, not to soften the pattern, which
 # would blind it to the real thing.
-! grep -rqE --exclude="$(basename "$0")" '(/home/[a-z]|ClaudeCodeHub|personal-vault)' "$PAY"
+absent -rE --exclude="$(basename "$0")" '(/home/[a-z]|ClaudeCodeHub|personal-vault)' "$PAY"
 chk "no absolute home paths or private-folder names anywhere in the payload" $?
 
 echo ""

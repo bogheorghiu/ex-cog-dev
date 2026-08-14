@@ -54,12 +54,14 @@ bash ${CLAUDE_PLUGIN_ROOT}/hooks/block-dangerous-git.test.sh
 bash ${CLAUDE_PLUGIN_ROOT}/hooks/announce-pr-merge-guard.test.sh
 ```
 
-The PII gate carries two more, both run from the repo root rather than the plugin root because each compares the payload against something outside it:
+The PII gate carries two more. Both are written as repo-root-relative paths simply because one of them lives outside the plugin, so no plugin-root path can name it:
 
 ```bash
 bash security-toolkit/pii-gate/payload-parity.test.sh   # shipped copy == running copy
 bash .githooks/pre-push.test.sh                         # the gate's own 52 fail-closed cases
 ```
+
+They check different things, and only the first one looks at the payload: `payload-parity` compares `security-toolkit/pii-gate/` against `.githooks/` (and resolves its own location, so it runs from any working directory), while `pre-push.test.sh` drives *this repo's running hook* against throwaway scratch repos and never reads the payload at all.
 
 All currently passing. `block-dc-config.sh` and `block-dc-execute.sh` do not yet have test suites — adding these is tracked in the parent handoff.
 

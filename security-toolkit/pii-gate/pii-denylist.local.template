@@ -5,10 +5,18 @@
 # The installer copies this file to `pii-denylist.local` at your repo root,
 # which is gitignored. You fill that copy in; it stays on your machine.
 #
-# One term per line; matching is case-insensitive, fixed-string, WHOLE-WORD
-# (a term inside a longer word doesn't match), everywhere: staged diffs,
-# pushed history, and the CI-scanned tree. No wildcards — list each variant
-# (diacritic and ASCII spellings) as its own term.
+# One term per line; matching is case-insensitive and fixed-string. No wildcards
+# — list each variant (diacritic and ASCII spellings) as its own term.
+#
+# Matching is WHOLE-WORD (a term inside a longer word doesn't match) everywhere
+# a layer reads CONTENT: staged diffs, pushed history, and both CI content scans.
+#
+# ONE EXCEPTION — CI also scans tracked file PATHS, and that scan is a SUBSTRING
+# match on purpose: a filename concatenates where prose does not, so a
+# whole-word rule would miss `assets/<term>scan.png`. Practical consequence: the
+# term `Ana` fails CI on a file named `banana.png`. That job logs counts only,
+# never the path, so pick terms with this in mind — short terms that are common
+# substrings will bite here and nowhere else.
 #
 # Blank lines and lines starting with '#' are ignored.
 #

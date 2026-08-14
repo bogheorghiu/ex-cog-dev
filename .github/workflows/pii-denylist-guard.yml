@@ -221,9 +221,25 @@ jobs:
           fi
           # Normalized EXACTLY as norm() does in .githooks/pre-push, for the reason every layer is:
           # one denylist must not behave as several. The parity check enforces the sameness.
-          printf '%s\n' "${DENYLIST}" | tr '|' '\n' | tr -d '\r' \
+          #
+          # Status handled the same way as the `denylist` job above, and for the same reason spelled
+          # out there. This job previously ended in `|| true`, which is why it is called out here:
+          # that swallowed a failing `tr` or `sed` into an EMPTY term file, which fell through to the
+          # -s check below, warned "HISTORY WAS NOT SCANNED" and exited 0. A green check, no scan,
+          # and a warning nobody reads on a passing run — fail-open, in the job whose whole purpose
+          # is to see what the tree scan cannot.
+          nst=0
+          printf '%s\n' "${DENYLIST}" \
+            | tr '|' '\n' \
+            | tr -d '\r' \
             | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
-            | grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' > "${RUNNER_TEMP}/denylist.txt" || true
+            | { grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#'; gs=$?; [ "${gs}" -le 1 ]; } \
+            > "${RUNNER_TEMP}/denylist.txt" || nst=$?
+          if [ "${nst}" -ne 0 ]; then
+            echo "::error::Normalizing the PII denylist failed (exit ${nst}) — history was NOT verified. Failing closed."
+            rm -f "${RUNNER_TEMP}/denylist.txt"
+            exit 1
+          fi
           if [ ! -s "${RUNNER_TEMP}/denylist.txt" ]; then
             echo "::warning::PII_DENYLIST held no usable terms — HISTORY WAS NOT SCANNED."
             exit 0
