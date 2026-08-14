@@ -103,9 +103,14 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
-git log -p -m --all --text \
+git log -p -m --all --text --no-ext-diff --no-textconv \
   | grep -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' pii-denylist.local)
 ```
+
+`--no-ext-diff --no-textconv` are not optional either: the hooks and the CI
+history job both pass them so that a repo-local `.gitattributes` diff driver
+cannot blank the content before grep is shown it. Without them your scan is
+honestly clean about text it never saw.
 
 **Never hand the raw denylist to `grep -f`** — here or anywhere. Every layer of
 the gate strips comments and blank lines before scanning, and a hand-run command

@@ -47,8 +47,9 @@ RUN_WF=.github/workflows/pii-denylist-guard.yml
 PAY_WF="$PAY/workflows/pii-denylist-guard.yml"
 INSTALL="$PAY/install.sh"
 TEMPLATE="$PAY/pii-denylist.local.template"
+SKILL_DIR=security-toolkit/skills/pii-gate
 
-for f in "$INSTALL" "$PAY_WF" "$TEMPLATE" "$RUN_WF"; do
+for f in "$INSTALL" "$PAY_WF" "$TEMPLATE" "$RUN_WF" "$SKILL_DIR/SKILL.md"; do
   [ -f "$f" ] || { echo "missing $f — the payload is incomplete, not merely drifted"; exit 1; }
 done
 
@@ -164,8 +165,12 @@ echo "${YEL}--- The payload must not leak the shipping repo's own paths ---${NC}
 # scanner that names what it looks for (the prompt-injection hook carries an allowlist for the
 # same reason) — and the honest fix is to exclude the detector, not to soften the pattern, which
 # would blind it to the real thing.
-absent -rE --exclude="$(basename "$0")" '(/home/[a-z]|ClaudeCodeHub|personal-vault)' "$PAY"
-chk "no absolute home paths or private-folder names anywhere in the payload" $?
+# Scans the SKILL too, not only the payload directory. The skill ships with the plugin and is the
+# text a consumer actually reads, so a stray build-machine path there reaches exactly the same
+# audience — but it sits outside $PAY, so the original single-directory scan could not see it.
+# Reproduced: a planted path in SKILL.md left this suite exiting 0.
+absent -rE --exclude="$(basename "$0")" '(/home/[a-z]|ClaudeCodeHub|personal-vault)' "$PAY" "$SKILL_DIR"
+chk "no absolute home paths or private-folder names in the payload or the skill" $?
 
 echo ""
 echo "====================================="

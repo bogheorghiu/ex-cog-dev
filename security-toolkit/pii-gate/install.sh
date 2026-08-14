@@ -15,6 +15,21 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 REPO="${1:?usage: install.sh /path/to/repo}"
 TOP="$(git -C "$REPO" rev-parse --show-toplevel)"
 
+# Refuse to run from a LINKED WORKTREE. `git config core.hooksPath` writes to the repository's
+# SHARED config, but the hook files land only in the worktree we were pointed at — so every other
+# worktree, main included, would point core.hooksPath at a directory it does not have and run NO
+# hooks at all. The gate would read as installed while being off everywhere but here, which is the
+# worst state a gate can be in. Reproduced before this guard existed.
+GIT_DIR_PATH="$(git -C "$TOP" rev-parse --path-format=absolute --git-dir)"
+COMMON_DIR_PATH="$(git -C "$TOP" rev-parse --path-format=absolute --git-common-dir)"
+if [ "$GIT_DIR_PATH" != "$COMMON_DIR_PATH" ]; then
+  echo "REFUSING: $TOP is a linked worktree." >&2
+  echo "  core.hooksPath is shared across all worktrees, but these hook files are not — installing" >&2
+  echo "  here would disable hooks in every other worktree, silently." >&2
+  echo "  Run the installer against the main worktree: $(dirname "$COMMON_DIR_PATH")" >&2
+  exit 1
+fi
+
 mkdir -p "$TOP/.githooks" "$TOP/.github/workflows"
 # pre-push.test.sh ships with the hooks on purpose: the suite is what makes a change to pre-push
 # checkable in the repo that runs it, and a copy that drifts from its tests is the thing this gate
@@ -47,6 +62,20 @@ for n in pii-denylist.local pii-denylist.txt .pii-denylist.synced; do
   fi
 done
 
+# Never clobber an existing hooks path blind. A repo using husky (or a machine-wide hooks dir)
+# would lose those hooks with no warning and no record of what was there — this installer would
+# be doing quietly to someone else's guardrails what this whole gate exists to prevent.
+CURRENT_HOOKSPATH="$(git -C "$TOP" config --local --get core.hooksPath || true)"
+if [ -n "$CURRENT_HOOKSPATH" ] && [ "$CURRENT_HOOKSPATH" != ".githooks" ]; then
+  if [ "${PII_GATE_REPLACE_HOOKSPATH:-}" != "1" ]; then
+    echo "REFUSING: this repo already sets core.hooksPath = ${CURRENT_HOOKSPATH}" >&2
+    echo "  The gate needs .githooks. Chain or migrate those hooks first, then re-run with" >&2
+    echo "  PII_GATE_REPLACE_HOOKSPATH=1 to confirm replacing ${CURRENT_HOOKSPATH}." >&2
+    echo "  (Everything else above is already installed; only this last step was skipped.)" >&2
+    exit 1
+  fi
+  echo "NOTE: replacing core.hooksPath ${CURRENT_HOOKSPATH} -> .githooks (PII_GATE_REPLACE_HOOKSPATH=1)."
+fi
 git -C "$TOP" config core.hooksPath .githooks
 
 # Seed only when the repo has NO denylist under EITHER accepted name. Testing just
