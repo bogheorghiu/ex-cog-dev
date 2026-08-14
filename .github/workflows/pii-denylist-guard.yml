@@ -49,14 +49,15 @@ on:
 permissions:
   contents: read
 
-# This file carries FOUR jobs. Three scan this repository: `denylist` (the tracked tree, the one this
-# file is named for), `history` (every commit's diff), and `secrets`. The fourth, `parity`, scans the
-# gate itself rather than the repo — it fails when the layers stop agreeing with each other.
-# The `secrets` job runs gitleaks over the FULL history (built-in rules), so a leaked
-# token in any past commit fails the run rather than only one in the tip; its binary is
-# version-pinned and sha256-verified before it executes. They are kept in one workflow because they
-# answer the same question — did something that must not be public reach this repo — and a reviewer
-# reading one green check should not have to know that the other gate lives somewhere else.
+# The `jobs:` block below is the inventory; each job's own comment says what it does. What that
+# cannot say is why they share one file rather than sitting in separate workflows: the scanning
+# jobs answer one question between them — did something that must not be public reach this repo —
+# and a reviewer reading one green check should not have to know that a second gate lives
+# elsewhere. `parity` rides along because it guards those jobs rather than the repo, and a drifted
+# gate is worth failing in the same place its results are read.
+#
+# gitleaks is version-pinned and sha256-verified before it executes, and it scans the FULL history
+# rather than the tip, so a token leaked in any past commit fails the run.
 
 jobs:
   denylist:

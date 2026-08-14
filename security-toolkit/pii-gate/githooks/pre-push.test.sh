@@ -13,7 +13,9 @@
 # - Fail-closed when git cannot determine the push range
 # - Fail-closed when the denylist exists but cannot be read (the hook's own precheck)
 # - Fail-closed when grep itself errors (its own status, not the pipeline's, under pipefail) —
-#   covered for both pattern-file call sites: the ref-name check and the commit scan
+#   the hook greps the pattern file at THREE sites — the ref-name check, the annotated-tag object
+#   scan, and the commit scan. The stub drives the ref-name and commit sites directly; the tag
+#   scan routes its status through the same evaluation helper but is not itself exercised here
 # - Fail-closed when mktemp fails, rather than reporting the gate INACTIVE
 # - Fail-closed when mktemp SUCCEEDS but the writes into that file fail, for both denylist sources
 # - Fail-closed when the normalization grep itself errors, rather than yielding an empty denylist

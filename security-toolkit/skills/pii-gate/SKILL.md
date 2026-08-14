@@ -78,6 +78,17 @@ decided you do not need it here, re-run with `PII_GATE_REPLACE_HOOKSPATH=1` and
 accept the loss — which for refusal 3 means an overwrite that nothing in the
 installer can undo.
 
+**Both merge routes cost you the edit on the next install, and nothing warns.**
+The installer tells its own hooks from foreign ones by looking for the gate's own
+denylist references in the file. A gate hook you have edited still carries them,
+so it is classed as the gate's, overwritten in place, and no refusal fires — the
+folded-in body is simply gone, along with the line that called your renamed hook.
+That is the same "re-running is silent" property that makes ordinary updates
+painless, and it cannot tell your edit from an older version of the file it is
+meant to replace. So keep the merged hook under version control, and re-apply the
+edit after any re-run. Only the third route announces its cost; the two better
+ones charge it later.
+
 The one case it passes over quietly is a *global* hooks dir whose only hook is a
 `pre-commit` — this gate chains that one, so nothing is lost. Re-running over an
 installation of this gate is likewise silent: it tells its own hooks from
