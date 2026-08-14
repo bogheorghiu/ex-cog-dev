@@ -105,9 +105,11 @@ DENY="$(mktemp)" || {
 }
 CLEANUP="$DENY"
 
-# A KIND, never a path: the denylist's path is the one string the gate cannot check against itself
-# on the unreadable branch (there are, by definition, no terms loaded), and a clone living under a
-# directory named after the person would otherwise print the term withheld everywhere else.
+# A KIND, never a path: the denylist's path is the one string the gate cannot rely on being able to
+# check against itself on the unreadable branch — PII_DENYLIST is normalized in before that test, so
+# whether terms are loaded there depends on the env var — and a clone living under a directory named
+# after the person would otherwise print the term withheld everywhere else. (An earlier version said
+# that branch by definition has no terms loaded; the union with PII_DENYLIST makes that false.)
 DENY_SRC="none"
 env_armed=""
 if [ -n "${PII_DENYLIST:-}" ]; then

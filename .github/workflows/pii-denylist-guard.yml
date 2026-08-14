@@ -273,7 +273,7 @@ jobs:
           n=$(cat "${RUNNER_TEMP}/hist.txt")
           rm -f "${RUNNER_TEMP}"/denylist.txt "${RUNNER_TEMP}"/hist.txt
           if [ "${n}" -gt 0 ]; then
-            echo "::error::${n} line(s) in this repository's HISTORY contain a denylisted personal term. The tree can be clean while the commits are not. To see which, run this locally — the same flags this job used, and strip comment/blank lines from the denylist first, because a bare # line is a pattern that matches almost everything: git log -p -m --all --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv | grep -a -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' your-denylist)"
+            echo "::error::${n} line(s) in this repository's HISTORY contain a denylisted personal term. The tree can be clean while the commits are not. To see which, run this locally — the same flags this job used, and strip comment/blank lines from the denylist first, because a bare # line is a pattern that matches almost everything: git log -p -m --all --no-color -U0 --pretty=fuller --text --no-ext-diff --no-textconv | grep -a -i -F -w -f <(tr '|' '\\n' < your-denylist | tr -d '\\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#')"
             exit 1
           fi
           echo "History denylist scan: clean across $(git rev-list --all --count) commits."

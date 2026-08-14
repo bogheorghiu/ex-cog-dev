@@ -6,20 +6,10 @@
 # here asks one question: does a name get through, or does a clean push get blocked? The hook is
 # driven exactly as git drives it — ref lines on stdin, remote name in $1.
 #
-# Tests cover:
-# - Baseline: a name in the outgoing commits blocks; clean commits pass
-# - A name in a commit MESSAGE, not only in file content
-# - Log safety: the matched term is NEVER echoed, including when it is in the ref name
-# - Fail-closed when git cannot determine the push range
-# - Fail-closed when the denylist exists but cannot be read (the hook's own precheck)
-# - Fail-closed when grep itself errors (its own status, not the pipeline's, under pipefail) —
-#   the hook greps the pattern file at THREE sites — the ref-name check, the annotated-tag object
-#   scan, and the commit scan. The stub drives the ref-name and commit sites directly; the tag
-#   scan routes its status through the same evaluation helper but is not itself exercised here
-# - Fail-closed when mktemp fails, rather than reporting the gate INACTIVE
-# - Fail-closed when mktemp SUCCEEDS but the writes into that file fail, for both denylist sources
-# - Fail-closed when the normalization grep itself errors, rather than yielding an empty denylist
-# - The denylist's own PATH is never echoed, even from a clone under a directory named after it
+# What it covers is not listed here. Every case names its own invariant in the string it prints,
+# and the suite prints all of them on every run — so `bash pre-push.test.sh` is the current
+# answer, while a hand-kept list is a second copy that nothing updates. This one had already
+# gone stale twice: a miscounted grep call-site claim, then three cases missing outright.
 # - Binary/NUL bytes in one commit must not blind the scan of another
 # - Merge commits: a name added only in a conflict resolution
 # - A path marked -diff in .gitattributes must not hide a name from the diff

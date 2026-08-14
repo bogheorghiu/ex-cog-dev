@@ -109,8 +109,12 @@ echo "${YEL}--- The shipped workflow must carry every job, not just the denylist
 # gitleaks job still validated, still ran, and still reported a green "denylist" result — so the
 # check looked identical to a passing one while scanning for no secrets at all. Compare the JOB
 # LIST, not merely the hooks.
-RUN_JOBS="$(sed -n 's/^  \([a-z][a-z0-9_-]*\):$/\1/p' "$RUN_WF" | sort)"
-PAY_JOBS="$(sed -n 's/^  \([a-z][a-z0-9_-]*\):$/\1/p' "$PAY_WF" | sort)"
+# Scoped to the jobs: block. Unscoped, this also collected the `on:` keys — push and
+# workflow_dispatch — so a genuine failure would have printed them as jobs. No false pass and no
+# false fail, but the diagnostic below is this block's only contribution the byte-identity check
+# does not already make, and a diagnostic that misnames things is the part worth getting right.
+RUN_JOBS="$(sed -n '/^jobs:/,$p' "$RUN_WF" | sed -n 's/^  \([a-z][a-z0-9_-]*\):$/\1/p' | sort)"
+PAY_JOBS="$(sed -n '/^jobs:/,$p' "$PAY_WF" | sed -n 's/^  \([a-z][a-z0-9_-]*\):$/\1/p' | sort)"
 [ -n "$RUN_JOBS" ] && [ "$RUN_JOBS" = "$PAY_JOBS" ]
 chk "shipped workflow declares the same jobs as the running one" $?
 if [ "$RUN_JOBS" != "$PAY_JOBS" ]; then
@@ -118,11 +122,12 @@ if [ "$RUN_JOBS" != "$PAY_JOBS" ]; then
   echo "      shipped: $(echo "$PAY_JOBS" | tr '\n' ' ')"
 fi
 
-# Anchored on the RUN line, not the word. `grep -q 'gitleaks'` also matched the file's header
-# comment above `jobs:`, so deleting the secrets job outright left this check green — it could
-# not fail for the case it names. That is the same comment-vs-code trap this file already
-# diagnoses for the seed path below, missed here because the sabotage pass rewrote every
-# occurrence at once and so never produced a file where only the job was gone.
+# Anchored on the RUN line, not the word. A bare `grep -q 'gitleaks'` cannot fail for the case it
+# names: the parity job's own comment says "gitleaks scans with its own built-in rules", so
+# deleting the secrets job outright would leave an unanchored match green. (The header sentence
+# that originally caused this has since been removed for other reasons — the parity comment is
+# what keeps the hazard live, so cite that rather than a line a reader will not find.) Same
+# comment-vs-code trap this file diagnoses for the seed path below.
 grep -qE '^[[:space:]]*run:[[:space:]]*\./gitleaks[[:space:]]' "$PAY_WF"
 chk "shipped workflow still EXECUTES gitleaks (secret scanning is not implied by the denylist job)" $?
 grep -q 'sha256sum -c' "$PAY_WF"

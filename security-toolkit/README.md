@@ -30,7 +30,7 @@ Honest limits, stated in the skill itself: it is **Windows/WSL-specific** (macOS
 
 ## The `pii-gate` skill and installer
 
-The other three surfaces here guard a *session*. This one guards a *repository*: `pii-gate/` is a drop-in gate that blocks personal names from reaching a remote — a pre-commit hook (staged diff), a pre-push hook (every outgoing commit, plus the ref name, commit message, author identity and tag message), and a CI workflow (tracked tree, full history, and gitleaks for secrets). The skill fires on `git init`, adding a remote, or a first push; `pii-gate/install.sh <repo>` does the install.
+Everything else here is scoped to a session or a machine — the hooks watch what Claude does in a session, the WSL skill triages a box after the fact. This one is scoped to a *repository*: `pii-gate/` is a drop-in gate that blocks personal names from reaching a remote — a pre-commit hook (staged diff), a pre-push hook (every outgoing commit, plus the ref name, commit message, author identity and tag message), and a CI workflow (tracked tree, full history, and gitleaks for secrets). The skill fires on `git init`, adding a remote, or a first push; `pii-gate/install.sh <repo>` does the install.
 
 Everything the gate does and how to run it lives in `skills/pii-gate/SKILL.md` and the installer's own output — not repeated here. Three things this README is the right place for:
 

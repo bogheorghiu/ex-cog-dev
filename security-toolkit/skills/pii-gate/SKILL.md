@@ -176,9 +176,13 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
+# norm() is copied from the hooks: one denylist must not behave differently by hand.
+norm() { tr '|' '\n' | tr -d '\r' \
+         | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+         | grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#'; }
 DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
 git log -p -m --all --text --no-ext-diff --no-textconv --pretty=fuller \
-  | grep -a -i -F -w -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
+  | grep -a -i -F -w -f <(norm < "$DL")
 ```
 
 Every flag there is load-bearing, and the gate passes each for a reason worth
@@ -203,17 +207,30 @@ clean about content it was never shown:
   commit.
 
 **Never hand the raw denylist to `grep -f`** — here or anywhere. Every layer of
-the gate strips comments and blank lines before scanning, and a hand-run command
-that skips that step is not the same scan. The shipped template is *entirely*
-comments, eight of them a bare `#`; loaded as a pattern, `#` matches any line
-containing one, so this command would drown a real hit in every comment in your
-history. The `grep -v` is the normalization, not tidiness.
+the gate runs `norm()` first, and a hand-run command that skips it is not the
+same scan. All four of its stages earn their place, and this codebase has been
+bitten by three of them:
 
-Reach for gitleaks for the other half — **secrets**, not names. It runs in the
-workflow's separate `secrets` job with its own built-in rules and is never handed
-the denylist, so it cannot find a personal name and will return clean while one
-sits in your history. Two scans, two different questions; neither substitutes for
-the other.
+- `grep -v` drops comments and blanks. The shipped template is *entirely*
+  comments, eight of them a bare `#`; loaded as a pattern, `#` matches any line
+  containing one, drowning a real hit in noise.
+- `tr -d '\r'` strips carriage returns. A denylist saved on Windows, or pasted
+  through a CRLF editor, leaves every pattern ending in `\r` so it matches
+  **nothing** — measured here: a CRLF denylist that the full pipeline matches
+  returns zero hits without this stage.
+- The `sed` trims leading and trailing blanks, so an indented entry still counts.
+- `tr '|' '\n'` splits the single-line form used by the CI secret field.
+
+Two of those turn a real hit into a clean result, on the one scan you run to
+answer "has a name already leaked". That is why `norm()` is copied here verbatim
+rather than approximated.
+
+Reach for gitleaks for the other half — **secrets**, not names. It runs both in
+pre-commit (over staged changes) and in the workflow's separate `secrets` job
+(over full history), always with its own built-in rules, and is never handed the
+denylist — so it cannot find a personal name and will return clean while one sits
+in your history. Two scans, two different questions; neither substitutes for the
+other.
 
 Say plainly that a retrofit does not undo an earlier exposure. If a real name is
 already in pushed history, the honest options are history rewrite plus a force
@@ -221,9 +238,18 @@ push, or accepting the exposure — not a gate that starts from now.
 
 ## What the gate is and isn't
 
-Three layers: pre-commit (staged diff), pre-push (every commit being pushed, plus
-the ref name, commit message, author identity and tag message — each is a route a
-name takes to the remote on its own), and CI (tree + full history + gitleaks).
+Three layers: pre-commit (gitleaks over the staged changes, then the denylist
+scan of the staged diff), pre-push (every commit being pushed, plus the ref name,
+commit message, author identity and tag message — each is a route a name takes to
+the remote on its own), and CI (tree + full history + gitleaks).
+
+**gitleaks runs locally as well as in CI, and can block a commit on its own.**
+pre-commit prefers a global `pre-commit` hook if you have one, else runs the
+`gitleaks` binary directly against the staged changes, and stops the commit with
+"pre-commit BLOCKED: gitleaks findings". If neither is present it says so and
+skips that layer — "no global pre-commit hook and no gitleaks binary — secret
+scan skipped (CI still scans)". That warning is the signal to install gitleaks;
+the denylist layers are unaffected either way.
 
 **Everything fails closed.** An unreadable denylist, a failed `mktemp`, a `grep`
 that errored rather than not-matched — each blocks instead of passing. "Could not
@@ -245,16 +271,15 @@ locally:
 
 ```
 DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
-git ls-files \
-  | grep -i -F -f <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DL")
+git ls-files | grep -i -F -f <(norm < "$DL")   # norm() as defined above
 ```
 
-Same normalization as the history command above, for an overlapping reason. Two
-distinct ways the raw file misfires, both verified on GNU grep 3.11: a **blank**
-line becomes an empty pattern that matches every line (this scan, which has no
-`-w`, then returns your entire file list), and a **comment** line becomes a
-literal pattern — a bare `#` matches anything containing one, which `-w` does not
-prevent, since `#` is not a word character. Strip both, always.
+Same `norm()` as above, and for an overlapping reason. Two extra ways the raw
+file misfires here, both verified on GNU grep 3.11: a **blank** line becomes an
+empty pattern that matches every line (this scan has no `-w`, so you get your
+entire file list back), and a **comment** line becomes a literal pattern — a bare
+`#` matches anything containing one, which `-w` would not prevent anyway, since
+`#` is not a word character.
 
 The local hooks are armed **per clone** (`core.hooksPath`), so a fresh clone that
 skipped that step has no local coverage while still being able to push. That is
