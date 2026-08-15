@@ -39,9 +39,10 @@ name: PII denylist guard
 # Nothing is lost on pull requests — a check run attaches to the head COMMIT, so the push-triggered
 # result still appears in the PR's own rollup.
 # The one shape this does not cover is a PR from a FORK, whose head commits are pushed to the fork
-# and never to this repo. That is moot for a single-maintainer repo, and it would fail open in any
-# case: GitHub withholds secrets from fork PRs, so the denylist would be unavailable — which the
-# "secret is unavailable" branch below reports loudly rather than passing silently.
+# and never to this repo — so no run is created here at all, and nothing below reports on it. Note
+# what that means: the fork case is not "reported loudly", it is simply not seen. It is moot for a
+# single-maintainer repo, and adding a pull_request trigger would not rescue it, since GitHub
+# withholds secrets from fork PRs and the denylist would be unavailable anyway.
 on:
   push:
   workflow_dispatch:

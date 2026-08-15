@@ -140,8 +140,10 @@ if [ -n "$ORPHANED" ]; then
     if [ "$CHAINED_PRECOMMIT" -eq 1 ]; then
       echo "  (pre-commit is not in that list because this gate chains a GLOBAL one.)" >&2
     fi
-    echo "  Copy them into ${TOP}/.githooks, or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to" >&2
-    echo "  accept losing them here. Nothing has been written yet." >&2
+    echo "  Merge what they do into ${TOP}/.githooks/ (git dispatches ONE hook per event, so a" >&2
+    echo "  second pre-commit cannot sit beside this gate's — COPYING them here just produces the" >&2
+    echo "  next refusal), or re-run with PII_GATE_REPLACE_HOOKSPATH=1 to accept losing them in" >&2
+    echo "  this repo. Nothing has been written yet." >&2
     exit 1
   fi
   echo "NOTE: taking over hooks from ${DISPLAY_HOOKSPATH} (${HOOKSPATH_SCOPE}); these stop firing here:${ORPHANED}"
