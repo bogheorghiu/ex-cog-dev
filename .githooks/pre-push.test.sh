@@ -23,7 +23,7 @@ HOOK="$SCRIPT_DIR/pre-push"
 TEST_TMP="$(mktemp -d)"
 trap 'chmod -R u+rwX "$TEST_TMP" 2>/dev/null; rm -rf "$TEST_TMP"' EXIT
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
-# PII_DENYLIST is the hook's highest-precedence input, and the activation route its own header
+# PII_DENYLIST is one of the hook's two denylist sources, and the activation route its own header
 # documents first. run_hook calls `env` without -i, so an exported denylist would otherwise reach
 # the hook and be UNIONED with the scratch repo's file — the file is still read and the synthetic
 # term still matches, but the inherited terms ride along, so a test asserting a clean push passes

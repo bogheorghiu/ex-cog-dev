@@ -95,9 +95,9 @@ fi
 # +x: install.sh chmods the five names after the cp, and a plain `cp` to a new destination already
 # carries the source's mode across (measured), so a +x payload hook reaches a first-time installer
 # +x regardless. Nor does it detect a sixth hook added to the cp line but missing from the chmod
-# line — nothing here reads install.sh's modes at all. The reason to keep it is narrow and real: a
-# payload hook committed without its exec bit would be installed without one, and a hook git cannot
-# execute neither runs nor errors.
+# line — nothing here reads install.sh's modes at all. The reason to keep it is the one at the top of this
+# block and nothing else. (Three rounds of review went into justifying it; each attempt to claim
+# more than mode parity was wrong, so this one claims only that.)
 for h in $HOOKS; do
   [ -x "$PAY/githooks/$h" ]
   chk "$h is executable in the payload (git preserves the mode; a non-exec hook silently never runs)" $?
@@ -165,8 +165,14 @@ chk "template carries 0 denylist terms (found $TERMS)" $?
 # secret-overwrite tool: a name on a comment line is documentation, not behaviour.
 grep -qE '^[[:space:]]*[A-Z_]+="\$\{PII_DENYLIST_DEFAULT' "$INSTALL"
 chk "installer ASSIGNS its optional seed path from PII_DENYLIST_DEFAULT (not merely mentions it)" $?
-absent -E 'DEFAULT="\$(HOME|\{HOME)' "$INSTALL"
-chk "installer does not hard-code a seed path under \$HOME" $?
+# Unanchored over the whole file, because the anchored form could not fail for the case it names:
+# it fired only on `DEFAULT="$HOME...`, so writing the same path into the existing default slot —
+# `DEFAULT="${PII_DENYLIST_DEFAULT:-$HOME/...}"` — passed both this check and the assignment check
+# above while the installer seeded from one maintainer's file again. Verified: that form passed.
+# HOME appears nowhere in install.sh today, so the broad assertion holds and has no false positive
+# to trade for the coverage.
+absent -F 'HOME' "$INSTALL"
+chk "installer references \$HOME nowhere (its seed path can only come from PII_DENYLIST_DEFAULT)" $?
 
 echo ""
 echo "${YEL}--- The payload must not leak the shipping repo's own paths ---${NC}"
