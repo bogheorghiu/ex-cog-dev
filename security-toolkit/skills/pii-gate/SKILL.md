@@ -176,7 +176,7 @@ because the tree genuinely is clean. The shipped workflow's `history` job does
 this in CI. The local equivalent greps history against *your denylist*:
 
 ```
-# norm() is copied from the hooks: one denylist must not behave differently by hand.
+# Same four stages the hooks apply, so one denylist does not behave differently by hand.
 norm() { tr '|' '\n' | tr -d '\r' \
          | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
          | grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#'; }
@@ -222,8 +222,15 @@ bitten by three of them:
 - `tr '|' '\n'` splits the single-line form used by the CI secret field.
 
 Two of those turn a real hit into a clean result, on the one scan you run to
-answer "has a name already leaked". That is why `norm()` is copied here verbatim
+answer "has a name already leaked". That is why the stages are reproduced here
 rather than approximated.
+
+One deliberate difference from the hooks' own `norm()`: theirs ends by reading
+grep's exit status (`gs=$?; [ "$gs" -le 1 ]`) so that grep's *own* failure cannot
+be laundered into an empty pattern list. Both commands above wrap this in
+`<(norm < "$DL")`, and a process substitution discards the status either way, so
+carrying it here would be decoration. If you lift this function somewhere that
+does read its status, take the brace group from `.githooks/pre-push` instead.
 
 Reach for gitleaks for the other half — **secrets**, not names. It runs both in
 pre-commit (over staged changes) and in the workflow's separate `secrets` job

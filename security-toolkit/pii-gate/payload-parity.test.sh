@@ -90,11 +90,14 @@ fi
 # Mode parity — the half `cmp` cannot see. `cmp` compares bytes, so two files can be byte-identical
 # and differ in whether git will execute them.
 #
-# Note what this does NOT guard, since an earlier version of this comment claimed it: an installed
-# hook arriving without +x, because install.sh chmods all five names unconditionally right after the
-# cp, and no other install path is documented. What it does buy is that separately-restated chmod
-# line — add a sixth hook to the cp and forget the chmod, and the consumer gets a hook git silently
-# never runs, which neither errors nor appears in any log.
+# What it buys is exactly that and nothing more, which is worth stating because two earlier
+# versions of this comment claimed otherwise. It does NOT guard an installed hook arriving without
+# +x: install.sh chmods the five names after the cp, and a plain `cp` to a new destination already
+# carries the source's mode across (measured), so a +x payload hook reaches a first-time installer
+# +x regardless. Nor does it detect a sixth hook added to the cp line but missing from the chmod
+# line — nothing here reads install.sh's modes at all. The reason to keep it is narrow and real: a
+# payload hook committed without its exec bit would be installed without one, and a hook git cannot
+# execute neither runs nor errors.
 for h in $HOOKS; do
   [ -x "$PAY/githooks/$h" ]
   chk "$h is executable in the payload (git preserves the mode; a non-exec hook silently never runs)" $?
