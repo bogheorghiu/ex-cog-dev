@@ -289,10 +289,18 @@ git ls-files | grep -i -F -f <(norm < "$DL")   # norm() as defined above
 
 Same `norm()` as above, and for an overlapping reason. Two extra ways the raw
 file misfires here, both verified on GNU grep 3.11: a **blank** line becomes an
-empty pattern that matches every line (this scan has no `-w`, so you get your
-entire file list back), and a **comment** line becomes a literal pattern — a bare
-`#` matches anything containing one, which `-w` would not prevent anyway, since
-`#` is not a word character.
+empty pattern that matches every line, and a **comment** line becomes a literal
+pattern — a bare `#` then matches any path containing one. This scan has no `-w`,
+so neither is filtered out and you get most of your file list back.
+
+A note on `-w`, since this document leans on it as the content scans' safety
+property: it tests the characters **around** a match, not the characters in the
+pattern. The match has to start at line start or after a non-word character and
+end at line end or before one. So `-w` does stop a bare `#` matching
+`banana#1.png`, and does stop `Ana` matching `banana.png` — but it still lets `#`
+match a comment-shaped line, where the `#` sits at line start with a space after
+it. Running `norm()` first is what removes those patterns; `-w` was never going
+to.
 
 The local hooks are armed **per clone** (`core.hooksPath`), so a fresh clone that
 skipped that step has no local coverage while still being able to push. That is

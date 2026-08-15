@@ -25,9 +25,12 @@ trap 'chmod -R u+rwX "$TEST_TMP" 2>/dev/null; rm -rf "$TEST_TMP"' EXIT
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 # PII_DENYLIST is the hook's highest-precedence input, and the activation route its own header
 # documents first. run_hook calls `env` without -i, so an exported denylist would otherwise reach
-# the hook: the scratch repo's file would never be opened, the synthetic term would not be a
-# pattern, and every content test would fail while `blankline` passed vacuously. CI sets no such
-# variable, so this only bites a maintainer running the suite locally — loudly, but pointlessly.
+# the hook and be UNIONED with the scratch repo's file — the file is still read and the synthetic
+# term still matches, but the inherited terms ride along, so a test asserting a clean push passes
+# or fails on whatever happens to be in the maintainer's own environment. CI sets no such variable,
+# so this only bites someone running the suite locally — loudly, but pointlessly. (An earlier
+# version of this comment said the file "would never be opened"; the hooks union, they do not
+# replace, which is what the union case below asserts.)
 # The two tests that need the variable inject it explicitly through run_hook.
 unset PII_DENYLIST
 # The hook's own staleness warning is about the developer's install, not about these scratch
