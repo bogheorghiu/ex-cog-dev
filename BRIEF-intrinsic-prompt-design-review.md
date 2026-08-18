@@ -225,7 +225,23 @@ work, it is a regression regardless of how well-argued it is.
 
 ## Verification
 
-Three layers, different jobs. None substitutes for another.
+Four layers, different jobs. None substitutes for another.
+
+0. **Run the skill's own instrument on the skill's own updated text.** The skill
+   instructs exactly this for any prompt that will run for many sessions — run
+   `/research-toolkit:text-deconstruction` on it, iteratively, stopping when a
+   pass surfaces nothing worth changing or when the method can no longer tell a
+   structural tension from an artifact of its own procedure.
+
+   A revision of *this* skill that skipped its own prescribed verification would
+   be self-undermining in the most literal way available, and the critique
+   already found the skill's worked example failing its own doctrine once. Do
+   this before handing the draft to a human or to layer 2.
+
+   Note what it can and cannot see: deconstruction finds where a text relies on
+   something it never establishes and where its claims and structure pull apart.
+   It says nothing about whether the skill *works*. That is why it is layer 0 and
+   not the whole plan.
 
 1. **Activation testing** — `makers-toolkit/skills/skill-activation-testing`,
    with `references/router-judge-template.md`. Required if you draft the arm-B
