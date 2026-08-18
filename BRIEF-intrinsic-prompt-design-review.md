@@ -13,8 +13,18 @@ knowledge of each other's findings. Roughly 145 numbered findings.
 This branch is where those findings get turned into drafted edits. Drafts, not
 proposals: write the change into the files.
 
-The critique itself is held privately and is not in this repo. Everything you
-need to act on is restated below, in this repo's own terms.
+The critique itself is held privately and is not in this repo — it carries
+material that should not ship in a public repository. It **is** available to read
+locally, outside this repository; your session brief points you at it, and it
+opens with its own index and reading map.
+
+Everything strictly needed to act is restated below in this repo's own terms, so
+this brief stands alone if you cannot reach the source. What the source adds is
+the full argument behind each finding, and the record of which ones were already
+argued down. Read it before drafting anything in section A.
+
+**Do not copy the source material into this repo**, in files or in commit
+messages. If you want to cite a finding, restate it.
 
 ## Verified before you start
 
