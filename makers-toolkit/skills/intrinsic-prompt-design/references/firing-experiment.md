@@ -32,9 +32,30 @@ construction*. That neutralizes part 2 — the thing the rewrite is actually for
 A proxy that forces attention onto the text cannot measure whether the text
 *wins* attention it would otherwise lose. **Part 2 can only be measured in a
 live harness** (full context load, many competing skills, a real task in
-flight) using the firing-counter hook (`vasana-system/hooks/count-skill-firings.sh`).
-This experiment is the part we could run now; it is necessary but not
-sufficient.
+flight) by counting firings per should-have-fired turn — whatever the harness
+offers for that (in Claude Code: a pre-invocation hook on the skill-invocation
+tool, e.g. `vasana-system/hooks/count-skill-firings.sh`). This experiment is
+the part we could run now; it is necessary but not sufficient.
+
+**Second limit — the judges are one source, not three.** Method below says it
+outright: the three blind routers per arm are three samples of the *same model*.
+Three samples of one model share its priors, its tokenizer, and its failure
+modes, so calling them "3 independent judges" overstates what agreement between
+them establishes — it measures sampling variance, not independent confirmation.
+A reader who starts at Results and skips Method takes the stronger reading. The
+disclosure was never hidden; carrying it only in Method was the defect. A
+genuinely independent replication needs routers drawn from **different model
+families**, and until one exists, every count here should be read as one
+source's opinion sampled three times.
+
+**Third limit — this bounds what *any* firing evidence can say.** A router
+choosing among a catalogue of descriptions and a model reading an invoked
+skill's *body* are different attention regimes: the first is a selection
+problem over short competing texts, the second is comprehension and uptake
+inside a long text already loaded. These experiments measure the first only. No
+result here — in either arm, in either round — licenses a claim about whether
+the body's wording changes what the model does once the skill has fired. That
+question needs its own instrument.
 
 ## Method
 

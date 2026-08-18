@@ -64,9 +64,9 @@ Report findings as a list. For each item: what's in the spec, what's in the impl
 
 ---
 
-## On the team primitive
+## On the spawning mechanism
 
-Use the team-agent primitive when spawning these. The plain background agent is a heavier abstraction with weaker ergonomics for this pattern; the team primitive is what the workflow is actually built on.
+Spawn these through whatever primitive the harness offers for coordinated, addressable agents (in Claude Code: the team-agent primitive). What the pattern needs is agents that can be messaged mid-task and can hand work to each other — the spec→implementation→verification loop is a conversation, not three monologues, so a fire-and-forget background agent is a weaker fit.
 
 Each agent gets its own folder if separation reduces friction (its own working notes, its own scratch space). Shared folders are fine when the work is light enough that the overhead of separation outweighs the clarity it buys.
 

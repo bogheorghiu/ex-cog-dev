@@ -72,10 +72,14 @@ arm pulled 2/3 back to `intrinsic-prompt-design`.)
 
 ## Interpretation
 
-1. **The under-fire is fixed.** On the two authoring turns OLD missed entirely
-   (U1, U2: 0/3), NEW fires ipd 2/3 — attributable to the scope broadening
-   (single routing variable). The strong-cue turns (U3, U4) were already 3/3 in
-   both arms.
+1. **The under-fire is reduced, not eliminated.** On the two authoring turns
+   OLD missed entirely (U1, U2: 0/3), NEW fires ipd 2/3 — attributable to the
+   scope broadening (single routing variable). That is improved recall on two
+   turns, and it leaves a third of those routings still going elsewhere; "fixed"
+   would claim a completeness the numbers do not show. The strong-cue turns
+   (U3, U4) were already 3/3 in both arms. Read the counts with the judge-lineage
+   limit in `firing-experiment.md`: three routers here are three samples of one
+   model, so 2/3 is one source's rate, not three sources agreeing.
 2. **No precision cost.** NEW fired ipd 0/3 on every trap: it did not poach the
    testing skill's turns (T5, T6) and did not bleed into general writing (T7) or
    code (T8). The "any prompt … and the like" generalization did not over-fire —
