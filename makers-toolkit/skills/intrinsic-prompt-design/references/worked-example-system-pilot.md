@@ -78,6 +78,17 @@ The numbered protocol is gone. The same content (memory files, CLAUDE.md, what e
 **"HALT EXECUTION. You are forbidden …"** → **"…cost more than the schema work would have."**
 The HALT becomes the consequence the HALT was protecting against. The model gets the same information without the obligation register.
 
+This conversion is right *here* and is not a general licence, so read it against
+the partition in the skill body. It works because what this HALT guarded — write
+the schema before the logic — is a judgment call with a cost structure: some
+one-line scripts genuinely need no schema doc, and a model that understands the
+cost makes that call better than a blanket prohibition does. Convert a stop that
+guards something which must hold every time — a safety boundary, a required
+output shape, a legal or privacy constraint — and you have traded a guarantee
+for a persuasive argument the model is free to weigh. Where the rule admits no
+exception, the register is correct and the real question is why it is prose at
+all rather than a check that cannot be reasoned past.
+
 **"PHASE B — BLUEPRINT … ask the user these five, one at a time, wait for each answer"** → **"Discovery questions, when scope is unclear: these are not a script to run. They are prompts the model can pull from when the request is ambiguous."**
 The mandatory script becomes available material. When scope is clear, asking the five wastes the user's time. When it's not, asking is faster than guessing.
 
