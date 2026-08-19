@@ -140,7 +140,7 @@ jobs:
 
       - name: Check out the repository
         if: steps.gate.outputs.review == 'true'
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           # By default checkout writes the base64 GITHUB_TOKEN into .git/config, which
@@ -187,7 +187,7 @@ jobs:
 
       - name: Review
         if: steps.gate.outputs.review == 'true'
-        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        uses: anthropics/claude-code-action@239e3a730883eeb5c53db12b0fc9573b3024b126 # v1.0.191
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Passing this short-circuits the OIDC → Claude-App-token path in
@@ -370,7 +370,7 @@ jobs:
       # clean" an explicit precondition. Over-run is not fail-open, but it is waste.
       - name: Repair rejected findings
         if: steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
-        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1.0.183
+        uses: anthropics/claude-code-action@239e3a730883eeb5c53db12b0fc9573b3024b126 # v1.0.191
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
