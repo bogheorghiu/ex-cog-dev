@@ -51,6 +51,7 @@ jobs:
           bash vasana-system/hooks/count-skill-firings.test.sh
           bash research-toolkit/hooks/count-skill-firings.test.sh
           bash .githooks/pre-push.test.sh
+          bash security-toolkit/pii-gate/payload-parity.test.sh
 
       - name: Stdlib Python suites
         run: |
