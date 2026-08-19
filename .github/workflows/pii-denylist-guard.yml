@@ -195,7 +195,7 @@ jobs:
   parity:
     # The one job here that scans the GATE rather than the repository. Which layers it compares is
     # declared at the top of layer-parity.test.sh, under a hard existence check, so the script is
-    # the answer and a copy here would go silently wrong the moment a fifth layer joins. What the
+    # the answer and a copy here would go silently wrong the moment a layer joins. What the
     # script cannot say is why the secrets job is absent from it: gitleaks scans with its own
     # built-in rules and is never handed the denylist, so there is no agreement relation for it to
     # be in. Every finding

@@ -33,7 +33,8 @@ PP=.githooks/pre-push
 PC=.githooks/pre-commit
 SD=.githooks/overwrite-ci-denylist
 WF=.github/workflows/pii-denylist-guard.yml
-for f in "$PP" "$PC" "$SD" "$WF"; do
+GI=.gitignore
+for f in "$PP" "$PC" "$SD" "$WF" "$GI"; do
   [ -f "$f" ] || { echo "missing $f — the gate is incomplete, not merely drifted"; exit 1; }
 done
 
@@ -45,7 +46,7 @@ NAMES="$(sed -n 's/^[[:space:]]*for n in \(.*\); do$/\1/p' "$PP" | head -1)"
 [ -n "$NAMES" ] || { echo "could not read the filename list out of $PP — has its search loop changed shape?"; exit 1; }
 
 for n in $NAMES; do
-  grep -qx -- "$n" .gitignore
+  grep -qx -- "$n" "$GI"
   chk ".gitignore ignores $n, which pre-push accepts" $?
 done
 
