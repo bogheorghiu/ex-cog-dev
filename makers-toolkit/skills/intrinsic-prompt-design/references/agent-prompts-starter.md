@@ -66,7 +66,9 @@ Report findings as a list. For each item: what's in the spec, what's in the impl
 
 ## On the spawning mechanism
 
-Spawn these through whatever primitive the harness offers for coordinated, addressable agents (in Claude Code: the team-agent primitive). What the pattern needs is agents that can be messaged mid-task and can hand work to each other — the spec→implementation→verification loop is a conversation, not three monologues, so a fire-and-forget background agent is a weaker fit.
+Spawn these through whatever primitive the harness offers for *addressable* agents — ones you can message while they are still working, and that can hand work back. The spec→implementation→verification loop is a conversation, not three monologues: verification returns work, and the orchestrator decides whether the spec or the implementation was wrong. An agent you can only launch and collect from is a weaker fit. In Claude Code this means an agent team, or any spawned agent given a name — the name is what makes it addressable afterwards.
+
+Worth knowing where this shape stops applying. It assumes the orchestrator decides *as it goes* whether a piece needs a worker at all, which is why the orchestrator prompt above spends its first paragraph on that judgment. When the shape is instead known before the work starts — the same three stages over thirty files, nothing to decide per item — a deterministic orchestration script is the better tool, and cheaper to reason about than a conversation. Reach for addressable agents when the flow is decided by a model, and for a script when it is decided by you.
 
 Each agent gets its own folder if separation reduces friction (its own working notes, its own scratch space). Shared folders are fine when the work is light enough that the overhead of separation outweighs the clarity it buys.
 
