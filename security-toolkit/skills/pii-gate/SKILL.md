@@ -307,6 +307,40 @@ skipped that step has no local coverage while still being able to push. That is
 exactly what the CI layer is the backstop for — don't treat the hooks alone as
 coverage.
 
+## The blind spot: Office files pass, and look clean doing it
+
+**No layer of this gate can read inside a `.docx`, `.xlsx` or `.pptx`.** They are zip
+archives, so gitleaks and the denylist grep are both handed compressed bytes rather than
+words. A denylisted name inside a Word document commits, pushes, and passes CI — and that
+outcome is byte-identical to a genuinely clean scan. Nothing distinguishes "scanned and
+clean" from "never looked."
+
+Measured 2026-08-19: two `.docx` scanned in place returned **zero** findings; extracting
+`word/document.xml` from the same two and scanning that returned **three**, across two
+rules. In that sample 60% of the findings were invisible to the gate.
+
+This bites harder than the file count suggests, because Office documents are where prose
+that was never written for a repo ends up — exported reports, meeting notes, client
+material. That is a higher-than-average base rate for exactly the names and account
+details the gate exists to stop, arriving in the one format it structurally cannot read.
+
+**Until it is fixed, scan Office files by hand before committing them.** Unzip and scan
+the inner XML rather than the archive, and scan the STAGED blob rather than the working
+tree, since staged bytes are what commit:
+
+```
+git show ":path/to/doc.docx" > "$TMPDIR/d.docx"
+unzip -p "$TMPDIR/d.docx" word/document.xml | sed -e 's/<[^>]*>/ /g' \
+  | grep -i -F -w -f <(norm < "$DL")     # norm() and $DL as defined above
+```
+
+`xl/sharedStrings.xml` is the equivalent for `.xlsx`, `ppt/slides/*.xml` for `.pptx`.
+
+Do not read a green gate as coverage of a commit that contains one of these. Tracked as
+issue #228, which carries the shape of a fix and its acceptance test — put a denylisted
+term inside a `.docx` and confirm the gate **blocks** before trusting any version that
+claims to have closed this.
+
 ## Vasana
 
 A vasana is a pattern that persists across unrelated contexts. If during this
