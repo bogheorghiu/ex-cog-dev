@@ -21,7 +21,7 @@ was measured or anticipated.
 - Skill frontmatter uses the Agent Skills spec's six fields — `name`,
   `description`, `license`, `compatibility`, `metadata`, `allowed-tools` —
   plus documented per-harness keys that only that harness reads at root level
-  (Claude Code's extension set; tracked in #234).
+  (Claude Code's extension set; tracked in issue #234).
 - It never carries agent-definition composition keys; those belong in agent
   files, and the linter rejects them at PR time.
 - Description: trigger self-contained in the first sentence (Hermes truncates
@@ -78,7 +78,7 @@ the agent body, so another harness can generate an equivalent delegation
 wrapper from the body alone.
 
 Why: agent composition has no shared format across harnesses (the mapping is
-tracked in #233); a body-side list keeps agent conversion mechanical even when
+tracked in issue #233); a body-side list keeps agent conversion mechanical even when
 the frontmatter form is harness-specific.
 
 ## R7 — Version the plugin; ports pin to it
@@ -109,7 +109,7 @@ the frontmatter form is harness-specific.
 - **R1 key check (implemented):** every `SKILL.md` frontmatter is checked for
   agent-definition composition keys, which are rejected at PR time. The
   portable baseline (the spec's six fields) is documented above, not enumerated
-  in code — see #234 for the full surface discussion.
+  in code — see issue #234 for the full surface discussion.
 - **R4 / R6 (proposed, not implemented):** path and composition checks are
   listed for future work; neither is enforced today.
 

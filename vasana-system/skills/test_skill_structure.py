@@ -154,7 +154,7 @@ def frontmatter_keys(fm):
 
     Lines starting with whitespace are block-scalar continuations and never
     count; only `key:` at column 0 does. Callers use this to reject keys that
-    belong in agent files rather than SKILL.md (see the R1 check below, #234).
+    belong in agent files rather than SKILL.md (see the R1 check below, issue #234).
     """
     keys = set()
     for line in fm.splitlines():
@@ -222,7 +222,7 @@ for path in skill_files:
 
     # R1 (PORTABILITY.md): the only keys categorically wrong in a SKILL.md are
     # agent-definition composition keys. Spec fields and per-harness root-level
-    # extensions are legitimate — see #234 for the full surface discussion.
+    # extensions are legitimate — see issue #234 for the full surface discussion.
     agent_keys = frontmatter_keys(fm) & {"skills", "tools"}
     check(
         f"no agent-composition keys (skills:, tools:){'' if not agent_keys else f' — found: {sorted(agent_keys)}'}",
