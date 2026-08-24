@@ -96,6 +96,13 @@ the frontmatter form is harness-specific.
   tolerated; the rule is about *referencing*, not *presence*.
 - Why: the converter needs a deterministic "ship boundary" to scan, and a
   shipped artifact that reads governance files breaks that boundary.
+- Known non-compliance today, so the rule reads as a target rather than a
+  description: security-toolkit's `block-dangerous-git.sh` hook messages
+  point at `.claude/rules/discard-safety.md` and `git-workflow.md`, and a
+  vasana-system reference pack (`iterative-loop-engine`
+  `criteria/review.criteria.md`) cites `git-workflow.md` — paths that do not
+  exist in this repo and ship nowhere. New shipped content follows R8;
+  cleaning these up is follow-up work, out of this document's scope.
 
 ## What these rules do NOT do
 

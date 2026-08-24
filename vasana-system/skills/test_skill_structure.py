@@ -17,12 +17,8 @@ no executable logic to unit-test, but they DO have an interface: the SKILL.md
 frontmatter is what the model reads to decide whether to fire, and the house
 conventions are easy to break silently. This asserts the invariants that hold
 across every vasana-system skill, so a future skill that breaks one fails the PR
-instead of shipping broken:
-
-  - valid YAML frontmatter (the seed-question style invites the footgun below)
-  - name == directory, kebab-case, <= 64 chars
-  - description present and within Anthropic's 1024-char limit
-  - a self-replication section, per CLAUDE.md's Self-Replication Principle
+instead of shipping broken. The `check()` labels below are the authoritative
+list of what is asserted; no enumeration here, so the list cannot go stale.
 
 On counting the self-replication heading: the canonical section is `## Vasana`
 (exactly one per skill, per the CLAUDE.md Self-Replication Principle and the

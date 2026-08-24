@@ -98,5 +98,4 @@ Files in `.claude/rules/` are development guidance for working in this repo, loa
 plugins convertible to other agent harnesses (Hermes, Codex, etc.) without
 restricting Claude features. It complements `.claude/rules/` — those govern
 how we work *in this repo*; PORTABILITY.md governs the shape of what we
-*ship*. Changes to the three `test_skill_structure.py` twins must keep the
-R1 check; R2–R8 are documented conventions with no linter check today.
+*ship*. It also carries its own enforcement status — read it there, not here.

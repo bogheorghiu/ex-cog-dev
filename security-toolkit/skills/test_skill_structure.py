@@ -19,12 +19,9 @@ no executable logic to unit-test, but they DO have an interface: the SKILL.md
 frontmatter is what the model reads to decide whether to fire, and the house
 conventions are easy to break silently. This asserts the invariants that hold
 across every security-toolkit skill, so a future skill that breaks one fails
-the PR instead of shipping broken:
-
-  - valid YAML frontmatter (the seed-question style invites the footgun below)
-  - name == directory, kebab-case, <= 64 chars
-  - description present and within Anthropic's 1024-char limit
-  - exactly one `## Vasana` section (CLAUDE.md convention), counted outside fences
+the PR instead of shipping broken. The `check()` labels below are the
+authoritative list of what is asserted; no enumeration here, so the list
+cannot go stale.
 
 YAML validity prefers a real parse via PyYAML when importable, and ALWAYS also
 runs a stdlib check for the one footgun the house seed-question style invites: a
