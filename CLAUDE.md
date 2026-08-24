@@ -99,4 +99,4 @@ plugins convertible to other agent harnesses (Hermes, Codex, etc.) without
 restricting Claude features. It complements `.claude/rules/` — those govern
 how we work *in this repo*; PORTABILITY.md governs the shape of what we
 *ship*. Changes to the three `test_skill_structure.py` twins must keep the
-R1–R8 checks (R1 is enforced there today).
+R1 check; R2–R8 are documented conventions with no linter check today.
