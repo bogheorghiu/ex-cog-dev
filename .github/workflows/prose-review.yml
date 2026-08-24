@@ -187,7 +187,7 @@ jobs:
 
       - name: Review
         if: steps.gate.outputs.review == 'true'
-        uses: anthropics/claude-code-action@239e3a730883eeb5c53db12b0fc9573b3024b126 # v1.0.191
+        uses: anthropics/claude-code-action@e2a4b761cd77a1138a5b41410eda9b28581f9bcd # v1.0.196
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Passing this short-circuits the OIDC → Claude-App-token path in
@@ -370,7 +370,7 @@ jobs:
       # clean" an explicit precondition. Over-run is not fail-open, but it is waste.
       - name: Repair rejected findings
         if: steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
-        uses: anthropics/claude-code-action@239e3a730883eeb5c53db12b0fc9573b3024b126 # v1.0.191
+        uses: anthropics/claude-code-action@e2a4b761cd77a1138a5b41410eda9b28581f9bcd # v1.0.196
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
