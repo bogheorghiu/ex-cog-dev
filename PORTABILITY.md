@@ -1,6 +1,6 @@
 # PORTABILITY.md — converting these plugins to other harnesses
 
-**Status: PROPOSAL — conventions for review, not yet enforced in CI.**
+**Status: R1 is enforced in CI (see Enforcement); R2–R8 are proposed for review.**
 
 **Created:** 2026-08-07
 **Why this file exists:** the plugins in this marketplace are Claude Code
@@ -16,19 +16,24 @@ render this plugin for another harness with deterministic rules, not per-file
 human judgment.** Each rule below exists because a specific conversion cost
 was measured or anticipated.
 
-## R1 — Skill frontmatter stays harness-agnostic: name + description only
+## R1 — Skill frontmatter stays within the portable surface
 
-- CC-only frontmatter keys (`skills:`, `tools:`, `model:`, `allowed-tools:`)
-  never appear in `SKILL.md` frontmatter. They belong in agent files, where
-  CC composition lives.
-- Description: trigger self-contained in the first ~57 characters (both
-  harnesses truncate the skill index there) and ≤1024 characters (Hermes
-  hard cap; the existing linter already enforces Anthropic's 1024).
+- Skill frontmatter uses the Agent Skills spec's six fields — `name`,
+  `description`, `license`, `compatibility`, `metadata`, `allowed-tools` —
+  plus documented per-harness keys that only that harness reads at root level
+  (Claude Code's extension set; tracked in #234).
+- It never carries agent-definition composition keys; those belong in agent
+  files, and the linter rejects them at PR time.
+- Description: trigger self-contained in the first sentence (Hermes truncates
+  its skill index at ~57 characters) and ≤1024 characters (the spec limit,
+  already enforced by the linter).
 
-Why: frontmatter is what the model reads every turn. It is the part that
-must stay portable. The repo's 22 research-toolkit skills already comply
-(verified 2026-08-07); this rule keeps it true. Enforced by the R1 key check
-in each plugin's `test_skill_structure.py`.
+Why: frontmatter is what every harness reads every turn, so it is the one
+surface that must stay portable. The six spec fields are the shared baseline.
+Harness-specific keys stay at root level where their harness reads them —
+moving a root-level key under `metadata` hides it from the harness that needs
+it, so `metadata` is not a place to relocate Claude's keys; it is only a home
+for keys a harness genuinely reads from there (e.g. Hermes' `metadata.hermes.*`).
 
 ## R2 — Skill content is whole-tree (SKILL.md + references/ + scripts/)
 
@@ -65,17 +70,16 @@ keep it.
   README, since both harnesses export them as env.
 - Why: stable option names = one config mapping in the port, forever.
 
-## R6 — Agents declare composition twice: frontmatter (CC) + body (portable)
+## R6 — Agent composition declared in the body (portable), not only frontmatter
 
-- Keep `skills:` in agent frontmatter — Claude composes from it.
-- ALSO list the same skills as a plain ordered list in the agent body (e.g.
-  a `## Composition` section), so another harness can generate an equivalent
-  delegation wrapper from the body alone.
+No agent in this repo currently uses `skills:` frontmatter; if one ever does
+(Claude composes from it), also list the same skills as a plain ordered list in
+the agent body, so another harness can generate an equivalent delegation
+wrapper from the body alone.
 
-Why: `skills:` frontmatter is the ONE construct in this repo with no direct
-analog in other harnesses. A body-side declaration makes agent conversion
-mechanical instead of hand-written, and keeps the body authoritative for
-humans reading the agent.
+Why: agent composition has no shared format across harnesses (the mapping is
+tracked in #233); a body-side list keeps agent conversion mechanical even when
+the frontmatter form is harness-specific.
 
 ## R7 — Version the plugin; ports pin to it
 
@@ -83,14 +87,15 @@ humans reading the agent.
   version). A port pins `pin_plugin_version`, so "update from source" keys
   on a semantic version, not a raw SHA.
 
-## R8 — Keep dev scaffolding out of the shipped surface
+## R8 — Shipped content never references dev scaffolding
 
 - `CLAUDE.md`, `.claude/rules/`, workflows, githooks, CI = repo governance,
-  NOT plugin content. Never referenced from a shipped skill/hook/command.
-- Why: the converter must have a clean "ship boundary" to scan. The renderer
-  knows the six shipped part types (skills, MCP, hooks, commands, agents,
-  userConfig) and stops if it sees anything else; scaffolding inside the
-  shipped surface breaks that scan.
+  not plugin content; a shipped skill/hook/command never reads or imports them.
+- Co-located dev files (e.g. the `test_skill_structure.py` linters under
+  `skills/`) may ship inert — they never run for a consumer — and that is
+  tolerated; the rule is about *referencing*, not *presence*.
+- Why: the converter needs a deterministic "ship boundary" to scan, and a
+  shipped artifact that reads governance files breaks that boundary.
 
 ## What these rules do NOT do
 
@@ -99,17 +104,14 @@ humans reading the agent.
 - They do not make the repo "harness-agnostic" by dropping CC idioms — the
   idioms stay, in designated places.
 
-## Enforcement (proposed)
+## Enforcement
 
-Extend each plugin's `test_skill_structure.py` (they are deliberate twins —
-keep logic identical, only the plugin name differs) with:
-
-- **R1 key check:** frontmatter keys ⊆ {name, description} for every
-  SKILL.md. Catches CC-only keys and stray keys at PR time.
-- **R4 path check:** no hardcoded absolute paths in skill bodies/scripts
-  (scan for `C:\`, `/home/`, `/Users/`).
-- **R6 composition check:** every `agents/*.md` with a `skills:` frontmatter
-  list also has a `## Composition` body section naming the same skills.
+- **R1 key check (implemented):** every `SKILL.md` frontmatter is checked for
+  agent-definition composition keys, which are rejected at PR time. The
+  portable baseline (the spec's six fields) is documented above, not enumerated
+  in code — see #234 for the full surface discussion.
+- **R4 / R6 (proposed, not implemented):** path and composition checks are
+  listed for future work; neither is enforced today.
 
 Per the existing convention (issue #196), do NOT add a fourth linter copy —
 extend the three twins, and if this grows, replace the mechanism with one
