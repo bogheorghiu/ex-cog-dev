@@ -106,8 +106,11 @@ the frontmatter form is harness-specific.
 
 ## Enforcement
 
-- **R1 key check (implemented):** every `SKILL.md` frontmatter is checked for
-  agent-definition composition keys, which are rejected at PR time. The
+- **R1 key check (implemented):** every `SKILL.md` frontmatter in
+  research-toolkit, security-toolkit and vasana-system is checked for
+  agent-definition composition keys, which are rejected at PR time.
+  makers-toolkit ships skills but carries no linter twin (issue #196 caps the
+  copies at three), so its skills are not behind this gate today. The
   portable baseline (the spec's six fields) is documented above, not enumerated
   in code — see issue #234 for the full surface discussion.
 - **R4 / R6 (proposed, not implemented):** path and composition checks are

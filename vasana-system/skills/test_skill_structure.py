@@ -152,8 +152,9 @@ def parse_frontmatter(fm):
 def frontmatter_keys(fm):
     """Return the set of top-level keys in a frontmatter block.
 
-    Lines starting with whitespace are block-scalar continuations and never
-    count; only `key:` at column 0 does. Callers use this to reject keys that
+    Indented lines are never top-level keys (they are block-scalar
+    continuations or nested mapping keys, e.g. under `metadata:`); only
+    `key:` at column 0 counts. Callers use this to reject keys that
     belong in agent files rather than SKILL.md (see the R1 check below, issue #234).
     """
     keys = set()
