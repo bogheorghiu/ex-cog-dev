@@ -7,10 +7,9 @@ name: Unit tests
 #   - the repo's own PII pre-push guard (bash)
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)
-#   - research-toolkit skill-structure linter (stdlib Python)
 #   - dev-job-defense-ties config engine + screen-efficiency proxy (stdlib Python)
 #   - brainstorm session recorder (stdlib Python)
-#   - vasana-system skill-structure linter (frontmatter YAML + conventions, via uv)
+#   - skill-structure linters, all three twins (frontmatter YAML + conventions, via uv)
 #   - edge-graph + relational-memory backends (need mcp/pydantic, run via uvx)
 #
 # Each suite exits non-zero on failure, so a regression fails the job.
