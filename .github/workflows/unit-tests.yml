@@ -60,7 +60,6 @@ jobs:
           python3 research-toolkit/mcp-servers/financial-mcp/test_validation.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_tic_parser.py
           python3 research-toolkit/skills/macro-monitor/scripts/test_fred_fetcher.py
-          python3 research-toolkit/skills/test_skill_structure.py
           python3 research-toolkit/skills/dev-job-defense-ties/scripts/test_config.py
           python3 research-toolkit/skills/research/scripts/test_config.py
           python3 research-toolkit/skills/dev-job-defense-ties/test_screen_efficiency.py
@@ -74,12 +73,15 @@ jobs:
           python3 .github/scripts/test_prose_review_cleanup.py
           python3 .github/scripts/test_check_json_ascii.py
 
-      - name: Skill-structure linters (vasana-system, security-toolkit)
+      - name: Skill-structure linters (all three twins)
         run: |
           set -euo pipefail
           # Run with PyYAML so the full parser catches every frontmatter YAML
           # error — including the unquoted `key: ... : ...` variant the stdlib
-          # fallback in the linter can't. See vasana-system/skills/test_skill_structure.py.
+          # fallback in the linter can't — and so the R1 key check reads keys
+          # from a real parse, not the column-0 regex fallback.
+          # See vasana-system/skills/test_skill_structure.py.
+          uv run --no-project --with pyyaml python research-toolkit/skills/test_skill_structure.py
           uv run --no-project --with pyyaml python vasana-system/skills/test_skill_structure.py
           uv run --no-project --with pyyaml python security-toolkit/skills/test_skill_structure.py
 

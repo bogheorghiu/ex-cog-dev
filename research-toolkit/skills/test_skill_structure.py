@@ -44,6 +44,7 @@ if hasattr(sys.stdout, "reconfigure"):
 # Anthropic's documented frontmatter limits (platform.claude.com Agent Skills).
 NAME_MAX = 64
 DESC_MAX = 1024
+AGENT_COMPOSITION_KEYS = {"skills", "tools"}
 # Soft floor: every shipped description is >= 250 chars; 40 catches an empty or
 # stub description without coupling the test to the current house verbosity.
 DESC_MIN = 40
@@ -135,11 +136,21 @@ def parse_frontmatter(fm):
 def frontmatter_keys(fm):
     """Return the set of top-level keys in a frontmatter block.
 
-    Indented lines are never top-level keys (they are block-scalar
-    continuations or nested mapping keys, e.g. under `metadata:`); only
-    `key:` at column 0 counts. Callers use this to reject keys that
-    belong in agent files rather than SKILL.md (see the R1 check below, issue #234).
+    A real YAML parse is authoritative when PyYAML is importable: the regex
+    fallback reads only `key:` at column 0, so YAML-valid spellings such as
+    `skills : [...]` or `"skills": [...]` would slip past it (indented lines
+    are never top-level keys either way; the CI step ensures PyYAML). Callers
+    use this to reject keys that belong in agent files rather than SKILL.md
+    (see the R1 check below, issue #234).
     """
+    try:
+        import yaml  # type: ignore
+
+        data = yaml.safe_load(fm)
+        if isinstance(data, dict):
+            return {str(k) for k in data}
+    except Exception:
+        pass
     keys = set()
     for line in fm.splitlines():
         if line[:1] in (" ", "\t"):
@@ -207,9 +218,10 @@ for path in skill_files:
     # R1 (PORTABILITY.md): the only keys categorically wrong in a SKILL.md are
     # agent-definition composition keys. Spec fields and per-harness root-level
     # extensions are legitimate — see issue #234 for the full surface discussion.
-    agent_keys = frontmatter_keys(fm) & {"skills", "tools"}
+    agent_keys = frontmatter_keys(fm) & AGENT_COMPOSITION_KEYS
+    _label_keys = ", ".join(f"{k}:" for k in sorted(AGENT_COMPOSITION_KEYS))
     check(
-        f"no agent-composition keys (skills:, tools:){'' if not agent_keys else f' — found: {sorted(agent_keys)}'}",
+        f"no agent-composition keys ({_label_keys}){'' if not agent_keys else f' — found: {sorted(agent_keys)}'}",
         not agent_keys,
     )
 
