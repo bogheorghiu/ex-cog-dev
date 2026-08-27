@@ -17,12 +17,8 @@ no executable logic to unit-test, but they DO have an interface: the SKILL.md
 frontmatter is what the model reads to decide whether to fire, and the house
 conventions are easy to break silently. This asserts the invariants that hold
 across every vasana-system skill, so a future skill that breaks one fails the PR
-instead of shipping broken:
-
-  - valid YAML frontmatter (the seed-question style invites the footgun below)
-  - name == directory, kebab-case, <= 64 chars
-  - description present and within Anthropic's 1024-char limit
-  - a self-replication section, per CLAUDE.md's Self-Replication Principle
+instead of shipping broken. The `check()` labels below are the authoritative
+list of what is asserted; no enumeration here, so the list cannot go stale.
 
 On counting the self-replication heading: the canonical section is `## Vasana`
 (exactly one per skill, per the CLAUDE.md Self-Replication Principle and the
@@ -56,6 +52,7 @@ if hasattr(sys.stdout, "reconfigure"):
 # Anthropic's documented frontmatter limits (platform.claude.com Agent Skills).
 NAME_MAX = 64
 DESC_MAX = 1024
+AGENT_COMPOSITION_KEYS = {"skills", "tools"}
 # Soft floor: every shipped description is >= 250 chars; 40 catches an empty or
 # stub description without coupling the test to the current house verbosity.
 DESC_MIN = 40
@@ -149,6 +146,34 @@ def parse_frontmatter(fm):
     return name, desc
 
 
+def frontmatter_keys(fm):
+    """Return the set of top-level keys in a frontmatter block.
+
+    A real YAML parse is authoritative when PyYAML is importable: the regex
+    fallback reads only `key:` at column 0, so YAML-valid spellings such as
+    `skills : [...]` or `"skills": [...]` would slip past it (indented lines
+    are never top-level keys either way; the CI step ensures PyYAML). Callers
+    use this to reject keys that belong in agent files rather than SKILL.md
+    (see the R1 check below, issue #234).
+    """
+    try:
+        import yaml  # type: ignore
+
+        data = yaml.safe_load(fm)
+        if isinstance(data, dict):
+            return {str(k) for k in data}
+    except Exception:
+        pass
+    keys = set()
+    for line in fm.splitlines():
+        if line[:1] in (" ", "\t"):
+            continue
+        m = re.match(r"^([A-Za-z_][\w-]*):", line)
+        if m:
+            keys.add(m.group(1))
+    return keys
+
+
 def yaml_validity_error(fm):
     """Return an error string if the frontmatter isn't valid YAML, else None.
 
@@ -202,6 +227,16 @@ for path in skill_files:
     check("name + description both present", bool(name) and bool(desc))
     if not name or not desc:
         continue
+
+    # R1 (PORTABILITY.md): the only keys categorically wrong in a SKILL.md are
+    # agent-definition composition keys. Spec fields and per-harness root-level
+    # extensions are legitimate — see issue #234 for the full surface discussion.
+    agent_keys = frontmatter_keys(fm) & AGENT_COMPOSITION_KEYS
+    _label_keys = ", ".join(f"{k}:" for k in sorted(AGENT_COMPOSITION_KEYS))
+    check(
+        f"no agent-composition keys ({_label_keys}){'' if not agent_keys else f' — found: {sorted(agent_keys)}'}",
+        not agent_keys,
+    )
 
     check(f"name matches directory ('{name}' == '{slug}')", name == slug)
     check(f"name is kebab-case and <= {NAME_MAX} chars", bool(NAME_RE.match(name)) and len(name) <= NAME_MAX)

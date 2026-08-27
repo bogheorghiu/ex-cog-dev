@@ -93,3 +93,9 @@ That makes `main` directly load-bearing for everyone: each plugin's `.mcp.json` 
 ## Development rules (`.claude/rules/`)
 
 Files in `.claude/rules/` are development guidance for working in this repo, loaded by Claude Code itself (a path-scoped rule — one with `paths:` frontmatter — loads its body only when you open a matching file). They are **not** shipped with any plugin: a marketplace plugin carries skills, MCPs, agents, and hooks, never `CLAUDE.md` or rules. So a rule can encode a development convention freely without affecting what consumers install.
+
+**`PORTABILITY.md` at the repo root** states the conventions that keep these
+plugins convertible to other agent harnesses (Hermes, Codex, etc.) without
+restricting Claude features. It complements `.claude/rules/` — those govern
+how we work *in this repo*; PORTABILITY.md governs the shape of what we
+*ship*. It also carries its own enforcement status — read it there, not here.
