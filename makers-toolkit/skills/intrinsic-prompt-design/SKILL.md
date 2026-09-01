@@ -20,7 +20,7 @@ The engineering discipline this skill draws from — schema before code, determi
 
 - **Name the shape before building on it.** A prompt that references "the data" without establishing what shape the data has creates the same drift that unnamed schemas create in code. For prompts, this means: name the domain, the theoretical position, the analytical lens — before giving instructions that assume them.
 - **Separate what must be deterministic from what should be probabilistic.** Anything the model needs to do the same way every time belongs in explicit rules or specs, not in the model's judgment. A prompt that asks the model to "remember to" do something deterministic is growing a script that hasn't been written yet. Judgment is for the parts that genuinely vary. And take the separation to its conclusion: when a rule must hold every time and a schema, validator, hook, test, or CI check can enforce it, put it there rather than in prose — a mechanical check can't be skimmed, argued with, or reinterpreted under load, and every prose rule can. Prose guardrails are the fallback for what genuinely can't be mechanised.
-- **Read the actual failure, not the inferred one.** When a prompt isn't working, read what the model actually produced — the output, the reasoning, the missed cues — not what you expected it to miss. Patch. Verify. Before writing the lesson into permanent guidance, challenge the explanation: a wrong lesson codified directs future attention to the wrong place.
+- **Read the actual failure, not the inferred one.** When a prompt isn't working, read what the model actually produced — the output, the reasoning, the missed cues — not what you expected it to miss. Patch. Verify. Before writing the lesson into permanent guidance, challenge the explanation: a wrong lesson codified directs future attention to the wrong place. And watch which patch you reach for: when a directive gets ignored, the reflex is to restate it louder — `IMPORTANT:`, `YOU MUST`, capitals, a third repetition. That adds emphasis without adding information. It competes with every other emphasised line in the prompt, so the prompt's loudest instruction is now whichever one failed most recently rather than whichever one matters most, and it leaves the actual question — why the first statement didn't land — unasked.
 - **Let concerns stay separate.** The relationship register and the operational register (described below) are one instance of this. More broadly: what the model should think from, what it should do, and how to verify it did it well are three different things. Prompts that blur them produce models that blur them.
 
 These patterns earn their cost differently at different scales. For a one-shot question, they're overkill. For a project prompt that will run hundreds of sessions, each one prevents a class of failure. What matters here is that the principles are available to think from — the engineering walk-throughs live with the protocol they came from.
@@ -50,6 +50,37 @@ Honest note on the evidence: this skill's own best measured result — recoverin
 Two things bound how far that result can be pushed, and they cut in opposite directions. It measured a *description* — text competing to be selected from a catalogue — not a directive inside a prompt body, and those are different attention regimes (`references/firing-experiment.md` states the limit). So it is suggestive of the partition above rather than evidence for it, and reading it as proof would repeat exactly the overreach this note exists to correct. What it does establish, in the one regime it covers, is that the doctrine's ranking is not universal — which is enough to require the partition even if it cannot confirm its shape.
 
 **The reciprocal move.** The prompt-writer's job is to include reasons where judgment lives. The model's job, on the receiving end, is scoped the same way: when an instruction is ambiguous, consequential, conflicting, or unsafe and its reason is absent, ask why — or construct your best understanding of why and surface it for confirmation (in a run with no human turn, surface it through whatever channel exists: a log, a note in the output, the orchestrator). Otherwise infer the likely why and proceed. For instructions that clear that bar, acting on a rule whose reason you've verified is informed rather than merely compliant, and the difference shows under pressure. For the rest, interrogating routine requests turns a peer into a pedant — the reasons exist so judgment gets exercised where it matters, not so every instruction becomes a negotiation.
+
+---
+
+## Dispositions are built, not requested
+
+The separation above routes a must-hold-every-time rule into a check, because a check can't be skimmed, argued with, or reinterpreted under load. That covers *constraints* — things that must not happen, or must happen exactly so. It leaves a gap, and the gap is most of what this skill wants: judgment at an edge the writer didn't anticipate, honest uncertainty, interest that comes from the material, the move down rather than up when challenged. No validator can assert any of them. All of them are pursued here in prose.
+
+Prose is not the only option left. Between "put it in a check" and "ask for it well" sits a third move: arrange the run so the behaviour is the only thing the structure permits.
+
+The clearest demonstration is the public `adhd` skill (credited below), built against premature convergence — a model's tendency to return the three answers a competent engineer produces in thirty seconds. It does not ask for divergence. It spawns isolated parallel branches under deliberately distorted frames, forbids evaluation inside the generating phase, and scores in a separate pass afterwards. The generator cannot converge on the critic's preferences because it cannot see the critic. Its stated framing is that convergence is architectural rather than a prompting problem. Take the design argument and leave the arithmetic: the reported speedup is contested — small benchmark, much of the headline multiplier riding on a single item — so this is cited as a worked instance of the move, not as a measured result.
+
+The same shape is available for most dispositions worth wanting:
+
+- **Independent judgment.** A fresh-context pass that never saw the first answer cannot be anchored by it. Asking one instance to "consider alternatives" sets it against everything it has already committed to; a second instance has nothing to defend.
+- **Honest uncertainty.** A step whose output *has a slot* for what could not be established, filled before the conclusion is written, produces different admissions than the same request made in prose afterwards — by then the conclusion exists and the uncertainty has to argue with it.
+- **Not converging early.** Separate generating from selecting in time. The separation does what "be creative" cannot, because it removes the critic rather than asking the generator to ignore it.
+
+This is where this skill's own record points, and it is the finding that most complicates its doctrine. The one measured win here came from a specification improvement in the operational register — broadening a closed list into an open class — not from reasons, trust, or relationship framing. Structure beat posture in the only place there is data. `references/trigger-rewrite-experiment.md` has the numbers; `references/firing-experiment.md` has the limits on what they can cover.
+
+So the partition has a fourth branch, and when a wanted behaviour keeps not happening it is the one to reach for before rewriting the paragraph again:
+
+| What you're protecting | Where it belongs |
+|---|---|
+| Must hold every time, and a check can assert it | The check |
+| A judgment call at a boundary you can't enumerate | Prose, carrying the failure mode it prevents |
+| Exact execution, and no check is available | A terse imperative |
+| A disposition you want reliably | The architecture that makes it necessary |
+
+Two limits, because this move is not free. It costs calls, latency and complexity — a second pass to defeat anchoring is real spend, and "scope shapes the apparatus" binds here as hard as anywhere; a disposition worth an architecture in a prompt that runs for months is not worth one in a prompt that runs once. And some dispositions have no structural form at all and genuinely live nowhere but the prose. The claim is not that prose is the wrong instrument. It is that prose should be what remains after the question is asked, rather than the first place to look.
+
+**The smallest version of this move is grammatical.** "Define the schema first" addresses a reader and asks for compliance. "Logic written before the schema is named drifts from it" describes a situation and leaves the reader to act on it. Same content, and the second has no addressee — so there is nothing in it to comply with or refuse. That is the structural move at the scale of a single sentence. Whether it changes model behaviour is untested: n=0, a claim and not a result, and a clean experiment — hold the directive constant, vary only the mood.
 
 ---
 
@@ -132,6 +163,8 @@ When challenged, the move is down — strip to what you actually know — not up
 ## Crediting the original
 
 The engineering discipline (deterministic engines under probabilistic decision-making, schema before code, repair-loop with persistent lessons, separation of concerns) comes from the *Universal CLAUDE.md Protocol*. The developmental mechanism (trust-backed-by-substance, productive gaps, interest-driven self-correction) was documented in the intrinsic-motivation behavioral methodology.
+
+"Dispositions are built, not requested" arrived by two routes worth recording. The structural argument and its worked instance come from the `adhd` parallel-divergent-ideation skill for Claude Code (MIT; circulated in several forks, e.g. `UditAkhourii/adhd` and `bhtru/adhd-claude`) and from the write-ups discussing it. The axis it sits on — that a demand can be answered by rephrasing it or by removing the situation that requires it, and that the second is the stronger move — is taken from demand-avoidance support practice, where arranging the situation is the established lever and gentler phrasing the weaker one. What is borrowed there is a technique and a distinction. Nothing about the mechanism transfers: that practice concerns anxiety in people who have autonomy to lose, and a claim that a model works the same way would be exactly the kind of unevidenced capability story this skill's own trust section warns about.
 
 ---
 
