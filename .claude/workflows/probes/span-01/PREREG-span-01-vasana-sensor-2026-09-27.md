@@ -1,5 +1,8 @@
 # PREREG — Span-01 as a vasana firing sensor (2026-09-27)
 
+**FROZEN** at this commit: `battery.json`, `questions.json` and `excluded.json`
+are final, and any edit after this voids the run.
+
 Written and committed before any Span-01 call returned data. Today's attempt
 was blocked by the workspace's zero-data-retention guardrail, so no data exists.
 
@@ -102,6 +105,18 @@ plain set, carries the gate.
   rationalised and interrupted loops, plus warranted-retry and
   unapplied-instruction hard negatives (B3). The v2 blind relabel runs
   against the pinned definitions and the exclusion rule above applies to it.
+
+## v2 blind relabel result (before any data)
+
+A fresh Fable agent, shown only the pinned definitions and the shuffled spans,
+had 0 disagreements and 2 "unsure" out of 88. Both are excluded per the rule
+above and listed in `excluded.json`:
+- B2-06: it is unclear whether "I'll keep this short" is a principle.
+- B3-10: it is unclear whether an unevidenced mechanism counts as "engaging
+  the failure".
+
+Exclusion rate: B1 0/29, B2 1/31, B3 1/28. All are under 30%, so no behavior
+is VOID.
 
 ## Deviations after launch
 
