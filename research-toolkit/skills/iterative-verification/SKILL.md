@@ -61,8 +61,8 @@ For facts: keep verifying until claims meet evidence thresholds.
 2. LABEL
    - Assign evidence tier to each claim:
      * VERIFIED: Primary sources, court docs, regulatory filings
-     * CREDIBLE: Multiple independent sources
-     * ALLEGED: Single source, unverified
+     * CREDIBLE: 3+ independent sources agree
+     * ALLEGED: 1-2 independent sources; write the count (ALLEGED ×1, ALLEGED ×2)
      * SPECULATIVE: Inference, theoretical
    - Add [RELAY] to any claim taken from a summary, not the primary source
 
@@ -87,9 +87,15 @@ For facts: keep verifying until claims meet evidence thresholds.
 | Tier | Definition | Examples |
 |------|------------|----------|
 | **VERIFIED** | Primary sources directly confirm | Regulatory filings, court documents, lab test results, official statements |
-| **CREDIBLE** | Multiple independent sources agree | 3+ news outlets, consistent professional reports, corroborated accounts |
-| **ALLEGED** | Single source, no corroboration | One article, one whistleblower, one study |
+| **CREDIBLE** | 3+ independent sources agree | 3+ news outlets, consistent professional reports, corroborated accounts |
+| **ALLEGED** | 1-2 independent sources, short of CREDIBLE | One article, one whistleblower, one study; two independent lab reports (ALLEGED ×2) |
 | **SPECULATIVE** | Inference from patterns | "If X then probably Y", theoretical risk |
+
+The count beside ALLEGED keeps one corroboration visible instead of reading
+like a lone claim. It counts independent origins, not outlets: two papers
+carrying one leak are ×1 (manufactured-consensus-detection). What a count
+cannot see - shared stake, shared method, a contradicting primary - is open in
+issue #244.
 
 ### The [RELAY] Rule
 
@@ -111,6 +117,43 @@ keeps what its author found salient and silently drops the rest. The evidence
 tier describes the SOURCE's quality; `[RELAY]` describes YOUR distance from
 it. The two are independent, which is why the tag stacks instead of replacing. (Principle P1 (relayed-is-not-read).)
 
+### Definition-Drift Check (a count is only stake-free while its definition holds still)
+
+A reporter has no discretion over how many events happened and full discretion
+over *what counts as one*. When the definition moves mid-series, every later
+number is an honest count of a different thing; the series looks continuous and
+the trend across the change is an artefact. Four moves: **threshold** (what is
+big enough to enter), **perimeter** (which entities, channels, regions), **unit
+or inclusion rule** (gross/net, messages/value, intra-group in or out), **base**
+(growth against a revised prior year). Sibling: **coverage drift** — the
+definition stands while the population it captures moves (a share of traffic on
+one network changes meaning as flows leave the network).
+
+Signals, strongest first: a level jump with no note; a growth rate you cannot
+reproduce from the published levels; a series renamed, split or restarted.
+Disclosure words — "restated", "like-for-like", "new methodology", "constant
+perimeter", a series-break flag in the publisher's legend, Chinese 口径 (可比口径
+"comparable basis", 全口径 "full basis") — mark only the *disclosed* case; their
+absence is not stability. Search for the equivalents in the reporter's own language.
+
+For any count, or any trend, share or ranking built from counts, that a
+deliverable rests on:
+1. Pull the method notes for the first and last edition in your window, and any edition where the level jumps.
+2. Compare threshold, perimeter, unit and base; name who controls the definition and when it changed.
+3. If it moved: each same-definition segment keeps its tier; the trend across the break is ALLEGED if the reporter states it, SPECULATIVE if you computed it, until a same-definition back-series exists from someone other than the reporter — a reporter's own back-cast is its own record and cannot clear its own break; name whose series clears it.
+4. No method notes found: list "definition unverified" in the report's limits and demote the claim to satellite; the loop does not stay open for it.
+
+Runs on every reporter, symmetrically (Principle P4 (counter-default)). Table,
+full procedure and where the tells appeared: `references/definition-drift.md`.
+(User-raised 2026-09-25; not yet run on a series.)
+
+**Ratios: state both periods before computing** (one observation, 2026-09-16).
+Write the period of the numerator and of the denominator explicitly. One year
+of NDB disbursements ($2.7bn) over cumulative approvals ($43bn) read as failure
+to deliver; the within-year ratio was 86%. Both figures were correct and
+sourced; the defect lived only in the pairing, and a figure-level fact-check
+passes it clean — it only shows at the ratio.
+
 ## Threshold Requirements
 
 For factual accuracy tasks, iterate until:
@@ -118,7 +161,7 @@ For factual accuracy tasks, iterate until:
 | Metric | Threshold | Rationale |
 |--------|-----------|-----------|
 | Claims labeled | ≥80% | Most claims should have explicit evidence basis |
-| Independent sources | ≥2 | Reduces single-point-of-failure |
+| Independent sources | ≥2 | Reduces single-point-of-failure. A stop rule for the search, not a grade: a claim can meet it and still be ALLEGED ×2 |
 | Evidence freshness | <2 years | Prevents stale information in dynamic domains |
 | Flow depth | ≥3 steps | Surface claims hide deeper realities |
 
@@ -136,7 +179,8 @@ Gap: No independent verification
 ```
 Search: "Company X privacy audit independent"
 Found: Third-party security audit report
-Claim upgraded: CREDIBLE (audit + marketing = 2 sources)
+Claim: ALLEGED ×1 (the audit is the one independent source; marketing is the
+  subject's own claim, not an independent source; CREDIBLE needs 3+)
 Remaining gaps: Ownership chain unclear
 → ITERATE
 ```
@@ -279,6 +323,18 @@ Before claiming completion, ask:
       before claiming completion (Principle P8 (the-method-matures-backward)). Early conclusions passed a
       weaker gate than late ones — that gradient is invisible unless
       checked.
+
+13. **"Did I apply the stake rule to only one side?"**
+    - When a stake demotes one source's own figures (a central bank's
+      settlement share), run the same rule over every other source in the same
+      deliverable before shipping — a messaging network's own traffic share is
+      the same kind of figure. Demoting one camp's records and passing the
+      other's as plain data is the frame talking (Principle P4 (counter-default);
+      source-dossier symmetry gate). Caught by the user, 2026-09-25.
+
+14. **"Did the definition move under any count, trend, share or ranking I rely on?"**
+    - A count is only stake-free while what-gets-counted holds still; run the
+      Definition-Drift Check on any series a verdict rests on.
 
 ## The "One More" Sweep Rule
 

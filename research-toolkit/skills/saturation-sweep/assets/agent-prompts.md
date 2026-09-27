@@ -13,6 +13,9 @@ positioned reader or an injected standpoint, not from more same-model agents.
 You are one worker in wave [N] of a saturation sweep.
 
 **Investigation question:** [one sentence]
+(State the question only — never a finding, a "known fact" or an expected answer;
+a worker that receives one returns it as corroboration, 2026-09-15 / 2026-09-25.
+Settled points go in a "not for you" list; any fact only with its attribution.)
 **Your axis:** [who-else | where-else | when-else | who-benefits-elsewhere —
 with this wave's specific scope, e.g. "where-else: jurisdictions the entity
 operated in before [year]"]
@@ -21,6 +24,9 @@ Search YOUR AXIS only — horizontal coverage, not depth. For each finding:
 - entity/claim, one line each
 - evidence tier (VERIFIED/CREDIBLE/ALLEGED/SPECULATIVE)
 - [RELAY] on anything you take from a summary rather than a primary source
+- For any count, trend, share or ranking you rely on, check whether what was
+  counted changed across the series (threshold, perimeter, unit, base); quote
+  the method note and its date, or say you did not check
 - source + date
 
 **Your output file:** [path]

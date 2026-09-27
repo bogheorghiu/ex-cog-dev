@@ -34,6 +34,7 @@ Structured monitoring of macro/geopolitical financial indicators using **free pu
 - Drop >$50B in single month
 - China drops below $600B
 - Coordinated selling (China + Japan both selling)
+- A drop is consistent with selling *and* with relocation to a custodian this series cannot see — read "Before Reading a Trend" below before escalating.
 
 ### 2. Dollar Index vs 10Y Yield (Daily)
 
@@ -105,6 +106,21 @@ curl -s "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS" | tail -5
 ```
 
 ## Interpretation Framework
+
+### Before Reading a Trend
+
+- **What can this instrument not see, and is the claim exactly that?** A
+  network's own share counts only traffic on that network; a custodian's
+  holdings count only what sits with that custodian. A fall in either is
+  consistent with retreat and with migration — the instrument cannot separate
+  the readings (observed twice: 2026-09-16, SWIFT's RMB share; 2026-09-25, NY
+  Fed foreign-official custody, flat through a yield spike).
+- **Whose records could separate them, and in what language?** Name the party
+  and the language in the report's limits even when unreached — the SWIFT case
+  was partly resolved only by PBoC/SAFE settlement data, in Chinese.
+- **Did the series' definition move?** Before reading a level shift as a trend,
+  check the method notes for threshold, perimeter, unit or base changes
+  (iterative-verification, Definition-Drift Check).
 
 ### Growth vs Value Sensitivity
 

@@ -116,6 +116,16 @@ Measured (on the recorded session's real bytes, seven units):
   produced 72 on one document);
 - word-matching as detector: void (10 v 10) — which is why it only arms.
 
+Measured in live use (one session, 2026-09-26), then fixed with regression
+tests:
+- claim-vs-record false positives: a skill named as an edit target (a
+  `SKILL.md` path, a "read as edit targets, not invoked" line) and a Method
+  line denying invocation both counted as claims;
+- an S2 false positive: a code-fix dispatch that named `cui-bono` once, with
+  no other source-judgement signal, was denied twice. S2 now needs two of its
+  phrase families to co-occur; the recorded source-judgement dispatch hits
+  all three.
+
 Bet, not yet measured (the ledger exists to measure it in live use):
 - whether an injected, situation-specific, span-free demand changes the next
   action (the record shows *operator*-pointing works; *script*-pointing at
@@ -125,4 +135,9 @@ Bet, not yet measured (the ledger exists to measure it in live use):
   afterward);
 - the S2 phrase families generalize beyond the recorded session (they are
   toolkit vocabulary, not case vocabulary, but n is small — they are assets,
-  swappable by measurement, not the design).
+  swappable by measurement, not the design);
+- that S2 loses little by requiring two co-occurring families. A dispatch
+  carrying one signal ("check this source's credibility") no longer arms it,
+  and two innocent mentions in one sentence still do; neither shape has been
+  observed yet.
+

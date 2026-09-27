@@ -114,6 +114,28 @@ ARM_MIN_ENTRIES = 2   # unit. Everyday words ("standard") alone must not arm a
                       # this easily (10/3 on the sparsest failure unit).
 S2_SESSION_CAP = 2    # dispatch denials per session: insistence, not DoS.
 
+# A slug is a claim only where the text says what the unit itself did. Path
+# tokens are cut out of a line rather than dropping it, so a real claim beside
+# a path mention survives. A disclaimer line is dropped whole: missing a claim
+# that shares its line with "not invoked" is the accepted, rarer error.
+_PATH_TOKEN_RE = re.compile(
+    r"[\w./-]*/(?:skill\.md|references/[\w./-]*)", re.IGNORECASE)
+_NON_CLAIM_LINE_RE = re.compile(
+    r"\bno\b.{0,40}?\bskills?\b.{0,20}?\b(?:was|were)\s+invoked\b"
+    r"|\b(?:was|were)\s+not\s+invoked\b"
+    r"|\bnever\s+invoked\b"
+    r"|\bread\s+as\s+(?:an?\s+)?(?:edit|review)"
+    r"(?:\s+or\s+(?:edit|review))?\s+targets?\b"
+)
+
+def _claimable_lines(low: str):
+    out = []
+    for ln in low.splitlines():
+        if _NON_CLAIM_LINE_RE.search(ln):
+            continue
+        out.append(_PATH_TOKEN_RE.sub(" ", ln))
+    return out
+
 # ------------------------------------------------------------------- storage
 
 def _read_jsonl(path: Path):
@@ -222,9 +244,13 @@ def match_situation(text: str, row: dict) -> bool:
             return True
     fams = det.get("families")
     if fams:
-        for phrases in fams.values():
-            if any(p.lower() in low for p in phrases):
-                return True
+        # One family alone is a mention (naming the cui-bono skill), not a
+        # commission. Cost, accepted because S2 denies: a dispatch carrying
+        # a single signal ("check this source's credibility") no longer arms.
+        hit = sum(1 for phrases in fams.values()
+                  if any(p.lower() in low for p in phrases))
+        if hit >= min(2, len(fams)):
+            return True
     return False
 
 def situations_for(text: str, surface: str):
@@ -278,28 +304,32 @@ def normalize_slug(name: str) -> str:
 
 def claimed_slugs(text: str):
     """A skill counts as CLAIMED only in forms that state 'this methodology
-    was applied', not in casual prose:
+    was applied', not in casual prose, and only on _claimable_lines():
       * hyphenated slug anywhere ('dialectic-spiral'), or its spaced twin —
         multi-word names are unambiguous;
       * plugin-qualified form ('research-toolkit:research') anywhere;
       * single-word names ('research') additionally on a line containing
-        'method' or 'routed via' — 'this research shows' must never flag.
+        'method' or 'routed via' — 'this research shows' must never flag —
+        and never as the prefix of the plugin's own name, 'research-toolkit'.
     """
     low = text.lower()
-    lines = low.splitlines()
-    method_lines = [ln for ln in lines if "method" in ln or "routed via" in ln]
+    claim_lines = _claimable_lines(low)
+    claim_text = "\n".join(claim_lines)
+    method_lines = [ln for ln in claim_lines
+                    if "method" in ln or "routed via" in ln]
     claimed = set()
     for slug in skill_roster():
         s = slug.lower()
         qualified = f"research-toolkit:{s}"
-        if qualified in low:
+        if qualified in claim_text:
             claimed.add(s)
             continue
         if "-" in s:
-            if s in low or s.replace("-", " ") in low:
+            if s in claim_text or s.replace("-", " ") in claim_text:
                 claimed.add(s)
         else:
-            if any(s in ln for ln in method_lines):
+            word_pat = re.compile(r"\b" + re.escape(s) + r"\b(?!-toolkit\b)")
+            if any(word_pat.search(ln) for ln in method_lines):
                 claimed.add(s)
     return claimed
 
@@ -463,10 +493,14 @@ def handle(event: str, payload: dict) -> dict | None:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason":
-                    "firing-filter [situation — fires once per dispatch]:\n"
+                    "firing-filter [situation — fires once per unit "
+                    "content]:\n"
                     + guidance
-                    + "\nRevise if warranted, then re-send; a re-send is not "
-                      "blocked again this session."}}
+                    + "\nRevise if warranted, then re-send; a "
+                      "content-identical re-send will not be blocked "
+                      "again (a revised dispatch is re-scanned fresh and "
+                      f"can be denied again, up to {S2_SESSION_CAP}/"
+                      "session)."}}
 
     elif event == "post-agent" and armed and text:
         h = unit_hash(text)
