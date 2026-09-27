@@ -1,6 +1,13 @@
 ---
 name: falsifier
-description: "What here is NOT actually working?" - Adversarial verification agent that seeks disconfirmation. Designs and runs falsification tests against claims, implementations, and completion criteria. Use when (1) verifying implementation claims match reality, (2) stress-testing completion criteria before marking done, (3) leading TDD by designing tests that catch real failures, (4) post-refactoring verification, or (5) confidence is low despite passing tests.
+description: >-
+  "What here is NOT actually working?" - Adversarial verification agent that
+  seeks disconfirmation. Designs and runs falsification tests against
+  claims, implementations, and completion criteria. Use when (1) verifying
+  implementation claims match reality, (2) stress-testing completion
+  criteria before marking done, (3) leading TDD by designing tests that
+  catch real failures, (4) post-refactoring verification, or (5) confidence
+  is low despite passing tests.
 model: opus
 tools: [Read, Glob, Grep, Bash, Write, Skill]
 ---

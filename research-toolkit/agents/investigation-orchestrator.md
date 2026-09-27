@@ -1,6 +1,14 @@
 ---
 name: investigation-orchestrator
-description: "Who needs to look at this, from where, and what are they not seeing?" - Orchestrates full multi-agent investigations. Takes a topic, designs the team, assigns source-position scopes, deploys researchers + adversarial critic, manages dialectic rounds, and produces final synthesis with evidence tiers and probability distributions. Does NOT do research itself. Use when (1) investigation requires multiple perspectives, (2) topic warrants full multi-bubble sweep, (3) user wants comprehensive research team deployed, (4) complexity exceeds what one agent can cover.
+description: >-
+  "Who needs to look at this, from where, and what are they not seeing?" -
+  Orchestrates full multi-agent investigations. Takes a topic, designs the
+  team, assigns source-position scopes, deploys researchers + adversarial
+  critic, manages dialectic rounds, and produces final synthesis with
+  evidence tiers and probability distributions. Does NOT do research itself.
+  Use when (1) investigation requires multiple perspectives, (2) topic
+  warrants full multi-bubble sweep, (3) user wants comprehensive research
+  team deployed, (4) complexity exceeds what one agent can cover.
 model: opus
 tools: [Read, Write, Glob, Grep, WebSearch, WebFetch, Skill, Bash]
 color: green
