@@ -69,6 +69,8 @@ vasana (notice) → find-similar (explore) → record-pattern (capture) → test
 | **Pattern** | The pattern ITSELF | When dynamic recognized across snippets |
 | **Pattern-Seed** | Compression that UNFOLDS to pattern | When formation dynamic repeats across 3+ patterns |
 
+These tiers are a convention the `vasana` skill layers on top of the relational-memory MCP server, not layers of the server: a snippet is an ordinary `episodic` memory tagged `metadata={"type": "snippet"}` and linked to its pattern by a `manifests` relation, patterns are markdown files under `skills/pattern-library/patterns/`, and the server itself knows only its own `recent` / `episodic` / `compost` layers.
+
 ## How to Use
 
 ### 1. Use Existing Patterns
@@ -83,7 +85,7 @@ Before relying on a pattern: `test-pattern [name]` (skill — invoke directly)
 
 ## Conceptual Foundations
 
-- `docs/speculative/vasana-pattern-seed-system.md` — three-tier model (snippet → pattern → pattern-seed)
+- [`skills/vasana/SKILL.md` — The Three-Tier System](skills/vasana/SKILL.md#the-three-tier-system) — three-tier model (snippet → pattern → pattern-seed)
 - `skills/pattern-library/VASANA-SYSTEM.md` — the relational turn
 
 Key concepts woven through:

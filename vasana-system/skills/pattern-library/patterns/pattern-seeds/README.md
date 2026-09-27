@@ -40,4 +40,4 @@ After noticing 3+ Vasanas share a recurring formation dynamic:
 
 ## Reference
 
-See `docs/speculative/vasana-pattern-seed-system.md` for full methodology.
+See [the vasana skill's Three-Tier System section](../../../vasana/SKILL.md#the-three-tier-system) for the methodology.
