@@ -105,7 +105,7 @@ class TestClaims(unittest.TestCase):
             self.assertIn("research",
                           ff.claimed_slugs("used research-toolkit:research"))
 
-    # --- Bug 1: target mentions (path / explicit not-invoked) -----------
+    # --- a named target is not a claim ------------------------------------
 
     def test_path_mention_is_not_a_claim(self):
         with Env():
@@ -128,15 +128,13 @@ class TestClaims(unittest.TestCase):
 
     def test_path_mention_does_not_shadow_a_real_claim_elsewhere(self):
         with Env():
-            # A target-file mention on one line must not blind the check to
-            # a genuine claim made on another line of the same document.
             flags = ff.claimed_slugs(
                 "edit skills/cui-bono/SKILL.md\n"
                 "Method: applied dialectic-spiral")
             self.assertIn("dialectic-spiral", flags)
             self.assertNotIn("cui-bono", flags)
 
-    # --- Bug 2: negated Method line ---------------------------------------
+    # --- a Method line that denies invocation -------------------------------
 
     def test_negated_method_line_never_flags(self):
         with Env():
@@ -152,9 +150,9 @@ class TestClaims(unittest.TestCase):
             self.assertIn("cui-bono",
                           ff.claimed_slugs("routed via "
                                            "research-toolkit:cui-bono"))
-            # The plugin-qualified form of one skill on a "routed via" line
-            # must not incidentally also claim the unrelated single-word
-            # "research" skill off the "research-toolkit" prefix.
+
+    def test_plugin_name_prefix_does_not_claim_research(self):
+        with Env():
             self.assertNotIn("research",
                              ff.claimed_slugs("routed via "
                                               "research-toolkit:cui-bono"))
@@ -192,10 +190,6 @@ class TestSituations(unittest.TestCase):
             self.assertFalse(ff.situations_for(CLAIM_DISPATCH, "dispatch"))
 
     def test_s2_bare_skill_name_mention_alone_does_not_fire(self):
-        # Bug 3: this hook's own code-fix brief names the cui-bono skill in
-        # a test-case description ("routed via research-toolkit:cui-bono").
-        # A single family hit (the skill's own name) is a mention, not a
-        # request to judge a source, and must not fire S2.
         with Env():
             self.assertFalse(ff.situations_for(
                 "Add a test: genuine claims should flag for 'routed via "
@@ -322,11 +316,6 @@ class TestHandle(unittest.TestCase):
             self.assertEqual(len(denials), ff.S2_SESSION_CAP)
 
     def test_dispatch_deny_message_scopes_resend_promise_to_identical_text(self):
-        # Bug 4: the message used to promise "a re-send is not blocked
-        # again this session" — but unit_hash keys on exact text (by
-        # design, per README's "once per unit content"), so a REVISED
-        # re-send is a new unit and can be denied again. The message must
-        # say so, not promise blanket session immunity.
         with Env():
             self._armed_state()
             out = ff.handle("pre-agent", {
@@ -338,11 +327,6 @@ class TestHandle(unittest.TestCase):
                              reason)
 
     def test_revised_resend_of_a_denied_dispatch_can_be_denied_again(self):
-        # Confirms the mechanism the fixed message now describes: a
-        # content-identical re-send is exempt, but revised text (a new
-        # unit_hash) is rescanned fresh and denied again, up to the cap —
-        # this reproduces the 2026-09-26 session's actual ledger (two
-        # different-text S2 denials in the same session).
         with Env():
             self._armed_state()
             first = ff.handle("pre-agent", {

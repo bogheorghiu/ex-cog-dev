@@ -116,6 +116,16 @@ Measured (on the recorded session's real bytes, seven units):
   produced 72 on one document);
 - word-matching as detector: void (10 v 10) — which is why it only arms.
 
+Measured in live use (one session, 2026-09-26), then fixed with regression
+tests:
+- claim-vs-record false positives: a skill named as an edit target (a
+  `SKILL.md` path, a "read as edit targets, not invoked" line) and a Method
+  line denying invocation both counted as claims;
+- an S2 false positive: a code-fix dispatch that named `cui-bono` once, with
+  no other source-judgement signal, was denied twice. S2 now needs two of its
+  phrase families to co-occur; the recorded source-judgement dispatch hits
+  all three.
+
 Bet, not yet measured (the ledger exists to measure it in live use):
 - whether an injected, situation-specific, span-free demand changes the next
   action (the record shows *operator*-pointing works; *script*-pointing at
@@ -125,72 +135,9 @@ Bet, not yet measured (the ledger exists to measure it in live use):
   afterward);
 - the S2 phrase families generalize beyond the recorded session (they are
   toolkit vocabulary, not case vocabulary, but n is small — they are assets,
-  swappable by measurement, not the design).
+  swappable by measurement, not the design);
+- that S2 loses little by requiring two co-occurring families. A dispatch
+  carrying one signal ("check this source's credibility") no longer arms it,
+  and two innocent mentions in one sentence still do; neither shape has been
+  observed yet.
 
-## Changelog
-
-**2026-09-26 — claim-vs-record and S2 false-positive fixes.**
-
-Two confirmed false positives from live use, both in `claimed_slugs()`
-(`firing_filter.py:322`, helped by `_claimable_lines()` at `:140`):
-
-- **Target mentions never claim.** A slug or its plugin-qualified form
-  used to count anywhere in the text — including a file path
-  (`skills/<slug>/SKILL.md`, `<slug>/SKILL.md`, a `.../references/...`
-  segment) and a line that itself says the skill was *not* invoked or was
-  only *read as a target*. Fix: every line is now run through
-  `_claimable_lines()` before any slug is searched for — path-token
-  substrings are stripped out of the line (a path mention next to an
-  unrelated real claim on the same line is not lost), and a line matching
-  `_NON_CLAIM_LINE_RE` ("no … skill … was/were invoked", "was/were not
-  invoked", "never invoked", "read as … edit/review target(s)") is dropped
-  whole. Dropping the whole line is deliberately the coarser of the two
-  options: a genuine claim that happens to share a line with a disclaimer
-  is a rarer, safer miss than the false positive it prevents.
-- **Negated Method line never claims.** `claimed_slugs()` used to flag a
-  single-word skill (`research`) on *any* line containing "method",
-  regardless of what the line said — so `Method: no research-toolkit
-  skill was invoked; skills named below were read as edit targets` added
-  a spurious flag for `research`, purely from the substring `research`
-  inside `research-toolkit`. `_NON_CLAIM_LINE_RE` (above) now drops that
-  line before the Method check ever sees it. A Method line that claims a
-  skill *was* applied (`Method: applied iterative-verification`) is
-  unaffected.
-- **Adjacent fix, same root cause:** single-word slug matching on a Method
-  line was a bare substring test (`s in ln`), so `research` also matched
-  inside the literal plugin-name prefix `research-toolkit:` in an
-  unrelated qualified reference (`routed via research-toolkit:cui-bono`
-  would incorrectly also claim `research`). Now matched with `\bresearch\b`
-  plus a negative lookahead for `-toolkit`, so only the skill itself, never
-  the plugin's own name, can satisfy it.
-- **S2 dispatch situation now requires 2 co-occurring families, not 1.**
-  `S2-source-judgement-dispatch` fired on this very hook's own code-fix
-  brief because the brief's required test list names the `cui-bono` skill
-  (`routed via research-toolkit:cui-bono`) — one bare mention, from the
-  `cui-bono` family alone, with none of the `source-judgement` or
-  `profiling` phrases present. A single family hit is a mention, not a
-  request to judge a source. `match_situation()` now requires
-  `min(2, len(families))` distinct families to co-occur. The recorded
-  source-judgement dispatch (`SOURCE_DISPATCH` in the tests) clears this
-  with room to spare (3/3 families); a bare skill-name mention no longer
-  does. Known trade-off: a dispatch that names only ONE of these signals
-  (e.g. "check this source's credibility" with no profiling/cui-bono
-  language) no longer arms S2 — accepted, since S2 blocks (denies), and
-  the measured recorded failure was always multi-family.
-- **Dispatch-deny message corrected to match the documented "once per unit
-  content" scope.** The PreToolUse (dispatch) deny reason used to promise
-  "a re-send is not blocked again this session" — true only for a
-  content-identical re-send (this is deliberate per `unit_hash()`'s
-  docstring and the "once per unit content" language already used
-  elsewhere in this file and README); a *revised* re-send is a new unit
-  and is rescanned fresh, so it can be denied again up to
-  `S2_SESSION_CAP`. Confirmed from this session's own ledger: two
-  different-text S2 denials landed back to back
-  (`hooks/firing-filter/` operator ledger, 2026-09-26 15:48 UTC) — the
-  operator revised the dispatch text after the first denial and was
-  denied again, exactly the behavior the old message said would not
-  happen. The message now says "a content-identical re-send will not be
-  blocked again" and names the revised-text/cap behavior explicitly. No
-  change to `unit_hash()` itself — the per-content keying is intended and
-  matches this file's own documentation, so only the message was wrong.
-- Test counts: 25 → 33 (all 25 original tests still pass unmodified).
