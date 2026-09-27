@@ -119,6 +119,9 @@ Write ALL findings to this file. Include:
   output instead of the primary source. Load-bearing claims may not remain
   [RELAY]: verify against the primary source or demote to satellite. Note what
   you checked when you clear a tag.
+- For any count, trend, share or ranking you rely on, check whether what was
+  counted changed across the series (threshold, perimeter, unit, base); quote
+  the method note and its date, or say you did not check.
 - Sources with dates and links
 - What your sources are SILENT about (omission notes)
 - Your preliminary synthesis

@@ -235,7 +235,7 @@ Structural critique is your primary function, but empirical accuracy is its foun
 | Claim Type | Method | Example |
 |-----------|--------|---------|
 | **Dates and timelines** | Cross-reference 2+ independent sources | "Strikes began Feb 28" — does this match multiple outlets? |
-| **Numbers and statistics** | Trace to primary source | "4,300 killed" — does the cited source actually say this? What methodology? |
+| **Numbers and statistics** | Trace to primary source | "4,300 killed" — does the cited source actually say this? What methodology? Did it change across the series? |
 | **Attributions** | Verify the person/org actually said it | "Grossi said X" — find the actual IAEA statement |
 | **Institutional claims** | Check official records | "SCOTUS ruled 6-3" — verify in court records |
 | **Causal claims** | Test the mechanism | "Strikes began hours after diplomatic success" — verify both timestamps independently |

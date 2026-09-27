@@ -114,6 +114,41 @@ ARM_MIN_ENTRIES = 2   # unit. Everyday words ("standard") alone must not arm a
                       # this easily (10/3 on the sparsest failure unit).
 S2_SESSION_CAP = 2    # dispatch denials per session: insistence, not DoS.
 
+# Bug 1/2 fix (2026-09-26): a slug, or its plugin-qualified form, is a CLAIM
+# only where the text names what the unit itself did — never where it names
+# a target file, and never on a line that itself says the skill was not
+# invoked. Two shapes are stripped/dropped BEFORE any slug is searched for:
+#  (a) a file-path mention — `skills/<slug>/SKILL.md`, `<slug>/SKILL.md`, or
+#      any `.../references/...` path segment — token-stripped from the line
+#      (the rest of the line still counts, so a path mention next to an
+#      unrelated real claim is not lost);
+#  (b) a line that explicitly says skills were not invoked, or were read
+#      only as edit/review targets — dropped WHOLE. This is deliberately
+#      coarser than (a): the false negative it trades for (a genuine claim
+#      buried in the same line as a disclaimer) is rarer, and safer to miss,
+#      than the false positive it prevents (see README changelog).
+_PATH_TOKEN_RE = re.compile(
+    r"[\w./-]*/(?:skill\.md|references/[\w./-]*)", re.IGNORECASE)
+_NON_CLAIM_LINE_RE = re.compile(
+    r"\bno\b.{0,40}?\bskills?\b.{0,20}?\b(?:was|were)\s+invoked\b"
+    r"|\b(?:was|were)\s+not\s+invoked\b"
+    r"|\bnever\s+invoked\b"
+    r"|\bread\s+as\s+(?:an?\s+)?(?:edit|review)"
+    r"(?:\s+or\s+(?:edit|review))?\s+targets?\b"
+)
+
+def _claimable_lines(low: str):
+    """Lines that survive as claim evidence, in claim_slugs()'s sense: path
+    tokens stripped out of each line, and any line matching
+    _NON_CLAIM_LINE_RE dropped whole. What's left is the only text scanned
+    for a slug, a spaced slug, or a plugin-qualified name."""
+    out = []
+    for ln in low.splitlines():
+        if _NON_CLAIM_LINE_RE.search(ln):
+            continue
+        out.append(_PATH_TOKEN_RE.sub(" ", ln))
+    return out
+
 # ------------------------------------------------------------------- storage
 
 def _read_jsonl(path: Path):
@@ -222,9 +257,17 @@ def match_situation(text: str, row: dict) -> bool:
             return True
     fams = det.get("families")
     if fams:
-        for phrases in fams.values():
-            if any(p.lower() in low for p in phrases):
-                return True
+        # Bug 3 fix (2026-09-26): a single family hit is a MENTION (e.g.
+        # naming the cui-bono skill in a code-fix brief's test-case
+        # description), not a request to judge a source — that false
+        # positive is measured on this very hook's own dispatch (see
+        # CHANGES-hook.md). Require >=2 distinct families to co-occur; the
+        # recorded source-judgement dispatch clears this with room to
+        # spare (3/3 families), a bare skill-name mention no longer does.
+        hit = sum(1 for phrases in fams.values()
+                  if any(p.lower() in low for p in phrases))
+        if hit >= min(2, len(fams)):
+            return True
     return False
 
 def situations_for(text: str, surface: str):
@@ -278,28 +321,44 @@ def normalize_slug(name: str) -> str:
 
 def claimed_slugs(text: str):
     """A skill counts as CLAIMED only in forms that state 'this methodology
-    was applied', not in casual prose:
-      * hyphenated slug anywhere ('dialectic-spiral'), or its spaced twin —
-        multi-word names are unambiguous;
-      * plugin-qualified form ('research-toolkit:research') anywhere;
-      * single-word names ('research') additionally on a line containing
-        'method' or 'routed via' — 'this research shows' must never flag.
+    was applied', not in casual prose, not as a target being named, and not
+    on a line that itself denies invocation:
+      * hyphenated slug ('dialectic-spiral'), or its spaced twin — checked
+        after path-token stripping and non-claim-line dropping (see
+        _claimable_lines), so 'edit skills/dialectic-spiral/SKILL.md' and
+        '... were read as edit targets, not invoked' never flag (Bug 1);
+      * plugin-qualified form ('research-toolkit:research'), same two
+        exclusions;
+      * single-word names ('research') additionally require a surviving
+        line containing 'method' or 'routed via' — 'this research shows'
+        must never flag, and a Method line that itself says no skill was
+        invoked is dropped before this check runs, so 'Method: no
+        research-toolkit skill was invoked' cannot flag 'research' off the
+        word 'research' inside 'research-toolkit' (Bug 2). Matched with a
+        word boundary that also excludes '-toolkit' immediately after: the
+        plugin's own name is 'research-toolkit', so a qualified reference
+        to some OTHER skill ('routed via research-toolkit:cui-bono') must
+        not incidentally also claim the single-word 'research' skill off
+        the plugin-name prefix.
     """
     low = text.lower()
-    lines = low.splitlines()
-    method_lines = [ln for ln in lines if "method" in ln or "routed via" in ln]
+    claim_lines = _claimable_lines(low)
+    claim_text = "\n".join(claim_lines)
+    method_lines = [ln for ln in claim_lines
+                    if "method" in ln or "routed via" in ln]
     claimed = set()
     for slug in skill_roster():
         s = slug.lower()
         qualified = f"research-toolkit:{s}"
-        if qualified in low:
+        if qualified in claim_text:
             claimed.add(s)
             continue
         if "-" in s:
-            if s in low or s.replace("-", " ") in low:
+            if s in claim_text or s.replace("-", " ") in claim_text:
                 claimed.add(s)
         else:
-            if any(s in ln for ln in method_lines):
+            word_pat = re.compile(r"\b" + re.escape(s) + r"\b(?!-toolkit\b)")
+            if any(word_pat.search(ln) for ln in method_lines):
                 claimed.add(s)
     return claimed
 
@@ -463,10 +522,21 @@ def handle(event: str, payload: dict) -> dict | None:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason":
-                    "firing-filter [situation — fires once per dispatch]:\n"
+                    "firing-filter [situation — fires once per unit "
+                    "content]:\n"
                     + guidance
-                    + "\nRevise if warranted, then re-send; a re-send is not "
-                      "blocked again this session."}}
+                    # Bug 4 fix (2026-09-26): this used to promise "a
+                    # re-send is not blocked again this session", which
+                    # overstates unit_hash's actual (and intended, per
+                    # README) scope — a REVISED dispatch is a new unit and
+                    # is re-scanned fresh, so it can be denied again up to
+                    # S2_SESSION_CAP. Only a content-identical re-send is
+                    # exempt; say that, not the broader claim.
+                    + "\nRevise if warranted, then re-send; a "
+                      "content-identical re-send will not be blocked "
+                      "again (a revised dispatch is re-scanned fresh and "
+                      f"can be denied again, up to {S2_SESSION_CAP}/"
+                      "session)."}}
 
     elif event == "post-agent" and armed and text:
         h = unit_hash(text)

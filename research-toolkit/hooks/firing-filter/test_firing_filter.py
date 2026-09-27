@@ -105,6 +105,60 @@ class TestClaims(unittest.TestCase):
             self.assertIn("research",
                           ff.claimed_slugs("used research-toolkit:research"))
 
+    # --- Bug 1: target mentions (path / explicit not-invoked) -----------
+
+    def test_path_mention_is_not_a_claim(self):
+        with Env():
+            self.assertEqual(ff.claimed_slugs(
+                "a proposal to edit `iterative-verification/SKILL.md`"),
+                set())
+            self.assertEqual(ff.claimed_slugs(
+                "see skills/cui-bono/SKILL.md for the checklist"), set())
+            self.assertEqual(ff.claimed_slugs(
+                "changes live under skills/iterative-verification/"
+                "references/frame-leak-lint.md"), set())
+
+    def test_explicit_read_as_target_or_not_invoked_line_is_not_a_claim(self):
+        with Env():
+            self.assertEqual(ff.claimed_slugs(
+                "skills named below (iterative-verification, cui-bono) "
+                "were read as edit targets, not invoked"), set())
+            self.assertEqual(ff.claimed_slugs(
+                "dialectic-spiral was never invoked this session"), set())
+
+    def test_path_mention_does_not_shadow_a_real_claim_elsewhere(self):
+        with Env():
+            # A target-file mention on one line must not blind the check to
+            # a genuine claim made on another line of the same document.
+            flags = ff.claimed_slugs(
+                "edit skills/cui-bono/SKILL.md\n"
+                "Method: applied dialectic-spiral")
+            self.assertIn("dialectic-spiral", flags)
+            self.assertNotIn("cui-bono", flags)
+
+    # --- Bug 2: negated Method line ---------------------------------------
+
+    def test_negated_method_line_never_flags(self):
+        with Env():
+            self.assertEqual(ff.claimed_slugs(
+                "Method: no research-toolkit skill was invoked; skills "
+                "named below were read as edit targets"), set())
+
+    def test_positive_method_line_still_flags(self):
+        with Env():
+            self.assertIn("iterative-verification",
+                          ff.claimed_slugs("Method: applied "
+                                           "iterative-verification"))
+            self.assertIn("cui-bono",
+                          ff.claimed_slugs("routed via "
+                                           "research-toolkit:cui-bono"))
+            # The plugin-qualified form of one skill on a "routed via" line
+            # must not incidentally also claim the unrelated single-word
+            # "research" skill off the "research-toolkit" prefix.
+            self.assertNotIn("research",
+                             ff.claimed_slugs("routed via "
+                                              "research-toolkit:cui-bono"))
+
 
 class TestReconcile(unittest.TestCase):
     def test_reproduces_claimed_but_not_fired(self):
@@ -136,6 +190,21 @@ class TestSituations(unittest.TestCase):
             # The measured control class: verifying claims is NOT judging a
             # source; the injection would be the wrong guidance there.
             self.assertFalse(ff.situations_for(CLAIM_DISPATCH, "dispatch"))
+
+    def test_s2_bare_skill_name_mention_alone_does_not_fire(self):
+        # Bug 3: this hook's own code-fix brief names the cui-bono skill in
+        # a test-case description ("routed via research-toolkit:cui-bono").
+        # A single family hit (the skill's own name) is a mention, not a
+        # request to judge a source, and must not fire S2.
+        with Env():
+            self.assertFalse(ff.situations_for(
+                "Add a test: genuine claims should flag for 'routed via "
+                "research-toolkit:cui-bono'.", "dispatch"))
+            self.assertFalse(ff.situations_for("cui-bono", "dispatch"))
+            # Two co-occurring families (the recorded shape) still fire.
+            self.assertTrue(ff.situations_for(
+                "This is cui-bono on the messenger — check its "
+                "credibility.", "dispatch"))
 
     def test_s3_needs_tiers_AND_absence(self):
         with Env():
@@ -251,6 +320,43 @@ class TestHandle(unittest.TestCase):
                     "tool_input": {"prompt": SOURCE_DISPATCH + f" v{i}"}}))
             denials = [o for o in outs if o]
             self.assertEqual(len(denials), ff.S2_SESSION_CAP)
+
+    def test_dispatch_deny_message_scopes_resend_promise_to_identical_text(self):
+        # Bug 4: the message used to promise "a re-send is not blocked
+        # again this session" — but unit_hash keys on exact text (by
+        # design, per README's "once per unit content"), so a REVISED
+        # re-send is a new unit and can be denied again. The message must
+        # say so, not promise blanket session immunity.
+        with Env():
+            self._armed_state()
+            out = ff.handle("pre-agent", {
+                "session_id": "s1",
+                "tool_input": {"prompt": SOURCE_DISPATCH}})
+            reason = out["hookSpecificOutput"]["permissionDecisionReason"]
+            self.assertIn("content-identical", reason)
+            self.assertNotIn("a re-send is not blocked again this session",
+                             reason)
+
+    def test_revised_resend_of_a_denied_dispatch_can_be_denied_again(self):
+        # Confirms the mechanism the fixed message now describes: a
+        # content-identical re-send is exempt, but revised text (a new
+        # unit_hash) is rescanned fresh and denied again, up to the cap —
+        # this reproduces the 2026-09-26 session's actual ledger (two
+        # different-text S2 denials in the same session).
+        with Env():
+            self._armed_state()
+            first = ff.handle("pre-agent", {
+                "session_id": "s1",
+                "tool_input": {"prompt": SOURCE_DISPATCH}})
+            self.assertIsNotNone(first)
+            identical_resend = ff.handle("pre-agent", {
+                "session_id": "s1",
+                "tool_input": {"prompt": SOURCE_DISPATCH}})
+            self.assertIsNone(identical_resend)  # bounded insistence holds
+            revised_resend = ff.handle("pre-agent", {
+                "session_id": "s1",
+                "tool_input": {"prompt": SOURCE_DISPATCH + " (revised)"}})
+            self.assertIsNotNone(revised_resend)  # new unit -> denied again
 
     def test_stop_respects_stop_hook_active(self):
         with Env():

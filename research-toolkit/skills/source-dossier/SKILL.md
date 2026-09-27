@@ -67,6 +67,9 @@ symmetrically, or it is not a method).
 1. **Own content over time.** What has this source published, corrected,
    retracted? Consistency between its claims and later-established facts —
    dated instances, not impressions.
+   For a source that publishes a series, record its **definition history** as
+   an observation (dated method notes): when what-gets-counted changed
+   (threshold, perimeter, unit, base) and whether the change landed when the number mattered to it.
 2. **Ownership & registries.** Beneficial ownership, funding, corporate
    registries, grant databases, imprint/legal notices. Who pays; who appoints.
 3. **Declared self-positioning.** What the source SAYS it is (mission, "about",

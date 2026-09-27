@@ -197,7 +197,7 @@ Manufacturer claims → Independent verification → Sustained performance reali
 Label every claim:
 
 - **VERIFIED**: Primary sources, regulatory filings, court documents, independent lab testing
-- **CREDIBLE**: Multiple independent sources, consistent patterns
+- **CREDIBLE**: 3+ independent sources, consistent patterns
 - **ALLEGED**: Single source, unverified but plausible
 - **SPECULATIVE**: Inference from patterns, theoretical risk
 

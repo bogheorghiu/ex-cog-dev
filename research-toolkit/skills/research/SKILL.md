@@ -114,6 +114,21 @@ A template is an asset to copy, never a mandatory rail: when a web search
 and three sentences is the right answer, that answer is sovereign — say
 the template was skipped and why.
 
+## Dispatch Guard (worker and lane briefs)
+
+A brief carries **questions and scope, never conclusions**. A "context" or
+"known facts" line that states a finding is a leak: the worker agrees and the
+agreement returns as corroboration (two "known facts" that were the
+orchestrator's own errors, confirmed by both lanes, 2026-09-25; a date asserted
+as a court finding, repeated as fact by three of four models, 2026-09-15). Shape
+that worked: one-line context; numbered OPEN questions that never state the
+expected answer; a "not for you" list of what is settled; a return format that
+ends with a mechanical check of the worker's own artifact (`wc -l`, `grep -c
+'^## '` pasted back — self-reports overstated the artifact three times,
+2026-09-21). Pass an unavoidable fact with its attribution, never as fact. A
+return produced with the expected answer in hand is [RELAY] of your own framing
+(Principle P1 (relayed-is-not-read)).
+
 ## Close-Out Guards
 
 Before any routed investigation closes, apply two checks (they are cheap and
@@ -133,6 +148,12 @@ they catch the two most-observed late-stage failures):
   closing (Principle P8 (the-method-matures-backward)). Expect boundaries
   and interpretations to sharpen rather than facts to flip — that
   sharpening is the point.
+- **Cross-thread integration.** Before finalising, search the project, the
+  source-dossier store and prior deliverables for every instrument, entity and
+  source this one names. An allocation brief recommended two products the
+  project's own issuer dossier had flagged four weeks earlier, caught only
+  because the user asked (2026-09-25). Carry the prior finding or rebut it;
+  never omit it. (Concurrent twin: orchestrator Rule #10, cross-investigation brief.)
 
 ## Platform Notes
 
