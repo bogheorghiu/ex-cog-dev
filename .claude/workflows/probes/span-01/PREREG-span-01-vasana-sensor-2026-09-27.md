@@ -120,5 +120,18 @@ is VOID.
 
 ## Deviations after launch
 
-(None yet. Any change after launch is recorded here with its reason, before
-scoring.)
+(Any change after launch is recorded here with its reason, before scoring.)
+
+- **2026-09-27, request encoding (runner only; recorded before any scored data).**
+  The first launch returned HTTP 400 on all 88 requests, so no probability
+  came back and nothing was scored. The API rejected the `state` shape. The
+  battery stores each span as a list of `{role, content}` messages, but
+  Respan accepts `state` only as a string, or as an object
+  `{input: [messages], output: <assistant message>}`. Five spans end on a
+  user turn (B1-14, B1-16, B1-26, B3-14, B3-15, all negatives), so they
+  cannot take the object form. Mixing forms would tie the input format to
+  the label, a cue the model could score on. Fix: the runner serialises
+  **every** span the same way, as a string transcript: each message becomes
+  `User: <content>` or `Assistant: <content>`, with messages joined by a
+  blank line. Content, order and roles are unchanged. The battery,
+  questions and exclusions are not edited. The scorer is unchanged.
