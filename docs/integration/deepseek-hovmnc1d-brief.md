@@ -27,8 +27,9 @@ this brief with the Span-01 probe results. It does not depend on the session tha
      sensor run (§5).
    - **The conversation contains a natural test case the frozen battery lacks.** DeepSeek's
      own visible reasoning (turn 10) repeats one paragraph word for word three times while its
-     actions keep progressing: it reads new pages between the repeats. That is repetition
-     *without* being stuck, the inverse of the battery's varied-wording loops (§5).
+     actions keep progressing: it runs a new search, then reads new pages, between the
+     repeats. That is repetition *without* being stuck, above the three-proposal count the
+     B3 definition uses. The frozen battery has no such item (§5).
 3. **DeepSeek's review of this repo got the architecture partly wrong** (§2, claims R2 and
    R4). It also merged distinct things into one three times: two unrelated "Mnemosyne"
    projects (E2), aef-core and another project's `scanIngested` (Q1), and Sophont with
@@ -55,6 +56,13 @@ this brief with the Span-01 probe results. It does not depend on the session tha
   access to this conversation. Each got open questions (never "confirm X") and had to
   return a quote plus URL from the primary source. Two OpenRouter facts were fetched raw by
   the writing session from `openrouter.ai`.
+- **Source check of this brief.** A fresh reader checked every quote, turn number and repo
+  citation against the raw conversation text and the repo. It found one false claim, since
+  corrected in §5.1. The first draft said of the frozen B3 hard negatives: *"None has
+  repeated wording while the actions progress"* and *"Its hard negatives vary the action or
+  add evidence."* B3-28 is a verbatim repeat. The writing session had truncated the battery
+  printout and missed it. The checker also fixed one wording (search vs page read) and one
+  shortened path.
 - **Tags** (pre-registered before the verifiers ran):
   - **GROUNDED**: the claim's own primary record states it.
   - **CONTRADICTED**: the primary record states otherwise.
@@ -78,7 +86,7 @@ Quotes are DeepSeek's words unless marked *(operator)*.
 | R2 | The relational-memory server stores *"three tiers (snippet → pattern → pattern-seed)"* | CONTRADICTED | The server's layers are `recent`, `episodic` and `compost` (`models.py` l. 13), plus core memories and a current-task slot, in JSONL files under `~/.claude-memory/`. Snippet/pattern/pattern-seed is the **skill-level** model in `vasana-system/README.md` ll. 64-70, stored as markdown in `skills/pattern-library/`. DeepSeek merged the two. |
 | R3 | Storage is *"local disk storage: SQLite or files"*, and the recommended hosts *"all … use SQLite"* like the ex-cog design | CONTRADICTED (partly) | Both servers write JSONL (`relational-memory/.../backend.py` l. 45; `edge-graph/.../backend.py` l. 47). There is no SQLite. "Local disk" is correct. |
 | R4 | ex-cog's relational memory is *"procedural/behavioral"*, *"a much more sophisticated and emergent form of relational memory"* than Mnemosyne's declarative graph | CONTRADICTED as a description of the code; GROUNDED as a description of the intent | The repo's own README: reading recurrences *"into higher-order patterns … is still a sketch. Today they're a memory system that works in practice, not the pattern engine the design imagines."* In code, relations are free-form typed links with a confidence (`create_relation`), and `discover_patterns` counts relation types that recur ≥ 3 times. `THIRD-PARTY-LICENSES.md` states the design intent: *"relation-primacy vs entity-storage."* |
-| R5 | DeepSeek could not open `vasana-system/docs/speculative/vasana-pattern-seed-system.md` | GROUNDED (the file is absent) | `vasana-system/docs/` does not exist, but `vasana-system/README.md` l. 86 and `pattern-seeds/README.md` l. 43 both link to it. The three-tier design is **unreadable to any outside reader**. That is probably why R2 happened. (Reported, not fixed here; see §4.) |
+| R5 | DeepSeek could not open `vasana-system/docs/speculative/vasana-pattern-seed-system.md` | GROUNDED (the file is absent) | `vasana-system/docs/` does not exist, but `vasana-system/README.md` l. 86 and `vasana-system/skills/pattern-library/patterns/pattern-seeds/README.md` l. 43 both link to it. The three-tier design is **unreadable to any outside reader**. That is probably why R2 happened. (Reported, not fixed here; see §4.) |
 
 ### External claims (blind verifiers; primary sources)
 
@@ -206,17 +214,22 @@ The conversation does not discuss it. Three things in it bear on it, all by infe
 The frozen battery (PR #242, branch `claude/zealous-curie-ib1m74`) was read, not edited.
 These are proposals for the **next** prereg.
 
-1. **Add a "same words, new action" hard negative for B3.** Every B3 item in the frozen
-   battery is short chat with no tool actions. Its hard negatives vary the action or add
-   evidence. None has repeated wording while the actions progress. DeepSeek's own trace in
-   turn 10 is a natural instance. This paragraph appears three times verbatim, with new
-   page reads between the repeats:
+1. **Add a "same words, new action" hard negative for B3, above the count threshold.** The
+   pinned B3 definition is by *intent*: *"the same action (by intent, not wording) at least
+   twice more after a reported failure."* The frozen battery already has one verbatim-repeat
+   hard negative, B3-28 (*"Run the migration again."* twice). It is negative only because
+   two proposals fall under the three-proposal threshold (`gen.py` ll. 162-164, a deliberate
+   threshold probe). No item has **three or more** identical wordings while the underlying
+   action changes. There, surface repetition clears the threshold and intent does not.
+   DeepSeek's own trace in turn 10 is a natural instance. This paragraph appears three
+   times verbatim, with a new search between the first two copies and new page reads
+   between the last two:
    > *"The search results for Hermes dual LLM pattern were not very specific. I found some
    > general resources on the Dual LLM pattern, but nothing specific to Hermes. I should
    > look for Hermes-specific security or sandboxing features…"*
 
-   A sensor that scores this as a stuck loop is reacting to surface repetition, which is
-   the same use/mention failure B2 exists to rule out, but in B3.
+   A sensor that scores this as a stuck loop is keying on wording rather than intent. That
+   is the same use/mention failure B2 exists to rule out, here showing up in B3.
 2. **Add spans that include tool-use traces.** Real agent sessions interleave tool calls
    with text. A sensor validated only on bare chat has not been tested on the input it
    would see in a hook.
