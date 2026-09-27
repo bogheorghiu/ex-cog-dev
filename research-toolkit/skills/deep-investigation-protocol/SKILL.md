@@ -198,7 +198,7 @@ Label every claim:
 
 - **VERIFIED**: Primary sources, regulatory filings, court documents, independent lab testing
 - **CREDIBLE**: 3+ independent sources, consistent patterns
-- **ALLEGED**: Single source, unverified but plausible
+- **ALLEGED**: 1-2 independent sources, unverified but plausible; write the count (ALLEGED ×2)
 - **SPECULATIVE**: Inference from patterns, theoretical risk
 
 **Data Breach Verification (Old-Data-Repackaged Pattern)**:

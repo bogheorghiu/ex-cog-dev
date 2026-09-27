@@ -114,7 +114,7 @@ Every claim must carry a tier label. When researchers present unlabeled claims, 
 |------|-----------|
 | **VERIFIED** | Primary sources, court docs, regulatory filings, lab results |
 | **CREDIBLE** | 3+ independent sources agree |
-| **ALLEGED** | Single source, unverified |
+| **ALLEGED** | 1-2 independent sources; write the count (ALLEGED ×2) |
 | **SPECULATIVE** | Inference from patterns |
 
 **Your power:** Downgrade evidence tiers when you find counter-evidence or detect manufactured consensus. Document every downgrade with reasoning.

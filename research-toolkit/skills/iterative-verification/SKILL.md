@@ -62,7 +62,7 @@ For facts: keep verifying until claims meet evidence thresholds.
    - Assign evidence tier to each claim:
      * VERIFIED: Primary sources, court docs, regulatory filings
      * CREDIBLE: 3+ independent sources agree
-     * ALLEGED: Single source, unverified
+     * ALLEGED: 1-2 independent sources; write the count (ALLEGED ×1, ALLEGED ×2)
      * SPECULATIVE: Inference, theoretical
    - Add [RELAY] to any claim taken from a summary, not the primary source
 
@@ -88,8 +88,14 @@ For facts: keep verifying until claims meet evidence thresholds.
 |------|------------|----------|
 | **VERIFIED** | Primary sources directly confirm | Regulatory filings, court documents, lab test results, official statements |
 | **CREDIBLE** | 3+ independent sources agree | 3+ news outlets, consistent professional reports, corroborated accounts |
-| **ALLEGED** | Single source, no corroboration | One article, one whistleblower, one study |
+| **ALLEGED** | 1-2 independent sources, short of CREDIBLE | One article, one whistleblower, one study; two independent lab reports (ALLEGED ×2) |
 | **SPECULATIVE** | Inference from patterns | "If X then probably Y", theoretical risk |
+
+The count beside ALLEGED keeps one corroboration visible instead of reading
+like a lone claim. It counts independent origins, not outlets: two papers
+carrying one leak are ×1 (manufactured-consensus-detection). What a count
+cannot see - shared stake, shared method, a contradicting primary - is open in
+issue #244.
 
 ### The [RELAY] Rule
 
@@ -155,7 +161,7 @@ For factual accuracy tasks, iterate until:
 | Metric | Threshold | Rationale |
 |--------|-----------|-----------|
 | Claims labeled | ≥80% | Most claims should have explicit evidence basis |
-| Independent sources | ≥2 | Reduces single-point-of-failure |
+| Independent sources | ≥2 | Reduces single-point-of-failure. A stop rule for the search, not a grade: a claim can meet it and still be ALLEGED ×2 |
 | Evidence freshness | <2 years | Prevents stale information in dynamic domains |
 | Flow depth | ≥3 steps | Surface claims hide deeper realities |
 
@@ -173,8 +179,8 @@ Gap: No independent verification
 ```
 Search: "Company X privacy audit independent"
 Found: Third-party security audit report
-Claim: still ALLEGED, now independently corroborated once (the audit; marketing is
-  the subject's own claim, not an independent source; CREDIBLE needs 3+)
+Claim: ALLEGED ×1 (the audit is the one independent source; marketing is the
+  subject's own claim, not an independent source; CREDIBLE needs 3+)
 Remaining gaps: Ownership chain unclear
 → ITERATE
 ```
