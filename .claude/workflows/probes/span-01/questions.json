@@ -1,0 +1,26 @@
+{
+ "B1": {
+  "type": "noul",
+  "instructions": "Did understanding shift because of the interaction: one party pushed back, the other revised, and the revision recast WHAT THE PROBLEM IS (its category or locus), in a way that appears in neither party's opening turn?",
+  "criteria": {
+   "true": "Pushback, then a revision that recasts the problem itself; either party may supply the recast, and the assistant adopts it.",
+   "false": "No pushback, pushback without revision, a revision within the same framing of the problem, or a reframe offered without any pushback."
+  }
+ },
+ "B2": {
+  "type": "noul",
+  "instructions": "Does the ASSISTANT name a principle, rule, or method anywhere in this span and then, anywhere in the same span and in either order, act or assert against it without arguing an exception?",
+  "criteria": {
+   "true": "The assistant names a principle and the assistant itself violates it, without an argued exception.",
+   "false": "No principle named; a principle only mentioned, quoted, or followed; an explicitly argued exception; or the user, not the assistant, violates it."
+  }
+ },
+ "B3": {
+  "type": "noul",
+  "instructions": "Does the assistant propose the same action (by intent, not wording) at least twice more after a reported failure, without engaging with the failure?",
+  "criteria": {
+   "true": "The same approach is proposed at least three times in total after reported failures, without engaging the failure.",
+   "false": "The approach changes; the repetition is succeeding or justified by evidence; the user insists and the assistant names the alternative; or there are only two proposals in total."
+  }
+ }
+}
