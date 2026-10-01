@@ -11,6 +11,7 @@ name: Unit tests
 #   - brainstorm session recorder (stdlib Python)
 #   - skill-structure linters, all three twins (frontmatter YAML + conventions, via uv)
 #   - edge-graph + relational-memory backends (need mcp/pydantic, run via uvx)
+#   - battery workflow libs under .claude/workflows/lib (Node, stdlib only)
 #
 # Each suite exits non-zero on failure, so a regression fails the job.
 
@@ -51,6 +52,18 @@ jobs:
           bash research-toolkit/hooks/count-skill-firings.test.sh
           bash .githooks/pre-push.test.sh
           bash security-toolkit/pii-gate/payload-parity.test.sh
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Node suites (battery workflow libs)
+        run: |
+          set -euo pipefail
+          node .claude/workflows/lib/critic-score.test.mjs
+          node .claude/workflows/lib/match-prep.test.mjs
+          node .claude/workflows/lib/or-call.test.mjs
+          node .claude/workflows/lib/critic-run.test.mjs
 
       - name: Stdlib Python suites
         run: |

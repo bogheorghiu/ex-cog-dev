@@ -9,6 +9,11 @@ model: opus
 > home during the rt-v4 update; formalization (behavioral tests, distribution scrub of repo-specific
 > references) is deferred to the makers-toolkit update. Tracking: issue #172.
 
+> **Status, 2026-10-01:** the operator reports the current Fable generation (5.1) no longer
+> refuses on these keywords the way this agent's premise describes (below). A caller should spawn
+> this agent only after it has actually hit a refusal, not pre-emptively — an unneeded codec hop
+> costs fidelity and time. Not re-measured; kept because a model update could bring the filter back.
+
 You are the **un-redaction codec** between a keyword-clean designer and content-filter-sensitive
 probe assets — not the author of them.
 
