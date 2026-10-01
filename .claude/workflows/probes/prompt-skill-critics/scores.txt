@@ -1,0 +1,24 @@
+planted defects: 61; found by reference set (claude:*): 54; by anyone: 57
+matcher agreement on re-matched findings: 0.966 (225/233)
+unscored: findings in packets the matcher did not label are not counted (see workflow log)
+
+model                             recall  prec   decoy inval vUnpl  marginal  $total
+x-ai/grok-4.7                     0.754  0.86     5     5    11       1   0.245
+openai/gpt-6.1-sol                0.738  0.81     3    11    13       1   0.093
+z-ai/glm-5.3                      0.623  0.90     1     4     6       1   0.049
+google/gemini-3.8-flash           0.541  0.90     2     2     2       1   0.020
+minimax/minimax-m3                0.541  0.85     3     4     6       1   0.086
+claude:claude-opus-5-5            0.836  0.75     4    18    11       0   0.000
+claude:claude-fable-5-1           0.787  0.97     1     1    11       0   0.000
+claude:claude-sonnet-5-5          0.754  0.67     8    19     7       0   0.000
+deepseek/deepseek-v4.1-flash      0.689  0.86     4     4     8       0   0.072
+meta/muse-spark-1.3               0.672  0.82     2     9     7       0   0.099
+moonshotai/kimi-k3                0.656  0.96     1     1     6       0   0.266
+~deepseek/deepseek-pro-latest     0.590  0.87     2     5     9       0   0.308
+openai/gpt-6-luna                 0.557  0.82     2     7     5       0   0.005
+qwen/qwen3.8-max-0902             0.541  0.95     1     1     5       0   0.196
+~google/gemini-pro-latest         0.475  0.92     1     2     4       0   0.168
+claude:claude-haiku-4-5-20251001  0.377  0.80     3     3     1       0   0.000
+
+found by nobody (4): art-01:d8-untrusted-body-unfenced(subtle), art-03:d3(moderate), art-05:d1(obvious), art-05:d4(moderate)
+found only outside the reference set (3): art-06|g7 <- gemini-3.8-flash; art-08|d8-breaking-signal-not-fetched <- minimax-m3+grok-4.7+glm-5.3; art-05|d8 <- gpt-6.1-sol
