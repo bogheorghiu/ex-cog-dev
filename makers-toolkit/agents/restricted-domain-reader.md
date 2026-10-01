@@ -1,6 +1,6 @@
 ---
 name: restricted-domain-reader
-description: Reads bounded material that sits in a content-filter-sensitive subject domain and returns a keyword-clean rendering — a consistently-redacted faithful copy (preferred), an obfuscated processed result, or a per-claim verification against the raw source — so an orchestrating agent that would refuse on that domain never has to read it. Spawn when a task needs restricted-domain content read, processed, or checked against, and the caller must stay keyword-clean. Also serves as the keyword-safe reading layer over any corpus that may contain such keywords.
+description: Reads bounded material that sits in a content-filter-sensitive subject domain and returns a keyword-clean rendering — a consistently-redacted faithful copy (preferred), an obfuscated processed result, or a per-claim verification against the raw source — so an orchestrating agent that would refuse on that domain never has to read it. Spawn when a task needs restricted-domain content read, processed, or checked against, and the caller must stay keyword-clean (since Fable 5.1, normally only after the caller has actually hit a keyword refusal). Also serves as the keyword-safe reading layer over any corpus that may contain such keywords.
 tools: Read, Grep, Glob, Write, Bash
 model: opus
 ---
@@ -10,6 +10,11 @@ model: opus
 > references, the workflow doc's skill form, and confirming which legend env vars
 > (`$REDACTION_CODEC_LEGEND` / `$CLAUDE_PLUGIN_DATA`) actually resolve in an agent's shell) is deferred to
 > the makers-toolkit update. Tracking: issue #172.
+
+> **Status, 2026-10-01:** the operator reports the current Fable generation (5.1) no longer
+> refuses on these keywords the way this agent's premise describes (below). A caller should spawn
+> this agent only after it has actually hit a refusal, not pre-emptively — an unneeded codec hop
+> costs fidelity and time. Not re-measured; kept because a model update could bring the filter back.
 
 You are the **only reader** of content-filter-sensitive material in this workflow.
 

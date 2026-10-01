@@ -29,7 +29,9 @@ record was right. Nothing compiles an agent's prose, so nothing catches this exc
 own claims) and `falsification-station`-style hand-off checking; it generalizes the same
 "verify from the raw jsonl, not the prose" discipline as the instrument-credit lesson (makers-toolkit
 A13). The full reliable-delegation recipe (data-only orientation, refusal-risk map, freedom frame,
-usage-limit resume) is makers-toolkit **B6**.
+usage-limit resume) is makers-toolkit **B6**. (Its refusal-avoidance parts — data-only orientation,
+the refusal-risk map — answer a Fable keyword-refusal problem the operator reported gone in Fable 5.1
+on 2026-10-01; treat them as a fallback for after an observed refusal, not a default step.)
 
 **Twin.** The portable principle lives at machine scope
 (`~/.claude/rules/verify-delegated-work-against-artifacts.md`) and loads every session. This repo

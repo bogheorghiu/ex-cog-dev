@@ -1,5 +1,14 @@
 # Redaction-codec workflow — keyword-clean sessions over restricted substrates
 
+> **Status, 2026-10-01 — mostly obsolete; kept as a fallback.** The operator reports that the
+> current Fable generation (5.1 at the time of writing) no longer seems to refuse on substrate
+> keywords the way this workflow assumes — the random, context-blind refusals that motivated the
+> codec have stopped showing up in their work. That is an operator observation, not a
+> measurement made here — nobody has re-run a refusal probe. So the default is now to let a Fable
+> session read the material raw, and to reach for this codec only **after an observed refusal**
+> (keep the refusal text as evidence). Why keep it at all: a model update can move the filter again,
+> and the codec is the known-working route if it does.
+
 **When this applies — and when it doesn't.** This workflow exists for exactly one situation: the
 session doing the work runs on a model whose content filter refuses on a substrate's *keywords* —
 **any Fable seat: orchestrator, designer, executor, reviewer, or subagent** ("the session" below) —

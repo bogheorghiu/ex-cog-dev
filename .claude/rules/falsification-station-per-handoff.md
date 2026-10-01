@@ -37,7 +37,9 @@ the uvx cache TTL.
   load-bearing.
 - The cheapest station is a **fresh reader with no stake in the prior conclusion** — in this repo,
   normally an **Opus subagent** (Opus reads this repo's sensitive substrates unredacted; the
-  redaction-codec agents are needed only when the *checking* session must itself stay keyword-clean) —
+  redaction-codec agents are needed only when the *checking* session must itself stay keyword-clean,
+  which since Fable 5.1 is the exception, not the rule — see the status note atop
+  `.claude/docs/redaction-codec-workflow.md`) —
   told to verify against the original and report contradictions, not to re-derive the conclusion.
 - A station reports **per claim**: confirmed-verbatim / confirmed-paraphrase (with the actual text) /
   not-found. "Roughly checks out" is not a station result.
