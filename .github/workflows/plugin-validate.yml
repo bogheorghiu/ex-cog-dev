@@ -66,3 +66,18 @@ jobs:
         run: |
           set -euo pipefail
           claude plugin validate . --strict
+
+      - name: Validate each plugin's components (agents, commands, skills)
+        # The marketplace-root run above checks each plugin's manifest but not its
+        # components: it exited 0 on a tree where three research-toolkit agents and a
+        # security-toolkit command had frontmatter that failed to parse (loaded with
+        # model/tools/metadata silently dropped). Validating a plugin directory does
+        # parse them, and failed on both trees.
+        # Not --strict: that also fails on the "plugin-root CLAUDE.md is not loaded"
+        # warning, which research-toolkit and vasana-system trigger with dev notes
+        # that are deliberately not plugin context. Errors still fail the run.
+        run: |
+          set -euo pipefail
+          for manifest in */.claude-plugin/plugin.json; do
+            claude plugin validate "${manifest%/.claude-plugin/plugin.json}"
+          done
