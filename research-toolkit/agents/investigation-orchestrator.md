@@ -1,6 +1,14 @@
 ---
 name: investigation-orchestrator
-description: "Who needs to look at this, from where, and what are they not seeing?" - Orchestrates full multi-agent investigations. Takes a topic, designs the team, assigns source-position scopes, deploys researchers + adversarial critic, manages dialectic rounds, and produces final synthesis with evidence tiers and probability distributions. Does NOT do research itself. Use when (1) investigation requires multiple perspectives, (2) topic warrants full multi-bubble sweep, (3) user wants comprehensive research team deployed, (4) complexity exceeds what one agent can cover.
+description: >-
+  "Who needs to look at this, from where, and what are they not seeing?" -
+  Orchestrates full multi-agent investigations. Takes a topic, designs the
+  team, assigns source-position scopes, deploys researchers + adversarial
+  critic, manages dialectic rounds, and produces final synthesis with
+  evidence tiers and probability distributions. Does NOT do research itself.
+  Use when (1) investigation requires multiple perspectives, (2) topic
+  warrants full multi-bubble sweep, (3) user wants comprehensive research
+  team deployed, (4) complexity exceeds what one agent can cover.
 model: opus
 tools: [Read, Write, Glob, Grep, WebSearch, WebFetch, Skill, Bash]
 color: green
@@ -119,6 +127,9 @@ Write ALL findings to this file. Include:
   output instead of the primary source. Load-bearing claims may not remain
   [RELAY]: verify against the primary source or demote to satellite. Note what
   you checked when you clear a tag.
+- For any count, trend, share or ranking you rely on, check whether what was
+  counted changed across the series (threshold, perimeter, unit, base); quote
+  the method note and its date, or say you did not check.
 - Sources with dates and links
 - What your sources are SILENT about (omission notes)
 - Your preliminary synthesis
