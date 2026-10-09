@@ -1,0 +1,40 @@
+{
+  "schema": "skilltest-design/1",
+  "target": "skill-activation-testing",
+  "question": "Does the skilltest pipeline (validate, emit, claude plugin eval, score) count firings correctly? The skill is the specimen, not the subject.",
+  "model": "sonnet",
+  "runs": 5,
+  "max_turns": 3,
+  "allowed_tools": ["Skill"],
+  "cases": [
+    {"id": "K1", "class": "control", "expect": "skill-activation-testing",
+     "prompt": "Use the skill-activation-testing skill to plan how I should test my skill's new description.",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "C1", "class": "clear", "expect": "skill-activation-testing",
+     "prompt": "I rewrote my skill's description. How do I A/B test whether it triggers more often now?",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "C2", "class": "clear", "expect": "skill-activation-testing",
+     "prompt": "Design a firing-rate experiment for a Claude Code skill: which turns, how many runs, and what counts as a trigger?",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "O1", "class": "oblique", "expect": "skill-activation-testing",
+     "prompt": "Since I reworded the first line of a SKILL.md, Claude seems to pick it up more often. Is that real or am I imagining it?",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "O2", "class": "oblique", "expect": "skill-activation-testing",
+     "prompt": "I tweaked the one-line summary that tells the agent when to load my helper doc. How would I know whether that changed anything?",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "T1", "class": "trap", "expect": "intrinsic-prompt-design",
+     "prompt": "Rewrite this instruction so the model follows it more reliably: 'Always cite sources.'",
+     "siblings": ["intrinsic-prompt-design"]},
+    {"id": "T2", "class": "trap", "expect": "system-pilot",
+     "prompt": "Help me plan a deterministic data pipeline: schema first, then validation, then a repair loop when a step fails.",
+     "siblings": ["system-pilot", "intrinsic-prompt-design"]},
+    {"id": "N1", "class": "offtopic", "expect": "none",
+     "prompt": "Roughly what is the boiling point of water at 2000 m altitude?"},
+    {"id": "N2", "class": "offtopic", "expect": "none",
+     "prompt": "How do I say 'good morning' in Romanian?"}
+  ],
+  "ship_rule": [
+    ["V.recall.control", ">=", 0.8],
+    ["V.false_fire.offtopic", "<=", 0.0]
+  ]
+}
