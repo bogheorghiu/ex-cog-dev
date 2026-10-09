@@ -125,7 +125,7 @@ The fourth step (codify the lesson) gets a precondition (verify the lesson is th
 - Mode-reading: trivial / feature / greenfield. Process scales to scope.
 - Tier-by-stakes for skipping: scaffolding (skip freely) vs. guardrails (skip only with outside check).
 - Explicit "ask the user" hook. The original framework never stops and asks.
-- Multi-agent / spec-driven layout as a suggestion when the work warrants. (See `agent-prompts-starter.md`.)
+- Multi-agent / spec-driven layout as a suggestion when the work warrants. (See the `system-pilot` skill's `references/agent-prompts-starter.md`.)
 - text-deconstruction as a verification instrument for prompts themselves.
 - Suggestion register throughout. Hard rules exist not to constrain but to define what the process is.
 
