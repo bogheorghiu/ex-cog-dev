@@ -51,6 +51,14 @@ DESIGN = {
 }
 
 
+def raises_exit(fn):
+    try:
+        fn()
+        return False
+    except SystemExit:
+        return True
+
+
 def errs(design):
     return st.validate(design)[0]
 
@@ -107,6 +115,12 @@ d = copy.deepcopy(DESIGN); d["cases"][1]["id"] = "C1"
 check("duplicate ids are rejected", any("duplicate" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["ship_rule"] = [["NEW.recall.oblique", "=>", 0.6]]
 check("a malformed ship rule is rejected", any("ship_rule" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["target"] = None
+check("a non-string target is a reported error, not a crash", any("target" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [T]
+check("a sibling list containing the target is rejected", any("distinct" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [SIB, SIB]
+check("a repeated sibling is rejected", any("distinct" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["runs"] = 3
 check("runs below 5 warns but does not error",
       errs(d) == [] and any("runs=3" in w for w in st.validate(d)[1]))
@@ -125,6 +139,11 @@ with tempfile.TemporaryDirectory() as tmp:
     check("the design hash travels with every case", "abc123" in clear)
     check("a negative's expect grader asserts zero calls", "min: 0" in trap and "max: 0" in trap)
     check("a positive's expect grader does not", "max: 0" not in clear)
+    check("a trap with a named winner also grades that the winner fired",
+          'name: "expect-winner"' in trap and "intrinsic\\\\-prompt\\\\-design" in trap
+          and 'name: "expect-winner"' not in clear)
+    check("emit refuses a non-empty directory (stale cases would run unflagged)",
+          raises_exit(lambda: st.emit(DESIGN, "abc123", tmp)))
     check("indicator graders carry a negligible weight so they barely move plugin eval's own score",
           clear.count(f"weight: {st.INDICATOR_WEIGHT}") == 3 and '"fired:*"' in clear)
     try:
@@ -170,6 +189,9 @@ with tempfile.TemporaryDirectory() as tmp:
     new_res["cases"].insert(0, {"name": "K1", "promptMarkdown": "Use the respect skill on this.",
                                 "arms": {"with": [run(["respect", "*"])] * 5}})
     rep_ren = st.score(REN, "h" * 64, [("NEW", write(tmp, "rn.json", new_res), "with")], seed=1)
+    bad_label = st.score(REN, "h" * 64, [("new", write(tmp, "rn2.json", new_res), "with")], seed=1)
+    check("an arm label missing from arm_targets voids rather than guessing the name",
+          bad_label["decision"] == "VOID")
     check("score counts the arm's own skill name as the target",
           rep_ren["metrics"]["NEW.recall.oblique"] == 1.0 and rep_ren["decision"] != "VOID")
 
@@ -226,6 +248,8 @@ with tempfile.TemporaryDirectory() as tmp:
     check("one case per class means the case-resampled interval is degenerate - honest, not hidden",
           m["NEW.recall.oblique.ci_lo"] == m["NEW.recall.oblique.ci_hi"])
     check("the rule holds -> SHIP", rep["decision"] == "SHIP")
+    check("both diff directions exist, so a pre-registered rule does not depend on --arm order",
+          abs(m["diff(OLD-NEW).recall.oblique"] + 0.6) < 1e-9)
     check("per-case outcome classes are kept",
           rep["summaries"]["NEW"]["per_case"]["T1"]["outcome"] == {"expected-sibling": 5})
     again = st.score(DESIGN, "f" * 64, [("NEW", new, "with"), ("OLD", old, "with")], seed=1)
@@ -272,6 +296,9 @@ with tempfile.TemporaryDirectory() as tmp:
     check("with/without arms of one plugin-eval file score as a functional delta",
           rep["metrics"]["diff(W-WO).score.all"] == 1.0)
 
+    check("an unreadable results file is VOID, not a crash",
+          st.score(DESIGN, "f" * 64, [("NEW", str(Path(tmp) / "missing.json"), "with")], seed=1)["decision"] == "VOID")
+
 print("power")
 d0, n0 = st.mde(0.5, 100, 1, 0.0)
 check("100 independent runs per arm at p0=.5 detect roughly a .19 rise", 0.17 < d0 < 0.22 and n0 == 100)
@@ -286,6 +313,15 @@ with tempfile.TemporaryDirectory() as tmp:
     check("validate exits 0 on a sound design", st.main(["validate", dp]) == 0)
     bad = copy.deepcopy(DESIGN); del bad["model"]
     check("validate exits 2 on an unsound design", st.main(["validate", write(tmp, "bad.json", bad)]) == 2)
+    rf = write(tmp, "r.json", result({c["id"]: [run()] * 5 for c in DESIGN["cases"]}))
+    norule = copy.deepcopy(DESIGN); del norule["ship_rule"]
+    check("no ship rule exits non-zero: a CI gate fails closed",
+          st.main(["score", write(tmp, "nr.json", norule), "--arm", "NEW=" + rf]) == 4)
+    allerr = write(tmp, "ae.json", result({c["id"]: [run(error="x")] * 5 for c in DESIGN["cases"]}))
+    out = str(Path(tmp) / "rep.json")
+    st.main(["score", dp, "--arm", "NEW=" + allerr, "--json", out])
+    txt = Path(out).read_text()
+    check("the JSON report is strict JSON (no NaN)", "NaN" not in txt and json.loads(txt) is not None)
     check("power runs", st.main(["power", "--p0", "0.5", "--cases", "10", "--runs", "5", "--icc", "0.3"]) == 0)
 
 print(f"\n{'all passed' if not failures else f'{failures} FAILED'}")

@@ -62,3 +62,24 @@ the protocol says to pass `--model <pin>` to plugin eval as well.
   Tier-2 result for it.
 - **Not tested here:** the competitive condition (`design.plugins`) and the statistics (the
   unit tests cover those).
+
+## Code changes after this run (so the validated version is unambiguous)
+
+The run used `skilltest.py` as of the PREREG commit, plus the model note added after the
+run. A local `/code-review` pass then led to further changes:
+
+- **Emitted case files.** A trap with a named winner gains an `expect-winner` grader. This
+  changes plugin eval's own per-run score. It does not change the `fired:*` indicators that
+  the validated counting reads.
+- **Validation and refusals.** `validate` rejects a non-string target, and duplicate or
+  target-containing sibling lists. `emit` refuses a non-empty directory.
+- **Scoring.**
+  - Arm differences are computed in both directions.
+  - An arm label missing from `arm_targets` is VOID.
+  - Unreadable results are VOID.
+  - A missing ship rule exits 4, so it never passes a CI gate.
+  - The JSON report is strict JSON.
+
+None of these touch the path this run validated: the grader regex for `fired:<skill>`,
+`read_runs`, and the per-case tallies. Each change has a unit test in
+`scripts/test_skilltest.py`. A re-run would confirm the new trap grader live; it was not done.

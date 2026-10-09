@@ -37,6 +37,7 @@ OPS = {
     "<=": lambda a, b: a <= b,
 }
 MIN_RUNS = 5
+EXIT = {"SHIP": 0, "NO-SHIP": 1, "VOID": 3, None: 4}  # 2 = invalid design
 DEFAULT_VOID_ERROR_RATE = 0.10
 BOOTSTRAP_DRAWS = 4000
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -68,14 +69,16 @@ def validate(design):
     errors, warnings = [], []
     if design.get("schema") != "skilltest-design/1":
         errors.append('schema must be "skilltest-design/1"')
-    target = design.get("target", "")
-    if not NAME_RE.match(target or ""):
+    target = design.get("target")
+    if not isinstance(target, str):
+        target = ""
+    if not NAME_RE.match(target):
         errors.append("target must be a bare skill name (kebab-case, no plugin prefix)")
     arm_targets = design.get("arm_targets") or {}
     if not isinstance(arm_targets, dict) or not all(NAME_RE.match(str(v)) for v in arm_targets.values()):
         errors.append("arm_targets, if given, maps arm label -> bare skill name (for a rename A/B)")
         arm_targets = {}
-    names = {target, *arm_targets.values()} - {""}
+    names = {target, *map(str, arm_targets.values())} - {""}
     if not design.get("model"):
         errors.append("model is required: the session model is part of the instrument "
                       "(discipline #6) and must be pinned, never inherited")
@@ -122,6 +125,8 @@ def validate(design):
         siblings = c.get("siblings", [])
         if not isinstance(siblings, list) or not all(NAME_RE.match(s or "") for s in siblings):
             errors.append(f"{where}: siblings must be a list of bare skill names")
+        elif names & set(siblings) or len(set(siblings)) != len(siblings):
+            errors.append(f"{where}: siblings must be distinct and must not include the target")
         elif cls == "trap" and expect != "none" and expect not in siblings:
             errors.append(f"{where}: a trap's expected sibling must also be listed in siblings")
         lowered = prompt.lower()
@@ -175,11 +180,14 @@ def _q(s):
 INDICATOR_WEIGHT = 0.001
 
 
+def skill_match(skill):
+    """The input_match regex for 'the Skill tool was called with this skill' - one
+    definition, so the scored and the indicator graders can never disagree."""
+    return r'"skill"\s*:\s*"(?:[\w-]+:)?' + re.escape(skill) + '"'
+
+
 def _fired_grader(skill, weight=INDICATOR_WEIGHT):
-    if skill == ANY_SKILL:
-        match = None
-    else:
-        match = r'"skill"\s*:\s*"(?:[\w-]+:)?' + re.escape(skill) + '"'
+    match = None if skill == ANY_SKILL else skill_match(skill)
     lines = [f"  - name: {_q(FIRED_PREFIX + skill)}",
              "    type: tool_used",
              "    tool: Skill",
@@ -191,13 +199,18 @@ def _fired_grader(skill, weight=INDICATOR_WEIGHT):
 
 def case_yaml(design, case, design_hash, plugin_paths=None, arm=None):
     target = arm_target(design, arm)
-    match = r'"skill"\s*:\s*"(?:[\w-]+:)?' + re.escape(target) + '"'
     expect_lines = ["  - name: \"expect\"",
                     "    type: tool_used",
                     "    tool: Skill",
-                    f"    input_match: {_q(match)}"]
+                    f"    input_match: {_q(skill_match(target))}"]
     if case["class"] in NEGATIVE:
         expect_lines += ["    min: 0", "    max: 0"]
+    if case["class"] == "trap" and case["expect"] != "none":
+        # Not firing the target is half a trap; the named sibling winning is the other half.
+        expect_lines += ["  - name: \"expect-winner\"",
+                         "    type: tool_used",
+                         "    tool: Skill",
+                         f"    input_match: {_q(skill_match(case['expect']))}"]
     out = [
         'schema_version: "1.1"',
         f"name: {_q(case['id'])}",
@@ -221,6 +234,9 @@ def emit(design, design_hash, out_dir, root=None, arm=None):
     """root: the directory plugin eval will run against (default: out_dir's parent).
     design["plugins"] is relative to it; case.yaml wants paths relative to the case dir."""
     out = Path(out_dir).resolve()
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"error: {out} is not empty - stale case dirs from another design would "
+                         "run too and nothing would flag them; emit into a fresh directory")
     root = Path(root).resolve() if root else out.parent
     for case in design["cases"]:
         d = out / case["id"]
@@ -382,7 +398,15 @@ def score(design, design_hash, arms, seed=None):
     ids_by_class = {cls: [c["id"] for c in design["cases"] if c["class"] == cls] for cls in CLASSES}
 
     for label, path, arm_key in arms:
-        runs, meta = read_runs(path, arm_key)
+        if design.get("arm_targets") and label not in design["arm_targets"]:
+            void.append(f"arm label {label} is not in the design's arm_targets "
+                        f"{sorted(design['arm_targets'])} - its target name would be guessed")
+            continue
+        try:
+            runs, meta = read_runs(path, arm_key)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+            void.append(f"{label}: cannot read results {path}: {exc}")
+            continue
         missing = [c["id"] for c in design["cases"] if c["id"] not in runs]
         if missing:
             void.append(f"{label}: cases in the design but not in the results: {missing}")
@@ -431,8 +455,11 @@ def score(design, design_hash, arms, seed=None):
             metrics[f"{label}.score.all.ci_hi"] = hi
 
     labels = list(summaries)
-    for i, a in enumerate(labels):
-        for b in labels[i + 1:]:
+    # Both directions: a pre-registered diff(NEW-OLD) must not depend on --arm order.
+    for a in labels:
+        for b in labels:
+            if a == b:
+                continue
             pa = {cid: (v["k"], v["n"]) for cid, v in summaries[a]["per_case"].items()}
             pb = {cid: (v["k"], v["n"]) for cid, v in summaries[b]["per_case"].items()}
             for cls, ids in ids_by_class.items():
@@ -517,9 +544,12 @@ def render(report, design):
     for line in report["rule_lines"]:
         out.append(f"rule: {line}")
     out.append(f"\nDECISION: {report['decision'] or 'none (no ship_rule in design)'}")
-    out.append("Validity limit: plugin eval loads only the plugin(s) under test, so the catalog is the "
-               "plugin itself - this measures firing under intra-plugin competition, not under a full "
-               "installed catalog.")
+    if design.get("plugins"):
+        out.append(f"Condition: competitive, catalog {design['plugins']} - firing under competition from "
+                   "these plugins only, not from a user's whole installed set.")
+    else:
+        out.append("Condition: ceiling - plugin eval loads only the plugin under test, so this measures "
+                   "firing under intra-plugin competition, not under a full installed catalog.")
     return "\n".join(out)
 
 
@@ -627,8 +657,11 @@ def main(argv=None):
     report = score(design, digest, args.arm, seed=args.seed)
     print(render(report, design))
     if args.json:
-        Path(args.json).write_text(json.dumps(report, indent=2, default=sorted), encoding="utf-8")
-    return {"SHIP": 0, "NO-SHIP": 1, "VOID": 3}.get(report["decision"], 0)
+        clean = json.loads(json.dumps(report, default=sorted),
+                           parse_constant=lambda c: None)  # NaN/Infinity -> null: strict JSON
+        Path(args.json).write_text(json.dumps(clean, indent=2, allow_nan=False), encoding="utf-8")
+    # Every outcome but SHIP is non-zero, so a CI gate fails closed: no rule is not a pass.
+    return EXIT[report["decision"]]
 
 
 if __name__ == "__main__":
