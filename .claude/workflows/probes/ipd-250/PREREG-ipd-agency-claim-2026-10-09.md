@@ -1,9 +1,12 @@
 # PREREG: "leave space for the model's own agency" (issue #250, 2026-10-09)
 
-Written before any run. The test has not been scheduled. Whether it runs before
-the "respect" extraction, or the claim ships labelled experimental, is an open
-operator decision (issue #250). This file exists so that whichever way that goes,
-the criterion was fixed before any data.
+Written before any run.
+
+**Status (operator decision, 2026-10-09):** this test runs **before** any
+extraction, because the agency claim is the core of the skill. It waits for the
+skill-testing methodology entry point on issue #250, and it does not start until
+that exists. Two related decisions are also recorded: the skill stays in
+makers-toolkit for now, and the name stays `intrinsic-prompt-design` for now.
 
 ## The claim, and why it gets its own test
 
