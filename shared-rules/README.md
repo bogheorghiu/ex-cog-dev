@@ -1,14 +1,11 @@
 # shared-rules
 
-Loads one shared set of Claude rules into sessions that have no `~/.claude/rules/` of
-their own, such as cloud sessions and fresh containers.
+Loads one shared set of Claude rules into sessions that don't have them installed
+locally, such as cloud sessions and fresh containers.
 
-The rules, and the install steps for every surface (local machines, cloud, desktop
+The rules, and how to install them on each surface (local machines, cloud, desktop
 app), live in their source repo: <https://github.com/bogheorghiu/claude-rules>. This
-plugin is the cloud half of that delivery. Its SessionStart hook
-(`hooks/load-rules.sh`) fetches the repo and prints the rules into context.
-
-Point it at a different rules repo by setting `SHARED_RULES_REPO`.
+plugin covers cloud sessions; `hooks/load-rules.sh` is its SessionStart hook.
 
 ```
 /plugin marketplace add bogheorghiu/ex-cog-dev

@@ -4,7 +4,6 @@ name: Unit tests
 # PR. Complements the MCP smoke test (which only checks that each server boots
 # and answers a JSON-RPC initialize). These suites exercise actual logic:
 #   - security-toolkit hooks (bash)
-#   - shared-rules SessionStart loader (bash)
 #   - the repo's own PII pre-push guard (bash)
 #   - financial-mcp validation + cache (stdlib Python)
 #   - macro-monitor TIC parser (stdlib Python)

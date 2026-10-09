@@ -61,6 +61,30 @@ out=$(run_hook "$H1" "file://$SRC"); rc=$?
 mv "$SRC.gone" "$SRC"
 check "unreachable source with cache exits 0" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
 check "unreachable source with cache still prints cached rules" "$(has "$out" ALWAYS_BODY)"
+check "unreachable source with cache says copies may be stale" "$(has "$out" 'may be out of date')"
+
+# --- Upstream history rewritten (force-push): cache follows it, no freeze ---
+git -C "$SRC" checkout -q --orphan rewritten
+printf '# Rewritten\nREWRITTEN_BODY\n' > "$SRC/rules/always.md"
+git -C "$SRC" add -A && git -C "$SRC" commit -qm rewritten
+git -C "$SRC" branch -q -M rewritten master 2>/dev/null || git -C "$SRC" branch -q -M rewritten main
+out=$(run_hook "$H1" "file://$SRC")
+check "force-pushed upstream content reaches the cache" "$(has "$out" REWRITTEN_BODY)"
+check "force-pushed upstream: no stale notice" "$([ "$(has "$out" 'may be out of date')" = 0 ] && echo 1 || echo 0)"
+
+# --- Configured URL changes: the cache is re-cloned from the new source ---
+SRC2="$TMP_DIR/src2"; mkdir -p "$SRC2/rules"
+printf '# Other\nOTHER_BODY\n' > "$SRC2/rules/other.md"
+git -C "$SRC2" init -q && git -C "$SRC2" add -A && git -C "$SRC2" commit -qm init
+out=$(run_hook "$H1" "file://$SRC2")
+check "changed repo URL: new source's rules printed" "$(has "$out" OTHER_BODY)"
+check "changed repo URL: old source's rules gone" "$([ "$(has "$out" REWRITTEN_BODY)" = 0 ] && echo 1 || echo 0)"
+
+# --- CRLF frontmatter is still recognised as path-scoped ---
+printf -- '---\r\npaths:\r\n  - "x/**"\r\n---\r\nCRLF_BODY\r\n' > "$SRC2/rules/crlf.md"
+git -C "$SRC2" add -A && git -C "$SRC2" commit -qm crlf
+out=$(run_hook "$H1" "file://$SRC2")
+check "CRLF path-scoped rule body NOT printed" "$([ "$(has "$out" CRLF_BODY)" = 0 ] && echo 1 || echo 0)"
 
 # --- Source unreachable, no cache: one-line notice, exit 0 ---
 H2="$TMP_DIR/h2"; mkdir -p "$H2"
@@ -74,6 +98,10 @@ H3="$TMP_DIR/h3"; mkdir -p "$H3/.claude/rules/shared/.git"
 out=$(run_hook "$H3" "file://$SRC"); rc=$?
 check "local install present: exits 0" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
 check "local install present: prints nothing" "$([ -z "$out" ] && echo 1 || echo 0)"
+
+H4="$TMP_DIR/h4"; mkdir -p "$H4/.claude/rules/shared"; echo "gitdir: elsewhere" > "$H4/.claude/rules/shared/.git"
+out=$(run_hook "$H4" "file://$SRC")
+check "local install as submodule/worktree (.git file): prints nothing" "$([ -z "$out" ] && echo 1 || echo 0)"
 
 echo
 echo "$pass passed, $fail failed"
