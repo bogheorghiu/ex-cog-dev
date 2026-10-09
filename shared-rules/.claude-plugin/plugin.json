@@ -1,0 +1,8 @@
+{
+  "name": "shared-rules",
+  "description": "Loads one shared set of Claude rules (github.com/bogheorghiu/claude-rules) into sessions that have no ~/.claude/rules - cloud sessions and fresh containers. A SessionStart hook fetches the rules repo, prints every always-on rule into context, and lists path-scoped rules with where to read them. Silent where the local install already loads the rules natively.",
+  "author": {
+    "name": "bogheorghiu"
+  },
+  "version": "0.1.0"
+}
