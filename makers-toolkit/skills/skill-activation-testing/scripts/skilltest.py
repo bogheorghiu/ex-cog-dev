@@ -52,6 +52,17 @@ def load_design(path):
     return json.loads(raw), hashlib.sha256(raw).hexdigest()
 
 
+def arm_target(design, label=None):
+    """The skill name that fires in this arm. Differs from design["target"] only in a
+    rename A/B, where arm_targets maps each arm label to its own name."""
+    return (design.get("arm_targets") or {}).get(label, design["target"])
+
+
+def case_prompt(design, case, label=None):
+    # Only a control names the skill; "{target}" lets one control serve both arms of a rename.
+    return case["prompt"].replace("{target}", arm_target(design, label))
+
+
 def validate(design):
     """Return (errors, warnings). Errors block emit/score; warnings are printed."""
     errors, warnings = [], []
@@ -60,6 +71,11 @@ def validate(design):
     target = design.get("target", "")
     if not NAME_RE.match(target or ""):
         errors.append("target must be a bare skill name (kebab-case, no plugin prefix)")
+    arm_targets = design.get("arm_targets") or {}
+    if not isinstance(arm_targets, dict) or not all(NAME_RE.match(str(v)) for v in arm_targets.values()):
+        errors.append("arm_targets, if given, maps arm label -> bare skill name (for a rename A/B)")
+        arm_targets = {}
+    names = {target, *arm_targets.values()} - {""}
     if not design.get("model"):
         errors.append("model is required: the session model is part of the instrument "
                       "(discipline #6) and must be pinned, never inherited")
@@ -75,7 +91,7 @@ def validate(design):
         return errors, warnings
 
     seen = set()
-    name_tokens = [t for t in (target or "").split("-") if len(t) > 3]
+    name_tokens = sorted({t for n in names for t in n.split("-") if len(t) > 3})
     for i, c in enumerate(cases):
         where = f"cases[{i}]"
         cid = c.get("id", "")
@@ -116,8 +132,10 @@ def validate(design):
             if leaks:
                 warnings.append(f"{where}: oblique prompt shares words with the target's name "
                                 f"({leaks}) - confirm none of them is the lexical cue")
-        if cls != "control" and target and target in lowered:
+        if cls != "control" and any(n in lowered for n in names):
             errors.append(f"{where}: only a control case may name the target skill")
+        if cls != "control" and "{target}" in prompt:
+            errors.append(f"{where}: the {{target}} placeholder is for control cases only")
         if any(ord(ch) > 127 for ch in prompt):
             warnings.append(f"{where}: non-ASCII prompt - fine in YAML, but a tracked .json "
                             "design must be ASCII-only (CLAUDE.md); keep the design file untracked or escape-free")
@@ -171,8 +189,8 @@ def _fired_grader(skill, weight=INDICATOR_WEIGHT):
     return lines
 
 
-def case_yaml(design, case, design_hash, plugin_paths=None):
-    target = design["target"]
+def case_yaml(design, case, design_hash, plugin_paths=None, arm=None):
+    target = arm_target(design, arm)
     match = r'"skill"\s*:\s*"(?:[\w-]+:)?' + re.escape(target) + '"'
     expect_lines = ["  - name: \"expect\"",
                     "    type: tool_used",
@@ -191,7 +209,7 @@ def case_yaml(design, case, design_hash, plugin_paths=None):
         f"  model: {_q(design['model'])}",
         f"  max_turns: {design.get('max_turns', 3)}",
         f"  allowed_tools: {json.dumps(design.get('allowed_tools', ['Skill']))}",
-        f"  prompt: {_q(case['prompt'])}",
+        f"  prompt: {_q(case_prompt(design, case, arm))}",
         "graders:",
     ] + expect_lines
     for skill in [target] + list(case.get("siblings", [])) + [ANY_SKILL]:
@@ -199,7 +217,7 @@ def case_yaml(design, case, design_hash, plugin_paths=None):
     return "\n".join(out) + "\n"
 
 
-def emit(design, design_hash, out_dir, root=None):
+def emit(design, design_hash, out_dir, root=None, arm=None):
     """root: the directory plugin eval will run against (default: out_dir's parent).
     design["plugins"] is relative to it; case.yaml wants paths relative to the case dir."""
     out = Path(out_dir).resolve()
@@ -210,7 +228,7 @@ def emit(design, design_hash, out_dir, root=None):
         paths = None
         if design.get("plugins"):
             paths = [os.path.relpath(root / p, d) for p in design["plugins"]]
-        (d / "case.yaml").write_text(case_yaml(design, case, design_hash, paths), encoding="utf-8")
+        (d / "case.yaml").write_text(case_yaml(design, case, design_hash, paths, arm), encoding="utf-8")
     return len(design["cases"])
 
 
@@ -333,9 +351,8 @@ def _rate_deltas(a, b, ids):
     return [(a[i][0] / a[i][1]) - (b[i][0] / b[i][1]) for i in ids if a[i][1] and b[i][1]]
 
 
-def summarise_arm(design, cases_runs):
+def summarise_arm(design, cases_runs, target):
     """Per-case tallies for one arm: target-fired k/n, outcome classes, run scores."""
-    target = design["target"]
     per_case, errors, total = {}, 0, 0
     for case in design["cases"]:
         runs = cases_runs.get(case["id"], {"runs": []})["runs"]
@@ -371,10 +388,14 @@ def score(design, design_hash, arms, seed=None):
             void.append(f"{label}: cases in the design but not in the results: {missing}")
         for c in design["cases"]:
             got = (runs.get(c["id"]) or {}).get("prompt")
-            if got is not None and got.strip() != c["prompt"].strip():
+            if got is not None and got.strip() != case_prompt(design, c, label).strip():
                 void.append(f"{label}: case {c['id']} ran a different prompt than the frozen design")
         if meta["modelOverride"] and meta["modelOverride"] != design["model"]:
             void.append(f"{label}: ran on model {meta['modelOverride']}, design pins {design['model']}")
+        elif not meta["modelOverride"]:
+            # The results record only the --model flag, not case.yaml's execution.model.
+            notes.append(f"{label}: results do not record the model; rerun plugin eval with "
+                         f"--model {design['model']} so the pin is checkable, not assumed")
         if design.get("plugins"):
             ran = sorted(Path(p.get("path") or "").name for p in (meta["plugins"] or []))
             want = sorted(Path(p).name for p in design["plugins"])
@@ -382,7 +403,7 @@ def score(design, design_hash, arms, seed=None):
                 void.append(f"{label}: catalog {ran} differs from the design's plugins {want}")
         if meta["partial"]:
             void.append(f"{label}: plugin eval reported a partial run")
-        per_case, errors, total = summarise_arm(design, runs)
+        per_case, errors, total = summarise_arm(design, runs, arm_target(design, label))
         if total and errors / total > void_rate:
             void.append(f"{label}: {errors}/{total} runs errored (> {void_rate:.0%})")
         short = [cid for cid, pc in per_case.items() if pc["n"] < design["runs"]]
@@ -562,6 +583,7 @@ def main(argv=None):
     e.add_argument("design")
     e.add_argument("out_dir", help="<root>/<evals dir>; run `claude plugin eval <root> --eval-dir <evals dir>`")
     e.add_argument("--root", help="directory plugin eval will run against (default: out_dir's parent)")
+    e.add_argument("--arm", help="arm label; required when the design has arm_targets (a rename A/B)")
     s = sub.add_parser("score", help="score plugin-eval results against the design")
     s.add_argument("design")
     s.add_argument("--arm", action="append", type=_parse_arm, required=True,
@@ -595,7 +617,11 @@ def main(argv=None):
         print(f"ok: {len(design['cases'])} cases, design sha256 {digest}")
         return 0
     if args.cmd == "emit":
-        n = emit(design, digest, args.out_dir, args.root)
+        if design.get("arm_targets") and args.arm not in design["arm_targets"]:
+            print(f"error: this design renames the target per arm; pass --arm one of "
+                  f"{sorted(design['arm_targets'])}", file=sys.stderr)
+            return 2
+        n = emit(design, digest, args.out_dir, args.root, args.arm)
         print(f"wrote {n} case dirs under {args.out_dir} (design sha256 {digest})")
         return 0
     report = score(design, digest, args.arm, seed=args.seed)

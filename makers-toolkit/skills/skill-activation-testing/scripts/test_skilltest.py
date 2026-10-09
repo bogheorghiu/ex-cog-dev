@@ -68,7 +68,7 @@ def result(per_case, model="sonnet", prompts=None, partial=False, arm="with"):
         if c["id"] not in per_case:
             continue
         cases.append({"name": c["id"],
-                      "promptMarkdown": (prompts or {}).get(c["id"], c["prompt"]),
+                      "promptMarkdown": (prompts or {}).get(c["id"], c["prompt"]) or c["prompt"],
                       "arms": {arm: per_case[c["id"]]}})
     return {"schemaVersion": 1, "claudeVersion": "2.1.295", "partial": partial,
             "suite": {"modelOverride": model, "plugins": [{"name": "makers-toolkit", "version": "x"}]},
@@ -144,6 +144,35 @@ with tempfile.TemporaryDirectory() as tmp:
 d = copy.deepcopy(DESIGN); d["plugins"] = ["/abs/path"]
 check("absolute plugin paths are rejected", any("plugins" in e for e in errs(d)))
 
+print("rename A/B")
+REN = copy.deepcopy(DESIGN)
+REN["arm_targets"] = {"OLD": T, "NEW": "respect"}
+REN["cases"][0] = {"id": "K1", "class": "control", "expect": T, "prompt": "Use the {target} skill on this."}
+check("a rename design validates", errs(REN) == [])
+r2 = copy.deepcopy(REN); r2["cases"][1]["prompt"] = "should I ask for respect here?"
+check("a non-control prompt naming either arm's skill is rejected", any("control" in e for e in errs(r2)))
+r2 = copy.deepcopy(REN); r2["cases"][1]["prompt"] = "use {target}"
+check("the placeholder is control-only", any("placeholder" in e for e in errs(r2)))
+with tempfile.TemporaryDirectory() as tmp:
+    st.emit(REN, "h", str(Path(tmp) / "old"), arm="OLD")
+    st.emit(REN, "h", str(Path(tmp) / "new"), arm="NEW")
+    old_k = (Path(tmp) / "old" / "K1" / "case.yaml").read_text()
+    new_k = (Path(tmp) / "new" / "K1" / "case.yaml").read_text()
+    check("each arm's control names that arm's skill",
+          "Use the skill-activation-testing skill" in old_k and "Use the respect skill" in new_k)
+    check("each arm's graders look for that arm's skill",
+          '"fired:respect"' in new_k and '"fired:respect"' not in old_k)
+    check("emit refuses a rename design without --arm",
+          st.main(["emit", write(tmp, "ren.json", REN), str(Path(tmp) / "x")]) == 2)
+    new_res = result({"C1": [run(["respect", "*"])] * 5, "O1": [run(["respect", "*"])] * 5,
+                      "T1": [run([SIB, "*"])] * 5, "N1": [run()] * 5},
+                     prompts={"C1": None})
+    new_res["cases"].insert(0, {"name": "K1", "promptMarkdown": "Use the respect skill on this.",
+                                "arms": {"with": [run(["respect", "*"])] * 5}})
+    rep_ren = st.score(REN, "h" * 64, [("NEW", write(tmp, "rn.json", new_res), "with")], seed=1)
+    check("score counts the arm's own skill name as the target",
+          rep_ren["metrics"]["NEW.recall.oblique"] == 1.0 and rep_ren["decision"] != "VOID")
+
 print("classify")
 case_t = DESIGN["cases"][2]
 check("target outranks a sibling in the same run",
@@ -216,6 +245,11 @@ with tempfile.TemporaryDirectory() as tmp:
                                                    model="haiku"))
     check("a run on a different model than the design pins voids it",
           st.score(DESIGN, "f" * 64, [("NEW", other_model, "with")], seed=1)["decision"] == "VOID")
+    unrecorded = write(tmp, "nomodel.json", result({c["id"]: [run()] * 5 for c in DESIGN["cases"]},
+                                                     model=None))
+    rep = st.score(DESIGN, "f" * 64, [("NEW", unrecorded, "with")], seed=1)
+    check("an unrecorded model is flagged, not silently trusted",
+          any("--model sonnet" in n for n in rep["notes"]))
     errored = write(tmp, "err.json", result({c["id"]: [run(error="boom")] + [run()] * 4
                                              for c in DESIGN["cases"]}))
     check("more than 10% errored runs voids the run",
