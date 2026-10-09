@@ -1,0 +1,8 @@
+{
+  "name": "shared-rules",
+  "description": "Shared Claude rules for cloud sessions and fresh containers - a SessionStart hook loads one public rules repo (github.com/bogheorghiu/claude-rules) into context, so the same rules apply where no local ~/.claude/rules install exists.",
+  "author": {
+    "name": "bogheorghiu"
+  },
+  "version": "0.1.0"
+}
