@@ -98,6 +98,44 @@ Any other result is reported as one of these:
   finding, and leaving it out would be the selective reporting the repo's rules
   forbid.
 
+## Instrument and sizing (added 2026-10-10, before any data)
+
+**Fit with the protocol in PR #253.** That protocol's functional axis compares
+plugin arms: with the plugin against without, or an OLD body against a NEW one.
+This test compares three *prompt texts*, and none of them is the skill. To use
+the same runner and scorer:
+
+- each arm's text is packaged as the body of a stand-in skill;
+- every case invokes that skill explicitly;
+- `skilltest.py score` compares B2 with B1 on that one pair, under a
+  `design.json` that carries the decision rule as `ship_rule`.
+
+This packaging is the instrument for the main run. If it turns out the scorer
+cannot express this, the alternative is recorded here before the pilot.
+
+**The protocol's three rules apply.**
+
+1. Graders judge handling quality against the pre-written expectations. They
+   never look for wording that one arm contains and another lacks, such as
+   trust phrases.
+2. The solvability check runs on out-of-spec items: a strong model, told the
+   right move, must pass the item.
+3. The judge noise floor is measured as R1 against R2 on one arm.
+
+**Pilot first, same reasons as the body-revision pre-registration.** A power
+check at a prior rate of 0.40 and 3 runs per item gives a smallest detectable
+rise of about 0.28 to 0.33 for 24 out-of-spec items. To reach the 0.15 bar
+takes roughly 120 items. The pilot:
+
+- runs **B1 only**, so it cannot reveal the effect;
+- measures the prior rate, the agreement between repeated runs of an item, the
+  noise floor and solvability;
+- is used to set the item count, or a revised bar with its reason, recorded here
+  before any B2 run.
+
+**Gap.** The roughly 0.15 bar and the 0.05 margins were chosen without prior
+data. They are judgment calls, recorded as such.
+
 ## VOID conditions
 
 The run is VOID if any of these happen:
@@ -110,4 +148,9 @@ The run is VOID if any of these happen:
 
 ## Deviations log
 
-(None yet.)
+- **2026-10-10, pre-launch, no data exists.**
+  - An instrument and sizing section was added: PR #253's runner, with each arm
+    packaged as a stand-in skill; the protocol's three rules; and a pilot run on
+    B1 only.
+  - The operator chose pilot-first sizing, and approved updating now, while
+    PR #253 is still a draft.
