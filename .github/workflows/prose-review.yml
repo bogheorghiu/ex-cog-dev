@@ -187,7 +187,7 @@ jobs:
 
       - name: Review
         if: steps.gate.outputs.review == 'true'
-        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1.0.226
+        uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Passing this short-circuits the OIDC → Claude-App-token path in
@@ -370,7 +370,7 @@ jobs:
       # clean" an explicit precondition. Over-run is not fail-open, but it is waste.
       - name: Repair rejected findings
         if: steps.gate.outputs.review == 'true' && steps.validate.outcome == 'success' && steps.validate.outputs.rejected != '0' && env.PROSE_REVIEW_REPAIR_ENABLED == 'true'
-        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1.0.226
+        uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -464,7 +464,7 @@ jobs:
       # purpose, so the same silence cannot come back.
       - name: Keep the round's inputs and reasoning
         if: always() && steps.scrub.outcome == 'success'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: prose-review-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.PROSE_REVIEW_DIR }}
