@@ -21,6 +21,10 @@
     {
       "name": "security-toolkit",
       "source": "./security-toolkit"
+    },
+    {
+      "name": "shared-rules",
+      "source": "./shared-rules"
     }
   ]
 }

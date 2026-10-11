@@ -56,6 +56,7 @@ via Customize → Browse plugins, then install the plugins you want.
 /plugin install makers-toolkit@ex-cog-dev
 /plugin install vasana-system@ex-cog-dev
 /plugin install security-toolkit@ex-cog-dev
+/plugin install shared-rules@ex-cog-dev
 ```
 
 > [!NOTE]
