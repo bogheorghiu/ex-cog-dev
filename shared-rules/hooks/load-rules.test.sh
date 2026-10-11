@@ -86,6 +86,25 @@ git -C "$SRC2" add -A && git -C "$SRC2" commit -qm crlf
 out=$(run_hook "$H1" "file://$SRC2")
 check "CRLF path-scoped rule body NOT printed" "$([ "$(has "$out" CRLF_BODY)" = 0 ] && echo 1 || echo 0)"
 
+# --- Rules grouped in subfolders are loaded, alongside top-level ones ---
+mkdir -p "$SRC2/rules/group"
+printf '# Nested\nNESTED_BODY\n' > "$SRC2/rules/group/nested.md"
+git -C "$SRC2" add -A && git -C "$SRC2" commit -qm nested
+out=$(run_hook "$H1" "file://$SRC2")
+check "rule in a subfolder of rules/ printed" "$(has "$out" NESTED_BODY)"
+check "subfolder rule named by its path under rules/" "$(has "$out" '=== rule: group/nested.md ===')"
+check "top-level rule still printed next to subfolder rules" "$(has "$out" OTHER_BODY)"
+
+# --- Fetch succeeds but the repo has no rules: say that, not "could not fetch" ---
+SRC3="$TMP_DIR/src3"; mkdir -p "$SRC3"
+printf 'no rules here\n' > "$SRC3/README.md"
+git -C "$SRC3" init -q && git -C "$SRC3" add -A && git -C "$SRC3" commit -qm init
+H5="$TMP_DIR/h5"; mkdir -p "$H5"
+out=$(run_hook "$H5" "file://$SRC3"); rc=$?
+check "fetched repo without rules exits 0" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
+check "fetched repo without rules says it was fetched" "$(has "$out" 'was fetched but has no .md files')"
+check "fetched repo without rules does not blame the fetch" "$([ "$(has "$out" 'could not fetch')" = 0 ] && echo 1 || echo 0)"
+
 # --- Source unreachable, no cache: one-line notice, exit 0 ---
 H2="$TMP_DIR/h2"; mkdir -p "$H2"
 out=$(run_hook "$H2" "file://$TMP_DIR/missing"); rc=$?

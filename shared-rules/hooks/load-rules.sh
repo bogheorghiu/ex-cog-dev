@@ -45,15 +45,22 @@ else
     rm -rf "$tmp"
 fi
 
-shopt -s nullglob
-files=("$CACHE"/rules/*.md)
+# Rules may sit in subfolders of rules/, as Claude Code allows locally. `find`, not
+# globstar: macOS ships bash 3.2, where ** silently means * and top-level rules vanish.
+files=()
+while IFS= read -r f; do files+=("$f"); done < <(find "$CACHE/rules" -type f -name '*.md' 2>/dev/null | LC_ALL=C sort)
 if [ ${#files[@]} -eq 0 ]; then
     # Silence would read the same as "there are no rules"; say which it is.
-    echo "[shared-rules] No shared rules loaded this session: could not fetch $REPO_URL and nothing is cached."
+    if [ -d "$CACHE/.git" ]; then
+        echo "[shared-rules] No shared rules loaded this session: $REPO_URL was fetched but has no .md files under rules/."
+    else
+        echo "[shared-rules] No shared rules loaded this session: could not fetch $REPO_URL and nothing is cached."
+    fi
     exit 0
 fi
 
-# Frontmatter = lines between a leading '---' and the next '---' (CRLF-tolerant).
+# The \r strip matters: a rule committed from Windows has CRLF endings, its
+# '---\r' would never match the delimiter, and a path-scoped rule would load in full.
 frontmatter() {
     awk '{sub(/\r$/, "")} NR==1 && $0!="---" {exit} NR>1 && $0=="---" {exit} NR>1 {print}' "$1"
 }
@@ -67,7 +74,7 @@ for f in "${files[@]}"; do
         continue
     fi
     echo
-    echo "=== rule: $(basename "$f") ==="
+    echo "=== rule: ${f#"$CACHE/rules/"} ==="
     cat "$f"
 done
 
