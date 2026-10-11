@@ -64,10 +64,11 @@ check "unreachable source with cache still prints cached rules" "$(has "$out" AL
 check "unreachable source with cache says copies may be stale" "$(has "$out" 'may be out of date')"
 
 # --- Upstream history rewritten (force-push): cache follows it, no freeze ---
+branch=$(git -C "$SRC" symbolic-ref --short HEAD)
 git -C "$SRC" checkout -q --orphan rewritten
 printf '# Rewritten\nREWRITTEN_BODY\n' > "$SRC/rules/always.md"
 git -C "$SRC" add -A && git -C "$SRC" commit -qm rewritten
-git -C "$SRC" branch -q -M rewritten master 2>/dev/null || git -C "$SRC" branch -q -M rewritten main
+git -C "$SRC" branch -q -M rewritten "$branch"
 out=$(run_hook "$H1" "file://$SRC")
 check "force-pushed upstream content reaches the cache" "$(has "$out" REWRITTEN_BODY)"
 check "force-pushed upstream: no stale notice" "$([ "$(has "$out" 'may be out of date')" = 0 ] && echo 1 || echo 0)"
