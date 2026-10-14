@@ -86,32 +86,32 @@ runs code; 3 runs per task and arm (24 runs), alternating arms; headless `claude
 Isolation was checked from ponytail's mode file: created in every WITH run, absent after
 every WITHOUT run.
 
-| Run | Task | Arm | Check | Diff lines | Of which test | Cost USD | Turns |
-|---|---|---|---|---|---|---|---|
-| 1 | T1 | WITH | pass | 31 | 23 | 0.616 | 13 |
-| 2 | T1 | WITHOUT | pass | 49 | 39 | 0.419 | 16 |
-| 3 | T2 | WITH | pass | 16 | 11 | 0.255 | 7 |
-| 4 | T2 | WITHOUT | pass | 15 | 11 | 0.235 | 8 |
-| 5 | T3 | WITH | pass | 27 | 14 | 0.294 | 9 |
-| 6 | T3 | WITHOUT | pass | 41 | 17 | 0.317 | 9 |
-| 7 | T4 | WITH | pass | 30 | 16 | 0.289 | 13 |
-| 8 | T4 | WITHOUT | pass | 20 | 0 | 0.237 | 8 |
-| 9 | T4 | WITH | pass | 32 | 18 | 0.284 | 13 |
-| 10 | T1 | WITHOUT | pass | 11 | 0 | 0.281 | 8 |
-| 11 | T1 | WITH | pass | 31 | 23 | 0.370 | 13 |
-| 12 | T2 | WITHOUT | pass | 15 | 11 | 0.207 | 6 |
-| 13 | T2 | WITH | pass | 13 | 9 | 0.276 | 8 |
-| 14 | T3 | WITHOUT | pass | 36 | 17 | 0.265 | 7 |
-| 15 | T3 | WITH | pass | 29 | 13 | 0.300 | 9 |
-| 16 | T4 | WITHOUT | pass | 20 | 0 | 0.229 | 8 |
-| 17 | T1 | WITH | pass | 51 | 32 | 0.396 | 13 |
-| 18 | T1 | WITHOUT | pass | 73 | 63 | 0.365 | 11 |
-| 19 | T2 | WITH | pass | 15 | 11 | 0.282 | 8 |
-| 20 | T2 | WITHOUT | pass | 16 | 12 | 0.232 | 7 |
-| 21 | T3 | WITH | pass | 27 | 14 | 0.282 | 9 |
-| 22 | T3 | WITHOUT | pass | 28 | 12 | 0.270 | 7 |
-| 23 | T4 | WITH | pass | 30 | 16 | 0.281 | 12 |
-| 24 | T4 | WITHOUT | pass | 17 | 0 | 0.239 | 8 |
+| Run | Task | Arm | Check | Diff lines | Of which test | Of which docs | Cost USD | Turns |
+|---|---|---|---|---|---|---|---|---|
+| 1 | T1 | WITH | pass | 31 | 23 | 0 | 0.616 | 13 |
+| 2 | T1 | WITHOUT | pass | 49 | 39 | 0 | 0.419 | 16 |
+| 3 | T2 | WITH | pass | 16 | 11 | 0 | 0.255 | 7 |
+| 4 | T2 | WITHOUT | pass | 15 | 11 | 0 | 0.235 | 8 |
+| 5 | T3 | WITH | pass | 27 | 14 | 3 | 0.294 | 9 |
+| 6 | T3 | WITHOUT | pass | 41 | 17 | 5 | 0.317 | 9 |
+| 7 | T4 | WITH | pass | 30 | 16 | 0 | 0.289 | 13 |
+| 8 | T4 | WITHOUT | pass | 20 | 0 | 0 | 0.237 | 8 |
+| 9 | T4 | WITH | pass | 32 | 18 | 0 | 0.284 | 13 |
+| 10 | T1 | WITHOUT | pass | 11 | 0 | 0 | 0.281 | 8 |
+| 11 | T1 | WITH | pass | 31 | 23 | 0 | 0.370 | 13 |
+| 12 | T2 | WITHOUT | pass | 15 | 11 | 0 | 0.207 | 6 |
+| 13 | T2 | WITH | pass | 13 | 9 | 0 | 0.276 | 8 |
+| 14 | T3 | WITHOUT | pass | 36 | 17 | 0 | 0.265 | 7 |
+| 15 | T3 | WITH | pass | 29 | 13 | 4 | 0.300 | 9 |
+| 16 | T4 | WITHOUT | pass | 20 | 0 | 0 | 0.229 | 8 |
+| 17 | T1 | WITH | pass | 51 | 32 | 11 | 0.396 | 13 |
+| 18 | T1 | WITHOUT | pass | 73 | 63 | 0 | 0.365 | 11 |
+| 19 | T2 | WITH | pass | 15 | 11 | 0 | 0.282 | 8 |
+| 20 | T2 | WITHOUT | pass | 16 | 12 | 0 | 0.232 | 7 |
+| 21 | T3 | WITH | pass | 27 | 14 | 3 | 0.282 | 9 |
+| 22 | T3 | WITHOUT | pass | 28 | 12 | 0 | 0.270 | 7 |
+| 23 | T4 | WITH | pass | 30 | 16 | 0 | 0.281 | 12 |
+| 24 | T4 | WITHOUT | pass | 17 | 0 | 0 | 0.239 | 8 |
 
 | | WITH | WITHOUT |
 |---|---|---|
@@ -125,8 +125,10 @@ and median cost were higher with ponytail.
 
 Exploratory, outside the rule (claiming either would need a new pre-registered run):
 
-- With ponytail, runs changed fewer lines outside tests and docs (median 9 against 13.5), and added tests
-  in 12/12 runs, against 8/12 without. The larger total diff is the tests.
+- Lines outside tests and docs: median 9 with ponytail against 13.5 without. Counting only
+  tests out (docs left in), the medians are 13 against 13.5, flat: the difference is docs
+  lines, added in 4 WITH runs against 1 WITHOUT run. With ponytail, runs added tests in 12/12 runs, against 8/12
+  without; the larger total diff is the tests.
 - On a one-word prompt, a WITH session cost about three times a WITHOUT one ($0.0087
   against $0.0027). That suggests the injected context is a fixed cost per request
   (Inference).
