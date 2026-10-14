@@ -1,244 +1,155 @@
 # Evaluation — the `ponytail` plugin (DietrichGebert/ponytail)
 
-**Written:** 2026-10-14. **Subject:** ponytail 5.2.0, commit `2961b52`, an external plugin
-unrelated to this repository. **Setting:** a cloud environment set up *to test ponytail*,
-where ponytail is installed at user scope (`~/.claude/settings.json`, marketplace source
-`github: DietrichGebert/ponytail`). This repository was attached to that environment for
-its testing methodology, not because ponytail belongs here. That is not the environment
-this repository is normally developed in. **Why it is filed here:** the evaluation uses
-this repository's testing methodology, and running it exposed a defect in one of this
-repository's skills: headless skill tests silently load user-scope plugins (§3).
+**Written:** 2026-10-14. **Subject:** ponytail 5.2.0 at commit `2961b52`, a third-party "lazy
+senior developer" persona plugin, unrelated to this repository. **Why it is filed here:** it
+is a test run under this repository's methodology (pre-registered decision rules, results
+read from artifacts, a blind verifier). Running it also exposed a defect in this
+repository's `skill-activation-testing` dev recipe, which is fixed separately (PR #256). The
+plugin-scope questions it raised are in issue #257.
 
-Every claim below is tagged GROUNDED (observed directly or confirmed by an independent
-check), UNRESOLVED (the evidence doesn't settle it) or Inference.
+Tags: GROUNDED (observed, or confirmed by an independent check), UNRESOLVED (the evidence
+doesn't settle it), Inference (reasoned, not measured).
 
----
+## Verdict
 
-## 1. What it is
+**Off by default, in every kind of repository; switch it on deliberately.** The security
+risk at this commit is low. In prose and skill repositories it adds little. In a small
+code-repository A/B it saved neither diff size nor cost (§4).
 
-A "lazy senior developer" persona for coding agents: YAGNI, reuse before writing, stdlib
-before dependencies, the smallest complete change, a test for any non-trivial logic, and a
-closing line naming what was skipped. Delivered through three hooks plus six skills
-(`ponytail`, `-review`, `-audit`, `-debt`, `-gain`, `-help`). No MCP server, no agents.
+## 1. What runs
 
-What runs in a Claude Code session (GROUNDED, from the code at `2961b52`):
+Three hooks, plus six on-demand skills. GROUNDED, from the code at `2961b52`:
 
-| Hook | When | What it does |
-|---|---|---|
-| `SessionStart` | startup, resume, clear, compact | Writes a mode flag under `~/.claude`; injects the ruleset (~5.4 KB); runs `git ls-files` and injects a "codebase map" of top-level names; once, injects a nudge telling the model to offer to add a status line to `~/.claude/settings.json` |
-| `SubagentStart` | every subagent spawn | Injects the ruleset (~3 KB) into the subagent while the mode is on |
-| `UserPromptSubmit` | every prompt | Matches `/ponytail …`, "stop ponytail" and "normal mode", and switches the mode flag; otherwise emits nothing |
+- **SessionStart** injects a ruleset of about 5 KB, plus a "codebase map" of top-level names
+  read via `git ls-files`. Once per machine it also tells the model to offer to edit
+  `~/.claude/settings.json` (to add a status line).
+- **SubagentStart** injects about 3 KB of rules into every subagent while the mode is on.
+- **UserPromptSubmit** reads each prompt only to match the mode-switch commands.
 
-`claude plugin details` reports the hooks as "no model context cost". That is wrong in
-practice: the SessionStart and SubagentStart output *is* model context.
+`claude plugin details` reports these hooks as having no model-context cost. In fact the
+SessionStart and SubagentStart output is model context.
 
 ## 2. Security
 
-**Code at `2961b52`: low risk.** From this session's own read of the code; the
-independent blind review is recorded in §6:
+**Low risk at `2961b52`.** This session read the hook code, then a blind reviewer (a
+separate model, given open questions) did the same. Both found:
 
-- No network access anywhere in the hook path.
-- Process execution: `node` (its own map script) and `git ls-files` with constant
-  arguments. No shell, and no external text is interpolated into a command.
-- Writes are confined to `~/.claude` (or `$CLAUDE_CONFIG_DIR`) and `~/.config/ponytail`.
-  The status-line script copy uses temp-file-then-rename, so it cannot write through a
-  planted symlink.
-- The codebase map reads only git-tracked files, skips symlinked files (`lstat`), filters paths
-  through an allowlist regex, and emits only identifier-shaped names within ~2,000 characters.
-  That leaves a **narrow but real** prompt-injection channel from repository content: words
-  glued with `-` or `_` in directory or function names (e.g. a folder named
-  `IMPORTANT-ignore-previous-instructions/`) reach the model, but spaces, newlines and
-  punctuation cannot. Relevant only when opening untrusted repositories.
-- The prompt hook reads every prompt but only regex-matches it. Nothing is stored or sent.
-- `git ls-files` runs with the repository's own `.git/config`. Whether any config-defined
-  helper fires for that command is UNRESOLVED; Claude Code runs git in the same repository
-  anyway, so this adds little exposure of its own.
+- no network access;
+- process execution only of `node` and `git ls-files`, with constant arguments and no shell;
+- writes confined to `~/.claude` and `~/.config/ponytail`;
+- no prompt text echoed or stored.
 
-**The real risk is trust over time.** These hooks run arbitrary Node with your privileges
-on every session start, prompt and subagent spawn, from a single maintainer's repository.
-A review of one commit says nothing about the next one. In the test environment the
-plugin is installed fresh when each container starts (Inference from the install timestamp
-matching container start), so every session effectively runs whatever is at the
-repository's HEAD that day. Whether a marketplace entry can be pinned to a ref or commit
-is UNRESOLVED. `claude plugin marketplace add --help` (2.1.299) shows no such flag.
+The reviewer corrected one claim of this session's. The codebase map is a **narrow but real
+prompt-injection channel**: identifier-shaped words from repository paths and names reach
+the model (e.g. a folder named `IMPORTANT-ignore-previous-instructions/`), though spaces,
+newlines and punctuation cannot. It matters only for untrusted repositories, where
+`PONYTAIL_MAP=0` turns the map off.
 
-**One behavioural flag.** The SessionStart output tells the model to "proactively offer"
-to edit `~/.claude/settings.json`. That is the plugin's legitimate setup path, not an
-attack, but it is still a hook steering the model toward editing user settings. Declining
-is safe: the plugin only nudges once. Accepting has a lasting effect: the hooks refresh
-`~/.claude/ponytail-statusline.sh` from the plugin every session, and once `statusLine`
-points at it, that script runs on every status refresh, outside the hook path, updated
-silently with each plugin version. Benign in 5.2.0 (it prints a badge).
+**The real risk is trust over time.** The hooks run Node with the user's privileges on every
+session, prompt and subagent spawn, from one maintainer's repository. A review of one commit
+says nothing about the next. Whether a marketplace entry can be pinned to a commit is
+UNRESOLVED.
 
-## 3. Interaction with this repo's plugins — the finding that matters
+## 3. Contamination of experiments — the finding that matters
 
-The finding is not specific to ponytail. **Any plugin installed at user scope rides along
-into experiments**, and ponytail is the instance that exposed it, because its hooks inject
-context. Measured with ponytail in the test environment. GROUNDED by the files the
-hooks wrote and by transcripts, not by asking a model:
+The finding is not specific to ponytail: **any plugin enabled at user scope rides along into
+test runs.** Ponytail exposed it because its hooks inject context. GROUNDED; four live runs
+on 2026-10-14, each judged from an artifact rather than from the model:
 
 | Run style | Ponytail present? | Evidence |
 |---|---|---|
-| `claude -p --plugin-dir X` (the skill-testing dev recipe) | **Yes** | its mode file appeared for the run's cwd hash |
-| same, plus `--setting-sources project` | No, and X's own hook still fired | no mode file; X's SessionStart marker written |
-| `claude plugin eval` | No | trace `init.plugins` = plugin under test + built-ins only |
-| Subagents (Agent tool) | **Yes** | "PONYTAIL MODE ACTIVE" in the subagent's own transcript |
+| `claude -p --plugin-dir X` | **yes** | its mode file appeared for the run's working directory |
+| same, plus `--setting-sources project` | no; X's own hook still fired | no mode file; X's marker file written |
+| `claude plugin eval` | no | the trace's plugin list held only the plugin under test plus built-ins |
+| a subagent (Agent tool) | **yes** | its ruleset in the subagent's own transcript |
 
-So:
+The fix for headless runs is PR #256. Subagents and workflow stages inherit whatever the
+driving session loaded, and no flag reaches them, so a session that drives skill tests
+should not run with persona plugins installed (issue #257).
 
-- Headless skill-firing runs pick up whatever user-scope plugins inject, in every arm.
-  Fixed separately (makers-toolkit 0.14.1): the `skill-activation-testing` dev recipe now
-  passes `--setting-sources project`.
-- The probe-battery workflow (`.claude/workflows/probe-battery.js`) runs actor and judge as
-  subagents, so ponytail's ruleset reaches both. That workflow `agent()` goes through the
-  same SubagentStart path is an Inference, not measured. Its CANARY probe checks that
-  plugins loaded, not that nothing extra did, so it would not catch this.
-- Research-toolkit's investigation agents (orchestrator, critic, falsifier) also receive a
-  "smallest version that does the core job" persona. Whether that makes sweeps shallower is
-  UNRESOLVED (unmeasured). It is the direction to worry about, since those agents exist to
-  go wide.
+## 4. Value
 
-## 4. Value in prose and skill repositories (such as this one)
+**Prose and skill repositories (like this one): little.** Its core duplicates
+`no-speculative-structure.md` and `no-drive-by-edits.md`. The codebase map covers code files
+only. It adds context to every session and subagent. The author's benchmark (−53% code, −26%
+cost on coding tasks, correctness unchanged) is UNRESOLVED: it was run by the author and has
+not been replicated.
 
-Short answer: little. The detail below applies to any repository that is mostly prose,
-skills or rules.
+**Code repositories: an A/B screen came out null.** Written before any run: the verdict
+"keep it on in code repositories" stands iff ponytail passes at least as many checks on
+every task **and** lowers median diff size or median cost. VOID if the isolation check fails.
 
-- **Mostly duplicates existing rules.** `no-speculative-structure.md` (YAGNI) and
-  `no-drive-by-edits.md` already carry the core. Ponytail's closing "what I skipped" line
-  matches the operator's own skipped-check discipline.
-- **What it adds:** an ordered reuse ladder (codebase → stdlib → installed dependency →
-  new code), a `shortcut: <limit>, <when to upgrade>` comment convention that
-  `/ponytail-debt` harvests, and on-demand review skills (`/ponytail-review`,
-  `/ponytail-audit`) aimed at over-engineering. The review skills overlap the built-in
-  `/simplify`.
-- **Fit:** this repo is mostly prose and skills. The codebase map covers only code files,
-  and the ruleset speaks to code. For skill and rule work it costs context and adds little.
-- **Minor tension:** "comment only the why, in one line" against
-  `reserve-prose-for-what-code-cannot-say.md` step 3, which says to write the why at
-  whatever length it needs and never abstain.
-- **The author's benchmarks** (−53% code, −26% cost, correctness level at 87/90 against
-  86/90 with no skill) are UNRESOLVED: run by the author, who has a stake, and not
-  independently replicated. The method is disclosed and the harness ships in
-  `benchmarks/agentic/`, so the claims can be checked. What the numbers themselves report
-  is "smaller and cheaper on coding tasks, no correctness gain". They make no claim about
-  research or prose work.
+Design: one private code repository; 4 small real tasks (T1–T4), each with a check that
+runs code; 3 runs per task and arm (24 runs), alternating arms; headless `claude -p` on
+`claude-opus-5-5`; both arms with `--setting-sources project`, WITH adding ponytail via
+`--plugin-dir`; each run in a throwaway worktree of one commit; no shell for either arm.
+Isolation was checked from ponytail's mode file: created in every WITH run, absent after
+every WITHOUT run.
 
-## 5. Recommendations
-
-1. **Keep it out of any environment that runs this repository's plugin tests.** Where it
-   must stay installed, set `PONYTAIL_DEFAULT_MODE=off` and switch it on with `/ponytail`
-   for code-heavy sessions. Reason: little value for prose work, a measured confound in
-   experiments, and a context cost in every session.
-2. **Before any probe battery or skill-firing run in a session where it is on**, type
-   `stop ponytail` (the subagent hook then injects nothing; GROUNDED from the code), or
-   use `claude plugin eval`, which is already isolated.
-3. **Optional scoping:** `PONYTAIL_SUBAGENT_MATCHER` limits subagent injection to agent
-   types matching a regex (e.g. `general-purpose`), which keeps it out of research-toolkit
-   agents.
-4. **Treat updates as new code.** Re-read the `hooks/` diff before accepting a new
-   version, or install from a fork you control.
-5. **Decline the status-line nudge in cloud sessions.** `~/.claude` does not survive the
-   container, so the edit buys nothing.
-
-## 5b. Code repositories — pre-test verdict and test plan
-
-Everything above judges ponytail for *this* repository, which is mostly prose and skills.
-For a repository that is mostly code, the verdict changes. This section was written before
-any test ran.
-
-**Verdict (Inference, untested in such a repository): keep it on, with three guards.**
-The codebase map earns its place where there is real code to reuse. The rules (reuse
-ladder, a test for non-trivial logic, `shortcut:` comments harvested by `/ponytail-debt`)
-fit code work and duplicate nothing there. The only benchmark that exists is the author's,
-and it covers coding tasks.
-
-1. **Untrusted repositories:** set `PONYTAIL_MAP=0`. The map is the one channel through
-   which repository content reaches the model (§2).
-2. **Subagents:** set `PONYTAIL_SUBAGENT_MATCHER=general-purpose`. Coding helpers then get
-   the rules, while review and research agents do not.
-3. **Updates:** read the `hooks/` diff before accepting a version. A code repository holds
-   more for a compromised hook to reach: credentials, CI config, deploy scripts.
-
-Untested interaction: a repository's own `CLAUDE.md` conventions against ponytail's
-always-on rules (e.g. "comment in one line", "smallest change").
-
-**Planned test.** A small A/B replication on one private code repository, run from a
-separate session on that repository. Task content and code stay in that repository. Only
-aggregate results come back here, recorded because they are a skill test run under this
-repository's methodology, not because of ponytail.
-
-Pre-registered design (fixed before any run):
-
-- **Arms:** headless `claude -p` sessions, same model and prompt, both with
-  `--setting-sources project` (§3). WITH loads ponytail through `--plugin-dir`; WITHOUT
-  loads nothing extra. Each run happens in a throwaway worktree of the same commit.
-- **Tasks:** 4 real tasks chosen and written down in that repository before any run, each
-  with a check that runs code (an existing or newly written test). 3 runs per task and arm.
-- **Endpoints, all read from artifacts:** check pass/fail per run; lines in `git diff`;
-  cost and turns from the `--output-format json` result; plus confirmation, from each run's
-  output, that WITH carried ponytail's ruleset and WITHOUT did not.
-- **Decision rule:** keep the code-repository verdict above iff WITH passes at least as many
-  checks as WITHOUT on every task **and** the median diff size or the median cost is lower
-  in WITH. A regression on any task, or no size or cost gain, means the verdict does not
-  stand on this evidence. VOID if the arm-isolation check fails.
-- **Limit named in advance:** 4 × 3 × 2 runs on one repository is a screen, not a
-  measurement. A pass means "no harm seen, a gain seen", not a general effect size.
-
-### Result (2026-10-14): null on the pre-registered rule
-
-The design ran as written: 24 runs, no deviations, model `claude-opus-5-5`, ponytail 5.2.0
-at `2961b52`. The pre-registration was committed before any run (its commit time precedes the
-results commit, and the summed run durations fit between the two).
+| Run | Task | Arm | Check | Diff lines | Of which test | Cost USD | Turns |
+|---|---|---|---|---|---|---|---|
+| 1 | T1 | WITH | pass | 31 | 23 | 0.616 | 13 |
+| 2 | T1 | WITHOUT | pass | 49 | 39 | 0.419 | 16 |
+| 3 | T2 | WITH | pass | 16 | 11 | 0.255 | 7 |
+| 4 | T2 | WITHOUT | pass | 15 | 11 | 0.235 | 8 |
+| 5 | T3 | WITH | pass | 27 | 14 | 0.294 | 9 |
+| 6 | T3 | WITHOUT | pass | 41 | 17 | 0.317 | 9 |
+| 7 | T4 | WITH | pass | 30 | 16 | 0.289 | 13 |
+| 8 | T4 | WITHOUT | pass | 20 | 0 | 0.237 | 8 |
+| 9 | T4 | WITH | pass | 32 | 18 | 0.284 | 13 |
+| 10 | T1 | WITHOUT | pass | 11 | 0 | 0.281 | 8 |
+| 11 | T1 | WITH | pass | 31 | 23 | 0.370 | 13 |
+| 12 | T2 | WITHOUT | pass | 15 | 11 | 0.207 | 6 |
+| 13 | T2 | WITH | pass | 13 | 9 | 0.276 | 8 |
+| 14 | T3 | WITHOUT | pass | 36 | 17 | 0.265 | 7 |
+| 15 | T3 | WITH | pass | 29 | 13 | 0.300 | 9 |
+| 16 | T4 | WITHOUT | pass | 20 | 0 | 0.229 | 8 |
+| 17 | T1 | WITH | pass | 51 | 32 | 0.396 | 13 |
+| 18 | T1 | WITHOUT | pass | 73 | 63 | 0.365 | 11 |
+| 19 | T2 | WITH | pass | 15 | 11 | 0.282 | 8 |
+| 20 | T2 | WITHOUT | pass | 16 | 12 | 0.232 | 7 |
+| 21 | T3 | WITH | pass | 27 | 14 | 0.282 | 9 |
+| 22 | T3 | WITHOUT | pass | 28 | 12 | 0.270 | 7 |
+| 23 | T4 | WITH | pass | 30 | 16 | 0.281 | 12 |
+| 24 | T4 | WITHOUT | pass | 17 | 0 | 0.239 | 8 |
 
 | | WITH | WITHOUT |
 |---|---|---|
-| Checks passed | 12/12 (T1–T4 each 3/3) | 12/12 (T1–T4 each 3/3) |
+| Checks passed | 12/12 | 12/12 |
 | Median diff lines | 29.5 | 20.0 |
-| Median cost (USD) | 0.2866 | 0.2516 |
+| Median cost (USD) | 0.287 | 0.252 |
 | Median turns | 10.5 | 8.0 |
-| Arm isolation | 12/12 pass | 12/12 pass |
 
-**Decision: the code-repository verdict above does not stand on this evidence.** There was
-no regression, but neither median diff size nor median cost was lower with ponytail. Both
-were higher. So the recommendation stays what §5 says for every environment: off by default,
-switched on deliberately.
+**Decision: the verdict does not stand.** There was no regression, but both median diff size
+and median cost were higher with ponytail.
 
-Outside the rule, exploratory only. These do not change the decision; claiming them would
-need a new pre-registered run:
+Exploratory, outside the rule (claiming either would need a new pre-registered run):
 
-- With ponytail, runs changed fewer non-test, non-doc lines (median 9 against 13.5) and
-  added test lines in 12/12 runs, against 8/12 without. The larger total diff is the tests.
-  (The private session's own summary said 9/12. Its per-run file shows 8/12; this record
-  uses the file.)
-- On a trivial prompt, a WITH session cost about three times a WITHOUT one ($0.0087
-  against $0.0027). That points to the injected context as a fixed cost per request
-  (Inference). On tasks this small, the fixed cost outweighs any saving.
+- With ponytail, runs changed fewer lines outside tests and docs (median 9 against 13.5), and added tests
+  in 12/12 runs, against 8/12 without. The larger total diff is the tests.
+- On a one-word prompt, a WITH session cost about three times a WITHOUT one ($0.0087
+  against $0.0027). That suggests the injected context is a fixed cost per request
+  (Inference).
 
-What it cannot show: the checks did not discriminate (every run passed); the tasks were small
-(the reference fix was 19 lines); neither arm had a shell; no one judged diff quality; one
-repository, one model, three runs per cell.
+What the screen cannot show: every run passed, so the checks did not discriminate; the tasks
+were small; nobody judged diff quality; and it covered one repository, one model and three
+runs per cell.
 
-Verification of this record: the aggregates were recomputed from the committed per-run file,
-not taken from the session's summary. The run script was read to confirm both arms used
-`--setting-sources project` and that the isolation check reads the hook's marker file.
+The run data came from a separate session on that repository. Its aggregates were recomputed
+here from the per-run rows rather than taken from that session's summary. That caught one
+miscount (9/12 for 8/12) before this record was written.
 
-## 6. Verification record
+## 5. If it stays installed
 
-- Hook code: read in full by this session, then given to a blind reviewer (separate model,
-  open questions, no conclusions supplied). Result: agrees on every
-  point of the low-risk read (no network, no shell, constant process arguments, writes
-  confined to the config dirs, no prompt text echoed). It corrected one claim: this
-  session first called injection through the codebase map "near zero"; the reviewer showed
-  it is a real, low-bandwidth channel (now stated in §2). Further items it raised, each
-  needing write access the attacker would already have or unverified Claude Code behaviour:
-  a crafted git index plus a symlinked intermediate directory could make the map read
-  identifier names from outside the project; the flag file's raw content is echoed
-  unvalidated; whether a project's settings `env` can redirect `CLAUDE_CONFIG_DIR` for
-  hooks is untested.
-- Contamination table: four live runs on 2026-10-14, Claude Code 2.1.299, haiku. Each is
-  judged by an artifact: a mode file, a hook marker file, an eval trace, a subagent
-  transcript.
-- **Not checked:** behavioural effects of the persona on research or probe outcomes (no A/B
-  was run); ponytail's other-harness adapters (OpenCode, Pi, Hermes, Cursor and the rest
-  never run under Claude Code); whether ref pinning is possible; whether workflow `agent()`
-  calls trigger SubagentStart.
+- `PONYTAIL_DEFAULT_MODE=off`; turn it on with `/ponytail` for code-heavy sessions.
+- Type `stop ponytail` before any probe battery or skill-firing run. The subagent hook then
+  injects nothing (GROUNDED, from the code).
+- `PONYTAIL_SUBAGENT_MATCHER=general-purpose` keeps it out of review and research agents.
+- `PONYTAIL_MAP=0` in untrusted repositories.
+- Read the `hooks/` diff before accepting a new version.
+
+## Not checked
+
+Behavioural effects of the persona on research or probe outcomes; ponytail's adapters for
+other agent harnesses; whether workflow `agent()` stages receive the SubagentStart
+injection (likely, unmeasured); diff quality in the A/B.
