@@ -130,6 +130,50 @@ So:
 5. **Decline the status-line nudge in cloud sessions.** `~/.claude` does not survive the
    container, so the edit buys nothing.
 
+## 5b. Code repositories — pre-test verdict and test plan
+
+Everything above judges ponytail for *this* repository, which is mostly prose and skills.
+For a repository that is mostly code, the verdict changes. This section was written before
+any test ran.
+
+**Verdict (Inference, untested in such a repository): keep it on, with three guards.**
+The codebase map earns its place where there is real code to reuse. The rules (reuse
+ladder, a test for non-trivial logic, `shortcut:` comments harvested by `/ponytail-debt`)
+fit code work and duplicate nothing there. The only benchmark that exists is the author's,
+and it covers coding tasks.
+
+1. **Untrusted repositories:** set `PONYTAIL_MAP=0`. The map is the one channel through
+   which repository content reaches the model (§2).
+2. **Subagents:** set `PONYTAIL_SUBAGENT_MATCHER=general-purpose`. Coding helpers then get
+   the rules, while review and research agents do not.
+3. **Updates:** read the `hooks/` diff before accepting a version. A code repository holds
+   more for a compromised hook to reach: credentials, CI config, deploy scripts.
+
+Untested interaction: a repository's own `CLAUDE.md` conventions against ponytail's
+always-on rules (e.g. "comment in one line", "smallest change").
+
+**Planned test.** A small A/B replication on one private code repository, run from a
+separate session on that repository. Task content and code stay in that repository. Only
+aggregate results come back here, recorded because they are a skill test run under this
+repository's methodology, not because of ponytail.
+
+Pre-registered design (fixed before any run):
+
+- **Arms:** headless `claude -p` sessions, same model and prompt, both with
+  `--setting-sources project` (§3). WITH loads ponytail through `--plugin-dir`; WITHOUT
+  loads nothing extra. Each run happens in a throwaway worktree of the same commit.
+- **Tasks:** 4 real tasks chosen and written down in that repository before any run, each
+  with a check that runs code (an existing or newly written test). 3 runs per task and arm.
+- **Endpoints, all read from artifacts:** check pass/fail per run; lines in `git diff`;
+  cost and turns from the `--output-format json` result; plus confirmation, from each run's
+  output, that WITH carried ponytail's ruleset and WITHOUT did not.
+- **Decision rule:** keep the code-repository verdict above iff WITH passes at least as many
+  checks as WITHOUT on every task **and** the median diff size or the median cost is lower
+  in WITH. A regression on any task, or no size or cost gain, means the verdict does not
+  stand on this evidence. VOID if the arm-isolation check fails.
+- **Limit named in advance:** 4 × 3 × 2 runs on one repository is a screen, not a
+  measurement. A pass means "no harm seen, a gain seen", not a general effect size.
+
 ## 6. Verification record
 
 - Hook code: read in full by this session, then given to a blind reviewer (separate model,
