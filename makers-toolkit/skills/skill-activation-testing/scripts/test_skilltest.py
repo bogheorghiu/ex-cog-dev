@@ -117,6 +117,30 @@ d = copy.deepcopy(DESIGN); d["ship_rule"] = [["NEW.recall.oblique", "=>", 0.6]]
 check("a malformed ship rule is rejected", any("ship_rule" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["target"] = None
 check("a non-string target is a reported error, not a crash", any("target" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [5]
+try:
+    sib_errs = errs(d)
+except TypeError:
+    sib_errs = None
+check("a non-string sibling is a reported error, not a crash",
+      sib_errs is not None and any("siblings" in e for e in sib_errs))
+d = copy.deepcopy(DESIGN); d["arm_targets"] = {"OLD": T, "NEW": 5}
+check("a non-string arm target is a reported error", any("arm_targets" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"].append("oops")
+try:
+    case_errs = errs(d)
+except AttributeError:
+    case_errs = None
+check("a non-object case is a reported error, not a crash",
+      case_errs is not None and any("must be an object" in e for e in case_errs))
+with tempfile.TemporaryDirectory() as _t:
+    _bad = Path(_t) / "bad.json"
+    _bad.write_text("{not json", encoding="utf-8")
+    _arr = Path(_t) / "arr.json"
+    _arr.write_text("[]", encoding="utf-8")
+    check("an unreadable design exits 2, not with a traceback",
+          st.main(["validate", str(Path(_t) / "missing.json")]) == 2
+          and st.main(["validate", str(_bad)]) == 2 and st.main(["validate", str(_arr)]) == 2)
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [T]
 check("a sibling list containing the target is rejected", any("distinct" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [SIB, SIB]
