@@ -39,11 +39,16 @@ independent blind review is recorded in §6:
 - Writes are confined to `~/.claude` (or `$CLAUDE_CONFIG_DIR`) and `~/.config/ponytail`.
   The status-line script copy uses temp-file-then-rename, so it cannot write through a
   planted symlink.
-- The codebase map reads only git-tracked files, skips symlinks (`lstat`), filters paths
-  through an allowlist regex, and emits only identifier-shaped names. Repository content
-  therefore reaches the model only as identifiers, which bounds prompt injection through it
-  to near zero.
+- The codebase map reads only git-tracked files, skips symlinked files (`lstat`), filters paths
+  through an allowlist regex, and emits only identifier-shaped names within ~2,000 characters.
+  That leaves a **narrow but real** prompt-injection channel from repository content: words
+  glued with `-` or `_` in directory or function names (e.g. a folder named
+  `IMPORTANT-ignore-previous-instructions/`) reach the model, but spaces, newlines and
+  punctuation cannot. Relevant only when opening untrusted repositories.
 - The prompt hook reads every prompt but only regex-matches it. Nothing is stored or sent.
+- `git ls-files` runs with the repository's own `.git/config`. Whether any config-defined
+  helper fires for that command is UNRESOLVED; Claude Code runs git in the same repository
+  anyway, so this adds little exposure of its own.
 
 **The real risk is trust over time.** These hooks run arbitrary Node with your privileges
 on every session start, prompt and subagent spawn, from a single maintainer's repository.
@@ -56,7 +61,10 @@ is UNRESOLVED. `claude plugin marketplace add --help` (2.1.299) shows no such fl
 **One behavioural flag.** The SessionStart output tells the model to "proactively offer"
 to edit `~/.claude/settings.json`. That is the plugin's legitimate setup path, not an
 attack, but it is still a hook steering the model toward editing user settings. Declining
-is safe: the plugin only nudges once.
+is safe: the plugin only nudges once. Accepting has a lasting effect: the hooks refresh
+`~/.claude/ponytail-statusline.sh` from the plugin every session, and once `statusLine`
+points at it, that script runs on every status refresh, outside the hook path, updated
+silently with each plugin version. Benign in 5.2.0 (it prints a badge).
 
 ## 3. Interaction with this repo — the finding that matters
 
@@ -125,7 +133,16 @@ So:
 ## 6. Verification record
 
 - Hook code: read in full by this session, then given to a blind reviewer (separate model,
-  open questions, no conclusions supplied). Result: pending at first commit.
+  open questions, no conclusions supplied). Result: agrees on every
+  point of the low-risk read (no network, no shell, constant process arguments, writes
+  confined to the config dirs, no prompt text echoed). It corrected one claim: this
+  session first called injection through the codebase map "near zero"; the reviewer showed
+  it is a real, low-bandwidth channel (now stated in §2). Further items it raised, each
+  needing write access the attacker would already have or unverified Claude Code behaviour:
+  a crafted git index plus a symlinked intermediate directory could make the map read
+  identifier names from outside the project; the flag file's raw content is echoed
+  unvalidated; whether a project's settings `env` can redirect `CLAUDE_CONFIG_DIR` for
+  hooks is untested.
 - Contamination table: four live runs on 2026-10-14, Claude Code 2.1.299, haiku. Each is
   judged by an artifact: a mode file, a hook marker file, an eval trace, a subagent
   transcript.
