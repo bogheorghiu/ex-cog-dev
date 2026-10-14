@@ -184,6 +184,44 @@ Pre-registered design (fixed before any run):
 - **Limit named in advance:** 4 × 3 × 2 runs on one repository is a screen, not a
   measurement. A pass means "no harm seen, a gain seen", not a general effect size.
 
+### Result (2026-10-14): null on the pre-registered rule
+
+The design ran as written: 24 runs, no deviations, model `claude-opus-5-5`, ponytail 5.2.0
+at `2961b52`. The pre-registration was committed before any run (its commit time precedes the
+results commit, and the summed run durations fit between the two).
+
+| | WITH | WITHOUT |
+|---|---|---|
+| Checks passed | 12/12 (T1–T4 each 3/3) | 12/12 (T1–T4 each 3/3) |
+| Median diff lines | 29.5 | 20.0 |
+| Median cost (USD) | 0.2866 | 0.2516 |
+| Median turns | 10.5 | 8.0 |
+| Arm isolation | 12/12 pass | 12/12 pass |
+
+**Decision: the code-repository verdict above does not stand on this evidence.** There was
+no regression, but neither median diff size nor median cost was lower with ponytail. Both
+were higher. So the recommendation stays what §5 says for every environment: off by default,
+switched on deliberately.
+
+Outside the rule, exploratory only. These do not change the decision; claiming them would
+need a new pre-registered run:
+
+- With ponytail, runs changed fewer non-test, non-doc lines (median 9 against 13.5) and
+  added test lines in 12/12 runs, against 8/12 without. The larger total diff is the tests.
+  (The private session's own summary said 9/12. Its per-run file shows 8/12; this record
+  uses the file.)
+- On a trivial prompt, a WITH session cost about three times a WITHOUT one ($0.0087
+  against $0.0027). That points to the injected context as a fixed cost per request
+  (Inference). On tasks this small, the fixed cost outweighs any saving.
+
+What it cannot show: the checks did not discriminate (every run passed); the tasks were small
+(the reference fix was 19 lines); neither arm had a shell; no one judged diff quality; one
+repository, one model, three runs per cell.
+
+Verification of this record: the aggregates were recomputed from the committed per-run file,
+not taken from the session's summary. The run script was read to confirm both arms used
+`--setting-sources project` and that the isolation check reads the hook's marker file.
+
 ## 6. Verification record
 
 - Hook code: read in full by this session, then given to a blind reviewer (separate model,
