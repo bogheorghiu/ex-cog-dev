@@ -146,7 +146,11 @@ miscount (9/12 for 8/12) before this record was written.
 - `PONYTAIL_DEFAULT_MODE=off`; turn it on with `/ponytail` for code-heavy sessions.
 - Type `stop ponytail` before any probe battery or skill-firing run. The subagent hook then
   injects nothing (GROUNDED, from the code).
-- `PONYTAIL_SUBAGENT_MATCHER=general-purpose` keeps it out of review and research agents.
+- `PONYTAIL_SUBAGENT_MATCHER` names the agent types that receive the rules (an unanchored,
+  case-insensitive regex; a subagent whose type is missing still gets them). Set it to the
+  code-writing types you use. Review and research work delegated as `general-purpose`, the
+  default type, keeps getting the rules unless the regex leaves that type out (GROUNDED, from
+  the code).
 - `PONYTAIL_MAP=0` in untrusted repositories.
 - Read the `hooks/` diff before accepting a new version.
 
