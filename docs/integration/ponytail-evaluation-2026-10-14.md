@@ -1,9 +1,13 @@
 # Evaluation — the `ponytail` plugin (DietrichGebert/ponytail)
 
-**Written:** 2026-10-14. **Subject:** ponytail 5.2.0, commit `2961b52`, as installed at user
-scope in this repo's cloud environment (`~/.claude/settings.json`, marketplace source
-`github: DietrichGebert/ponytail`). **Decision it serves:** whether to keep ponytail
-installed where this repo is developed, and how.
+**Written:** 2026-10-14. **Subject:** ponytail 5.2.0, commit `2961b52`, an external plugin
+unrelated to this repository. **Setting:** a cloud environment set up *to test ponytail*,
+where ponytail is installed at user scope (`~/.claude/settings.json`, marketplace source
+`github: DietrichGebert/ponytail`). This repository was attached to that environment for
+its testing methodology, not because ponytail belongs here. That is not the environment
+this repository is normally developed in. **Why it is filed here:** the evaluation uses
+this repository's testing methodology, and running it exposed a defect in one of this
+repository's skills: headless skill tests silently load user-scope plugins (§3).
 
 Every claim below is tagged GROUNDED (observed directly or confirmed by an independent
 check), UNRESOLVED (the evidence doesn't settle it) or Inference.
@@ -52,7 +56,7 @@ independent blind review is recorded in §6:
 
 **The real risk is trust over time.** These hooks run arbitrary Node with your privileges
 on every session start, prompt and subagent spawn, from a single maintainer's repository.
-A review of one commit says nothing about the next one. In this cloud environment the
+A review of one commit says nothing about the next one. In the test environment the
 plugin is installed fresh when each container starts (Inference from the install timestamp
 matching container start), so every session effectively runs whatever is at the
 repository's HEAD that day. Whether a marketplace entry can be pinned to a ref or commit
@@ -66,9 +70,11 @@ is safe: the plugin only nudges once. Accepting has a lasting effect: the hooks 
 points at it, that script runs on every status refresh, outside the hook path, updated
 silently with each plugin version. Benign in 5.2.0 (it prints a badge).
 
-## 3. Interaction with this repo — the finding that matters
+## 3. Interaction with this repo's plugins — the finding that matters
 
-**Ponytail contaminates experiments run in this environment.** GROUNDED by the files the
+The finding is not specific to ponytail. **Any plugin installed at user scope rides along
+into experiments**, and ponytail is the instance that exposed it, because its hooks inject
+context. Measured with ponytail in the test environment. GROUNDED by the files the
 hooks wrote and by transcripts, not by asking a model:
 
 | Run style | Ponytail present? | Evidence |
@@ -80,8 +86,9 @@ hooks wrote and by transcripts, not by asking a model:
 
 So:
 
-- Headless skill-firing runs pick up an extra persona in every arm. Fixed in this PR: the
-  `skill-activation-testing` dev recipe now passes `--setting-sources project`.
+- Headless skill-firing runs pick up whatever user-scope plugins inject, in every arm.
+  Fixed separately (makers-toolkit 0.14.1): the `skill-activation-testing` dev recipe now
+  passes `--setting-sources project`.
 - The probe-battery workflow (`.claude/workflows/probe-battery.js`) runs actor and judge as
   subagents, so ponytail's ruleset reaches both. That workflow `agent()` goes through the
   same SubagentStart path is an Inference, not measured. Its CANARY probe checks that
@@ -91,7 +98,10 @@ So:
   UNRESOLVED (unmeasured). It is the direction to worry about, since those agents exist to
   go wide.
 
-## 4. Value for this repo
+## 4. Value in prose and skill repositories (such as this one)
+
+Short answer: little. The detail below applies to any repository that is mostly prose,
+skills or rules.
 
 - **Mostly duplicates existing rules.** `no-speculative-structure.md` (YAGNI) and
   `no-drive-by-edits.md` already carry the core. Ponytail's closing "what I skipped" line
@@ -115,10 +125,10 @@ So:
 
 ## 5. Recommendations
 
-1. **Don't run it always-on in this environment.** If it stays installed, set
-   `PONYTAIL_DEFAULT_MODE=off` in the environment and switch it on with `/ponytail` for
-   code-heavy sessions (the MCP servers, `.github/scripts`). Reason: low marginal value
-   here, a measured experiment confound, and per-session context cost.
+1. **Keep it out of any environment that runs this repository's plugin tests.** Where it
+   must stay installed, set `PONYTAIL_DEFAULT_MODE=off` and switch it on with `/ponytail`
+   for code-heavy sessions. Reason: little value for prose work, a measured confound in
+   experiments, and a context cost in every session.
 2. **Before any probe battery or skill-firing run in a session where it is on**, type
    `stop ponytail` (the subagent hook then injects nothing; GROUNDED from the code), or
    use `claude plugin eval`, which is already isolated.
