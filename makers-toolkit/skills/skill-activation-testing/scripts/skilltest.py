@@ -105,7 +105,8 @@ def validate(design):
             errors.append(f"{where}: id must match {ID_RE.pattern}")
         elif cid in seen:
             errors.append(f"{where}: duplicate id {cid}")
-        seen.add(cid)
+        else:
+            seen.add(cid)
         cls = c.get("class")
         if cls not in CLASSES:
             errors.append(f"{where}: class must be one of {CLASSES}")
@@ -148,7 +149,7 @@ def validate(design):
             warnings.append(f"{where}: non-ASCII prompt - fine in YAML, but a tracked .json "
                             "design must be ASCII-only (CLAUDE.md); keep the design file untracked or escape-free")
 
-    classes = {c.get("class") for c in cases if isinstance(c, dict)}
+    classes = {c.get("class") for c in cases if isinstance(c, dict) and c.get("class") in CLASSES}
     if "oblique" not in classes:
         warnings.append("no oblique cases: the run cannot discriminate (discipline #3 - ceiling "
                         "first, discriminate second)")
@@ -238,8 +239,9 @@ def emit(design, design_hash, out_dir, root=None, arm=None):
     design["plugins"] is relative to it; case.yaml wants paths relative to the case dir."""
     out = Path(out_dir).resolve()
     if out.exists() and any(out.iterdir()):
-        raise SystemExit(f"error: {out} is not empty - stale case dirs from another design would "
-                         "run too and nothing would flag them; emit into a fresh directory")
+        print(f"error: {out} is not empty - stale case dirs from another design would "
+              "run too and nothing would flag them; emit into a fresh directory", file=sys.stderr)
+        raise SystemExit(2)
     root = Path(root).resolve() if root else out.parent
     for case in design["cases"]:
         d = out / case["id"]

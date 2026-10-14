@@ -134,7 +134,8 @@ The output, by level:
 The exit code is 0 for SHIP, 1 for NO-SHIP and 3 for VOID, so CI can gate on it. It is 2
 for unusable input (a design that cannot be read or fails validation, or a usage error),
 and 4 when a valid run has no ship rule to decide with. Neither passes a gate that treats
-any non-zero code as failure.
+any non-zero code as failure. An uncaught crash also exits 1, so read the printed verdict
+before treating 1 as NO-SHIP.
 
 **Before reporting any silence as a miss**, re-run a sample of the silent should-fire cases
 with `--keep-temp` and read the traces. Silence has three readings: a routing choice, a

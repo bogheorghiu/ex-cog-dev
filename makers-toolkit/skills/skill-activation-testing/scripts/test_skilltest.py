@@ -141,6 +141,14 @@ with tempfile.TemporaryDirectory() as _t:
     check("an unreadable design exits 2, not with a traceback",
           st.main(["validate", str(Path(_t) / "missing.json")]) == 2
           and st.main(["validate", str(_bad)]) == 2 and st.main(["validate", str(_arr)]) == 2)
+d = copy.deepcopy(DESIGN); d["cases"][0]["class"] = ["clear"]; d["cases"][1]["id"] = ["C1"]
+try:
+    case_errs = errs(d)
+except TypeError:
+    case_errs = None
+check("a list-valued class or id is a reported error, not a crash",
+      case_errs is not None and any("class must be" in e for e in case_errs)
+      and any("id must match" in e for e in case_errs))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [T]
 check("a sibling list containing the target is rejected", any("distinct" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [SIB, SIB]
@@ -168,6 +176,13 @@ with tempfile.TemporaryDirectory() as tmp:
           and 'name: "expect-winner"' not in clear)
     check("emit refuses a non-empty directory (stale cases would run unflagged)",
           raises_exit(lambda: st.emit(DESIGN, "abc123", tmp)))
+    try:
+        st.emit(DESIGN, "abc123", tmp)
+        refusal = None
+    except SystemExit as exc:
+        refusal = exc.code
+    check("emit's non-empty-directory refusal exits 2 like any usage error, not 1 (NO-SHIP)",
+          refusal == 2)
     check("indicator graders carry a negligible weight so they barely move plugin eval's own score",
           clear.count(f"weight: {st.INDICATOR_WEIGHT}") == 3 and '"fired:*"' in clear)
     try:
