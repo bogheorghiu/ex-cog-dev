@@ -101,7 +101,7 @@ def validate(design):
             errors.append(f"{where}: must be an object")
             continue
         cid = c.get("id", "")
-        if not ID_RE.match(str(cid)):
+        if not (isinstance(cid, str) and ID_RE.match(cid)):
             errors.append(f"{where}: id must match {ID_RE.pattern}")
         elif cid in seen:
             errors.append(f"{where}: duplicate id {cid}")

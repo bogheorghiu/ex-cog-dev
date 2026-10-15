@@ -149,6 +149,10 @@ except TypeError:
 check("a list-valued class or id is a reported error, not a crash",
       case_errs is not None and any("class must be" in e for e in case_errs)
       and any("id must match" in e for e in case_errs))
+for bad_id in (5, True, None):
+    d = copy.deepcopy(DESIGN); d["cases"][0]["id"] = bad_id
+    check(f"a non-string id ({bad_id!r}) is rejected, not passed on for emit to crash on",
+          any("id must match" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [T]
 check("a sibling list containing the target is rejected", any("distinct" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [SIB, SIB]
