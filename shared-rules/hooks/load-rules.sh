@@ -16,7 +16,8 @@ SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 # the notice showed, not "latest", so a push landing after the notice can't ride
 # along on an approval given for something else.
 if [ "${1:-}" = approve ]; then
-    if [ -n "${2:-}" ] && git -C "$CACHE" reset -q --hard "$2" 2>/dev/null; then
+    # A full sha only: names like FETCH_HEAD move, and would let a later push ride along.
+    if [[ "${2:-}" =~ ^[0-9a-f]{40}$ ]] && git -C "$CACHE" reset -q --hard "$2" 2>/dev/null; then
         echo "[shared-rules] Approved $2; these rules load from the next session on."
         exit 0
     fi
@@ -38,7 +39,7 @@ git_net() {
     "${t[@]}" git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=10 "$@" >/dev/null 2>&1
 }
 
-# A cache cloned from a different URL (SHARED_RULES_REPO changed) is not this repo.
+# A cache cloned from a different URL (the rules_repo setting changed) is not this repo.
 if [ -d "$CACHE/.git" ] && [ "$(git -C "$CACHE" remote get-url origin 2>/dev/null)" != "$REPO_URL" ]; then
     rm -rf "$CACHE"
 fi
@@ -52,8 +53,11 @@ if [ -d "$CACHE/.git" ]; then
     if ! git_net -C "$CACHE" fetch --depth 1 -q origin HEAD; then
         stale=1
     elif [ "$(git -C "$CACHE" rev-parse FETCH_HEAD)" != "$(git -C "$CACHE" rev-parse HEAD)" ]; then
-        # Nothing to ask about when no rule changed (a README edit, say).
-        if [ "$MODE" = auto ] || [ -z "$(git -C "$CACHE" diff --name-only HEAD FETCH_HEAD -- rules/)" ]; then
+        # Nothing to ask about when no loaded rule changed (a README edit, say). A
+        # failed diff must not read as "no change": ask mode fails toward consent.
+        if ! changed=$(git -C "$CACHE" diff --name-only HEAD FETCH_HEAD -- 'rules/*.md' 2>/dev/null); then
+            stale=1
+        elif [ "$MODE" = auto ] || [ -z "$changed" ]; then
             git -C "$CACHE" reset -q --hard FETCH_HEAD >/dev/null 2>&1 || stale=1
         else
             pending=$(git -C "$CACHE" rev-parse FETCH_HEAD)
@@ -100,11 +104,11 @@ if [ -n "$pending" ]; then
     echo "=== rule updates awaiting the user's approval ==="
     echo "Update mode is 'ask'. The rules below are the approved version $(git -C "$CACHE" rev-parse --short HEAD)."
     echo "The source has a newer version $pending changing:"
-    git -C "$CACHE" diff --name-status HEAD "$pending" -- rules/ | sed 's/^/    /'
+    git -C "$CACHE" diff --name-status HEAD "$pending" -- 'rules/*.md' | sed 's/^/    /'
     echo "Tell the user about this pending update before other work. To show them the changes:"
-    echo "    git -C '$CACHE' diff HEAD $pending -- rules/"
+    echo "    git -C $(printf %q "$CACHE") diff HEAD $pending -- 'rules/*.md'"
     echo "Only if the user explicitly approves, run:"
-    echo "    CLAUDE_PLUGIN_DATA='${CLAUDE_PLUGIN_DATA:-}' bash '$SELF' approve $pending"
+    echo "    CLAUDE_PLUGIN_DATA=$(printf %q "${CLAUDE_PLUGIN_DATA:-}") bash $(printf %q "$SELF") approve $pending"
 fi
 for f in "${files[@]}"; do
     if frontmatter "$f" | grep -q '^paths:'; then

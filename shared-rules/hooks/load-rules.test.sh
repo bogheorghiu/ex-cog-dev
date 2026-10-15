@@ -140,10 +140,43 @@ check "ask: a change outside rules/ asks nothing" "$([ "$(has "$out" 'awaiting t
 check "ask: a change outside rules/ advances the cache" "$([ "$(git -C "$H6/data/claude-rules" rev-parse HEAD)" = "$(git -C "$SRC4" rev-parse HEAD)" ] && echo 1 || echo 0)"
 env -i HOME="$H6" PATH="$PATH" CLAUDE_PLUGIN_DATA="$H6/data" bash "$HOOK" approve 0000000000000000000000000000000000000000 >/dev/null 2>&1; rc=$?
 check "ask: approving an unknown version fails" "$([ $rc -ne 0 ] && echo 1 || echo 0)"
+env -i HOME="$H6" PATH="$PATH" CLAUDE_PLUGIN_DATA="$H6/data" bash "$HOOK" approve FETCH_HEAD >/dev/null 2>&1; rc=$?
+check "ask: approve refuses a moving name like FETCH_HEAD" "$([ $rc -ne 0 ] && echo 1 || echo 0)"
+printf 'x' > "$SRC4/rules/diagram.png"
+git -C "$SRC4" add -A && git -C "$SRC4" commit -qm image
+out=$(run_hook "$H6" "file://$SRC4" "")
+check "ask: a non-.md file under rules/ asks nothing" "$([ "$(has "$out" 'awaiting the user')" = 0 ] && echo 1 || echo 0)"
 printf '# Later\nLATER_BODY\n' > "$SRC4/rules/later.md"
 git -C "$SRC4" add -A && git -C "$SRC4" commit -qm later
 out=$(run_hook "$H6" "file://$SRC4" "sometimes")
 check "unrecognised mode behaves as ask" "$([ "$(has "$out" LATER_BODY)" = 0 ] && [ "$(has "$out" 'awaiting the user')" = 1 ] && echo 1 || echo 0)"
+
+# --- Without CLAUDE_PLUGIN_DATA (cache under ~/.cache), the printed approve command still works ---
+SRC5="$TMP_DIR/src5"; mkdir -p "$SRC5/rules"
+printf '# One\nONE_BODY\n' > "$SRC5/rules/one.md"
+git -C "$SRC5" init -q && git -C "$SRC5" add -A && git -C "$SRC5" commit -qm init
+H7="$TMP_DIR/h7"; mkdir -p "$H7"
+nodata() { env -i HOME="$H7" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
+    CLAUDE_PLUGIN_OPTION_RULES_REPO="file://$SRC5" bash "$HOOK" </dev/null; }
+nodata >/dev/null
+printf '# Two\nTWO_BODY\n' > "$SRC5/rules/two.md"
+git -C "$SRC5" add -A && git -C "$SRC5" commit -qm two
+out=$(nodata)
+approve=$(printf '%s\n' "$out" | grep -E '^ +CLAUDE_PLUGIN_DATA=.* approve ' | sed 's/^ *//')
+env -i HOME="$H7" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null bash -c "$approve" >/dev/null 2>&1; rc=$?
+check "no plugin data dir: printed approve command works" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
+check "no plugin data dir: approved rule then loads" "$(has "$(nodata)" TWO_BODY)"
+
+# --- A data path containing a quote still yields a working approve command ---
+H8="$TMP_DIR/h8"; D8="$TMP_DIR/d a'ta"; mkdir -p "$H8"
+quoted() { env -i HOME="$H8" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
+    CLAUDE_PLUGIN_DATA="$D8" CLAUDE_PLUGIN_OPTION_RULES_REPO="file://$SRC5" bash "$HOOK" </dev/null; }
+quoted >/dev/null
+printf '# Three\nTHREE_BODY\n' > "$SRC5/rules/three.md"
+git -C "$SRC5" add -A && git -C "$SRC5" commit -qm three
+approve=$(quoted | grep -E '^ +CLAUDE_PLUGIN_DATA=.* approve ' | sed 's/^ *//')
+env -i HOME="$H8" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null bash -c "$approve" >/dev/null 2>&1; rc=$?
+check "data path with a quote: printed approve command works" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
 
 # --- Source unreachable, no cache: one-line notice, exit 0 ---
 H2="$TMP_DIR/h2"; mkdir -p "$H2"
