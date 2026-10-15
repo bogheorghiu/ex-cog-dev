@@ -26,3 +26,11 @@ Claude Code asks for these when you enable the plugin:
 One limit: `ask` remembers your approvals in the plugin's data folder. A container
 that starts empty every time, such as a fresh cloud session, has no record of past
 approvals, so each such session loads whatever the repo holds at that moment.
+
+## What it runs and fetches
+
+At each session start the hook runs `git` to clone the rules repository you configured
+(or update its saved copy) into the plugin's data folder, then prints the rule files
+into the session's context. It sends nothing anywhere else and runs nothing from the
+fetched repository: the rule files are read as text, never executed. The approve
+command it offers runs `git reset` in that same saved copy, and only when you approve.

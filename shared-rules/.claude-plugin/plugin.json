@@ -5,6 +5,7 @@
     "name": "bogheorghiu"
   },
   "version": "0.2.0",
+  "license": "MIT",
   "userConfig": {
     "rules_repo": {
       "type": "string",
