@@ -75,7 +75,7 @@ def validate(design):
     if not NAME_RE.match(target):
         errors.append("target must be a bare skill name (kebab-case, no plugin prefix)")
     arm_targets = design.get("arm_targets") or {}
-    if not isinstance(arm_targets, dict) or not all(NAME_RE.match(str(v)) for v in arm_targets.values()):
+    if not isinstance(arm_targets, dict) or not all(isinstance(v, str) and NAME_RE.match(v) for v in arm_targets.values()):
         errors.append("arm_targets, if given, maps arm label -> bare skill name (for a rename A/B)")
         arm_targets = {}
     names = {target, *map(str, arm_targets.values())} - {""}
@@ -97,12 +97,16 @@ def validate(design):
     name_tokens = sorted({t for n in names for t in n.split("-") if len(t) > 3})
     for i, c in enumerate(cases):
         where = f"cases[{i}]"
+        if not isinstance(c, dict):
+            errors.append(f"{where}: must be an object")
+            continue
         cid = c.get("id", "")
-        if not ID_RE.match(str(cid)):
+        if not (isinstance(cid, str) and ID_RE.match(cid)):
             errors.append(f"{where}: id must match {ID_RE.pattern}")
         elif cid in seen:
             errors.append(f"{where}: duplicate id {cid}")
-        seen.add(cid)
+        else:
+            seen.add(cid)
         cls = c.get("class")
         if cls not in CLASSES:
             errors.append(f"{where}: class must be one of {CLASSES}")
@@ -123,7 +127,7 @@ def validate(design):
         if cls == "trap" and expect == target:
             errors.append(f"{where}: a trap expects a sibling or \"none\", never the target")
         siblings = c.get("siblings", [])
-        if not isinstance(siblings, list) or not all(NAME_RE.match(s or "") for s in siblings):
+        if not isinstance(siblings, list) or not all(isinstance(s, str) and NAME_RE.match(s) for s in siblings):
             errors.append(f"{where}: siblings must be a list of bare skill names")
         elif names & set(siblings) or len(set(siblings)) != len(siblings):
             errors.append(f"{where}: siblings must be distinct and must not include the target")
@@ -145,7 +149,7 @@ def validate(design):
             warnings.append(f"{where}: non-ASCII prompt - fine in YAML, but a tracked .json "
                             "design must be ASCII-only (CLAUDE.md); keep the design file untracked or escape-free")
 
-    classes = {c.get("class") for c in cases}
+    classes = {c.get("class") for c in cases if isinstance(c, dict) and c.get("class") in CLASSES}
     if "oblique" not in classes:
         warnings.append("no oblique cases: the run cannot discriminate (discipline #3 - ceiling "
                         "first, discriminate second)")
@@ -235,8 +239,9 @@ def emit(design, design_hash, out_dir, root=None, arm=None):
     design["plugins"] is relative to it; case.yaml wants paths relative to the case dir."""
     out = Path(out_dir).resolve()
     if out.exists() and any(out.iterdir()):
-        raise SystemExit(f"error: {out} is not empty - stale case dirs from another design would "
-                         "run too and nothing would flag them; emit into a fresh directory")
+        print(f"error: {out} is not empty - stale case dirs from another design would "
+              "run too and nothing would flag them; emit into a fresh directory", file=sys.stderr)
+        raise SystemExit(2)
     root = Path(root).resolve() if root else out.parent
     for case in design["cases"]:
         d = out / case["id"]
@@ -343,16 +348,19 @@ def paired_diff_ci(a, b, ids, rng, draws=BOOTSTRAP_DRAWS):
     return (_percentile(stats, 0.025), _percentile(stats, 0.975))
 
 
-def sign_flip_p(deltas, rng, max_exact=14, draws=20000):
+SIGN_FLIP_MAX_EXACT = 14
+
+
+def sign_flip_p(deltas, rng, draws=20000):
     """Two-sided p for 'mean per-case delta is zero', by flipping the sign of each case's
-    delta (the method adewale/skill-eval-harness uses). Exact up to max_exact non-zero
+    delta (the method adewale/skill-eval-harness uses). Exact up to SIGN_FLIP_MAX_EXACT non-zero
     cases, Monte Carlo above. Unlike the bootstrap it stays valid at a handful of cases -
     and it shows plainly when a design CANNOT reach significance: 3 cases floor at p=.25."""
     ds = [d for d in deltas if d != 0]
     if not ds:
         return 1.0
     obs = abs(sum(ds)) - 1e-12
-    if len(ds) <= max_exact:
+    if len(ds) <= SIGN_FLIP_MAX_EXACT:
         hits = total = 0
         for mask in range(1 << len(ds)):
             s = sum(-d if (mask >> i) & 1 else d for i, d in enumerate(ds))
@@ -526,7 +534,8 @@ def render(report, design):
             out.append(f"  {c['id']:<12} {c['class']:<8} expect {c['expect']:<24} target fired "
                        f"{pc['k']}/{pc['n']} [{lo:.2f}, {hi:.2f}]   ({outcomes})")
     out.append("\n== metrics (pooled over runs; [interval] resamples cases - percentile bootstrap, "
-               "too narrow below ~10 cases per class; p is the exact sign-flip test on per-case deltas)")
+               "too narrow below ~10 cases per class; p is the sign-flip test on per-case deltas, "
+               f"exact up to {SIGN_FLIP_MAX_EXACT} non-zero deltas and sampled above)")
     for k in sorted(report["metrics"]):
         if k.endswith((".ci_lo", ".ci_hi", ".p")):
             continue
@@ -635,7 +644,14 @@ def main(argv=None):
               f"{delta:.3f} (alpha .05 two-sided, power .80)")
         return 0
 
-    design, digest = load_design(args.design)
+    try:
+        design, digest = load_design(args.design)
+    except (OSError, ValueError) as exc:  # json's decode error is a ValueError
+        print(f"error: cannot read the design: {exc}", file=sys.stderr)
+        return 2
+    if not isinstance(design, dict):
+        print("error: the design must be a JSON object", file=sys.stderr)
+        return 2
     errors, warnings = validate(design)
     for w in warnings:
         print(f"warning: {w}", file=sys.stderr)

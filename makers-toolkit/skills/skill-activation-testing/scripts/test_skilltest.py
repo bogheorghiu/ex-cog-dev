@@ -117,6 +117,42 @@ d = copy.deepcopy(DESIGN); d["ship_rule"] = [["NEW.recall.oblique", "=>", 0.6]]
 check("a malformed ship rule is rejected", any("ship_rule" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["target"] = None
 check("a non-string target is a reported error, not a crash", any("target" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [5]
+try:
+    sib_errs = errs(d)
+except TypeError:
+    sib_errs = None
+check("a non-string sibling is a reported error, not a crash",
+      sib_errs is not None and any("siblings" in e for e in sib_errs))
+d = copy.deepcopy(DESIGN); d["arm_targets"] = {"OLD": T, "NEW": 5}
+check("a non-string arm target is a reported error", any("arm_targets" in e for e in errs(d)))
+d = copy.deepcopy(DESIGN); d["cases"].append("oops")
+try:
+    case_errs = errs(d)
+except AttributeError:
+    case_errs = None
+check("a non-object case is a reported error, not a crash",
+      case_errs is not None and any("must be an object" in e for e in case_errs))
+with tempfile.TemporaryDirectory() as _t:
+    _bad = Path(_t) / "bad.json"
+    _bad.write_text("{not json", encoding="utf-8")
+    _arr = Path(_t) / "arr.json"
+    _arr.write_text("[]", encoding="utf-8")
+    check("an unreadable design exits 2, not with a traceback",
+          st.main(["validate", str(Path(_t) / "missing.json")]) == 2
+          and st.main(["validate", str(_bad)]) == 2 and st.main(["validate", str(_arr)]) == 2)
+d = copy.deepcopy(DESIGN); d["cases"][0]["class"] = ["clear"]; d["cases"][1]["id"] = ["C1"]
+try:
+    case_errs = errs(d)
+except TypeError:
+    case_errs = None
+check("a list-valued class or id is a reported error, not a crash",
+      case_errs is not None and any("class must be" in e for e in case_errs)
+      and any("id must match" in e for e in case_errs))
+for bad_id in (5, True, None):
+    d = copy.deepcopy(DESIGN); d["cases"][0]["id"] = bad_id
+    check(f"a non-string id ({bad_id!r}) is rejected, not passed on for emit to crash on",
+          any("id must match" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [T]
 check("a sibling list containing the target is rejected", any("distinct" in e for e in errs(d)))
 d = copy.deepcopy(DESIGN); d["cases"][0]["siblings"] = [SIB, SIB]
@@ -144,6 +180,13 @@ with tempfile.TemporaryDirectory() as tmp:
           and 'name: "expect-winner"' not in clear)
     check("emit refuses a non-empty directory (stale cases would run unflagged)",
           raises_exit(lambda: st.emit(DESIGN, "abc123", tmp)))
+    try:
+        st.emit(DESIGN, "abc123", tmp)
+        refusal = None
+    except SystemExit as exc:
+        refusal = exc.code
+    check("emit's non-empty-directory refusal exits 2 like any usage error, not 1 (NO-SHIP)",
+          refusal == 2)
     check("indicator graders carry a negligible weight so they barely move plugin eval's own score",
           clear.count(f"weight: {st.INDICATOR_WEIGHT}") == 3 and '"fired:*"' in clear)
     try:
