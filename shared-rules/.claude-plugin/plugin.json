@@ -4,5 +4,20 @@
   "author": {
     "name": "bogheorghiu"
   },
-  "version": "0.1.0"
+  "version": "0.2.0",
+  "userConfig": {
+    "rules_repo": {
+      "type": "string",
+      "title": "Rules repository",
+      "description": "Git URL of the rules repo to load. Rules are the .md files under its rules/ folder.",
+      "default": "https://github.com/bogheorghiu/claude-rules"
+    },
+    "update_mode": {
+      "type": "string",
+      "title": "Rule updates",
+      "description": "ask: new or changed rules wait until you approve them in a session. auto: they load as soon as they are published.",
+      "options": ["ask", "auto"],
+      "default": "ask"
+    }
+  }
 }

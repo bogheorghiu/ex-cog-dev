@@ -30,9 +30,13 @@ printf -- '---\npaths:\n  - "src/**"\n---\n# Scoped rule\nSCOPED_BODY\n' > "$SRC
 printf 'README_BODY\n' > "$SRC/README.md"
 git -C "$SRC" init -q && git -C "$SRC" add -A && git -C "$SRC" commit -qm init
 
-run_hook() { # args: HOME dir, repo url
+# Args: HOME dir, repo url, update mode. Mode defaults to auto here, so the fetch and
+# cache tests below see each upstream change at once; the ask-mode section passes
+# its own value, including none, to exercise the hook's real default.
+run_hook() {
     env -i HOME="$1" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
-        CLAUDE_PLUGIN_DATA="$1/data" SHARED_RULES_REPO="$2" bash "$HOOK" </dev/null
+        CLAUDE_PLUGIN_DATA="$1/data" CLAUDE_PLUGIN_OPTION_RULES_REPO="$2" \
+        CLAUDE_PLUGIN_OPTION_UPDATE_MODE="${3-auto}" bash "$HOOK" </dev/null
 }
 
 echo "Testing load-rules.sh"
@@ -105,6 +109,41 @@ out=$(run_hook "$H5" "file://$SRC3"); rc=$?
 check "fetched repo without rules exits 0" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
 check "fetched repo without rules says it was fetched" "$(has "$out" 'was fetched but has no .md files')"
 check "fetched repo without rules does not blame the fetch" "$([ "$(has "$out" 'could not fetch')" = 0 ] && echo 1 || echo 0)"
+
+# --- Ask mode (the default): changes wait for approval of the exact version shown ---
+SRC4="$TMP_DIR/src4"; mkdir -p "$SRC4/rules"
+printf '# Base\nBASE_BODY\n' > "$SRC4/rules/base.md"
+git -C "$SRC4" init -q && git -C "$SRC4" add -A && git -C "$SRC4" commit -qm init
+H6="$TMP_DIR/h6"; mkdir -p "$H6"
+out=$(run_hook "$H6" "file://$SRC4" "")
+check "ask (unset mode): first clone loads its rules" "$(has "$out" BASE_BODY)"
+printf '# Added\nADDED_BODY\n' > "$SRC4/rules/added.md"
+git -C "$SRC4" add -A && git -C "$SRC4" commit -qm added
+want=$(git -C "$SRC4" rev-parse HEAD)
+out=$(run_hook "$H6" "file://$SRC4" "")
+check "ask: new upstream rule not loaded before approval" "$([ "$(has "$out" ADDED_BODY)" = 0 ] && echo 1 || echo 0)"
+check "ask: approved rules still load" "$(has "$out" BASE_BODY)"
+check "ask: notice names the pending version" "$(has "$out" "newer version $want")"
+check "ask: notice lists the changed rule file" "$(has "$out" 'rules/added.md')"
+approve=$(printf '%s\n' "$out" | grep -E '^ +CLAUDE_PLUGIN_DATA=.* approve ' | sed 's/^ *//')
+check "ask: notice carries an approve command for that version" "$(has "$approve" "approve $want")"
+env -i HOME="$H6" PATH="$PATH" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
+    bash -c "$approve" >/dev/null 2>&1; rc=$?
+check "ask: the printed approve command succeeds as printed" "$([ $rc -eq 0 ] && echo 1 || echo 0)"
+out=$(run_hook "$H6" "file://$SRC4" "")
+check "ask: after approval the new rule loads" "$(has "$out" ADDED_BODY)"
+check "ask: after approval no pending notice" "$([ "$(has "$out" 'awaiting the user')" = 0 ] && echo 1 || echo 0)"
+printf 'docs only\n' > "$SRC4/README.md"
+git -C "$SRC4" add -A && git -C "$SRC4" commit -qm readme
+out=$(run_hook "$H6" "file://$SRC4" "")
+check "ask: a change outside rules/ asks nothing" "$([ "$(has "$out" 'awaiting the user')" = 0 ] && echo 1 || echo 0)"
+check "ask: a change outside rules/ advances the cache" "$([ "$(git -C "$H6/data/claude-rules" rev-parse HEAD)" = "$(git -C "$SRC4" rev-parse HEAD)" ] && echo 1 || echo 0)"
+env -i HOME="$H6" PATH="$PATH" CLAUDE_PLUGIN_DATA="$H6/data" bash "$HOOK" approve 0000000000000000000000000000000000000000 >/dev/null 2>&1; rc=$?
+check "ask: approving an unknown version fails" "$([ $rc -ne 0 ] && echo 1 || echo 0)"
+printf '# Later\nLATER_BODY\n' > "$SRC4/rules/later.md"
+git -C "$SRC4" add -A && git -C "$SRC4" commit -qm later
+out=$(run_hook "$H6" "file://$SRC4" "sometimes")
+check "unrecognised mode behaves as ask" "$([ "$(has "$out" LATER_BODY)" = 0 ] && [ "$(has "$out" 'awaiting the user')" = 1 ] && echo 1 || echo 0)"
 
 # --- Source unreachable, no cache: one-line notice, exit 0 ---
 H2="$TMP_DIR/h2"; mkdir -p "$H2"

@@ -4,8 +4,25 @@
 #
 # Must never block or fail the session: every failure falls through to exit 0.
 
-REPO_URL="${SHARED_RULES_REPO:-https://github.com/bogheorghiu/claude-rules}"
+# Settings come from the plugin's userConfig (plugin.json), which Claude Code exports
+# to hooks as CLAUDE_PLUGIN_OPTION_<KEY>.
+REPO_URL="${CLAUDE_PLUGIN_OPTION_RULES_REPO:-https://github.com/bogheorghiu/claude-rules}"
+# Anything but "auto" means ask: an unrecognised value must fail toward consent.
+MODE=ask; [ "${CLAUDE_PLUGIN_OPTION_UPDATE_MODE:-}" = auto ] && MODE=auto
 CACHE="${CLAUDE_PLUGIN_DATA:-$HOME/.cache/shared-rules}/claude-rules"
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
+# `load-rules.sh approve <sha>`: the user said yes to a pending update. Takes the sha
+# the notice showed, not "latest", so a push landing after the notice can't ride
+# along on an approval given for something else.
+if [ "${1:-}" = approve ]; then
+    if [ -n "${2:-}" ] && git -C "$CACHE" reset -q --hard "$2" 2>/dev/null; then
+        echo "[shared-rules] Approved $2; these rules load from the next session on."
+        exit 0
+    fi
+    echo "[shared-rules] Could not approve '${2:-}': not a version fetched into $CACHE." >&2
+    exit 1
+fi
 
 # The local install already makes Claude Code load these rules natively;
 # printing them again would put every rule in context twice. (-e, not -d: a
@@ -27,14 +44,24 @@ if [ -d "$CACHE/.git" ] && [ "$(git -C "$CACHE" remote get-url origin 2>/dev/nul
 fi
 
 stale=""
+pending=""
 if [ -d "$CACHE/.git" ]; then
     # fetch + reset rather than pull: a force-pushed upstream would make
     # `pull --ff-only` fail on every session and freeze the cache for good.
-    if ! { git_net -C "$CACHE" fetch --depth 1 -q origin HEAD && \
-           git -C "$CACHE" reset -q --hard FETCH_HEAD >/dev/null 2>&1; }; then
+    # The cache's checkout is the approved version; in ask mode a newer fetch waits.
+    if ! git_net -C "$CACHE" fetch --depth 1 -q origin HEAD; then
         stale=1
+    elif [ "$(git -C "$CACHE" rev-parse FETCH_HEAD)" != "$(git -C "$CACHE" rev-parse HEAD)" ]; then
+        # Nothing to ask about when no rule changed (a README edit, say).
+        if [ "$MODE" = auto ] || [ -z "$(git -C "$CACHE" diff --name-only HEAD FETCH_HEAD -- rules/)" ]; then
+            git -C "$CACHE" reset -q --hard FETCH_HEAD >/dev/null 2>&1 || stale=1
+        else
+            pending=$(git -C "$CACHE" rev-parse FETCH_HEAD)
+        fi
     fi
 else
+    # A first clone is loaded in either mode: installing the plugin is consent to
+    # the rules it points at today; ask mode governs what changes after that.
     # Clone beside the cache and move it in only when complete, so a clone killed
     # mid-way can never leave a half-made .git that every later session trips on.
     mkdir -p "$(dirname "$CACHE")" 2>/dev/null
@@ -68,6 +95,17 @@ frontmatter() {
 scoped=()
 echo "<shared-rules source=\"$REPO_URL\">"
 [ -n "$stale" ] && echo "Could not refresh from the source this session; these are the last cached copies and may be out of date."
+if [ -n "$pending" ]; then
+    echo
+    echo "=== rule updates awaiting the user's approval ==="
+    echo "Update mode is 'ask'. The rules below are the approved version $(git -C "$CACHE" rev-parse --short HEAD)."
+    echo "The source has a newer version $pending changing:"
+    git -C "$CACHE" diff --name-status HEAD "$pending" -- rules/ | sed 's/^/    /'
+    echo "Tell the user about this pending update before other work. To show them the changes:"
+    echo "    git -C '$CACHE' diff HEAD $pending -- rules/"
+    echo "Only if the user explicitly approves, run:"
+    echo "    CLAUDE_PLUGIN_DATA='${CLAUDE_PLUGIN_DATA:-}' bash '$SELF' approve $pending"
+fi
 for f in "${files[@]}"; do
     if frontmatter "$f" | grep -q '^paths:'; then
         scoped+=("$f")
