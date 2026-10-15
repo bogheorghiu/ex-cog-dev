@@ -17,7 +17,6 @@
       "type": "string",
       "title": "Rule updates",
       "description": "ask: new or changed rules wait until you approve them in a session. auto: they load as soon as they are published.",
-      "options": ["ask", "auto"],
       "default": "ask"
     }
   }
