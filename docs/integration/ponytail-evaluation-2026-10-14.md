@@ -16,6 +16,12 @@ doesn't settle it), Inference (reasoned, not measured).
 risk at this commit is low. In prose and skill repositories it adds little. In a small
 code-repository A/B it saved neither diff size nor cost (§4).
 
+**Updated 2026-10-15:** on harder code tasks, a second pre-registered round reversed the code
+result for the *ruleset*. The ruleset, delivered as plain text with no hooks, matched the
+plugin and roughly halved production code against nothing, at no extra cost. Plain text also
+reaches subagents, as the hook does. So for code repositories the better answer is the
+ruleset as text, and the plugin stays off. Details: `ponytail-ab-findings-2026-10-15.md`.
+
 ## 1. What runs
 
 Three hooks, plus six on-demand skills. GROUNDED, from the code at `2961b52`:
