@@ -47,6 +47,23 @@ under whichever name it uses.
 Re-running it updates the hooks and workflow in place and never touches an
 existing denylist.
 
+**Repos that installed a version before security-toolkit 0.7.0 should re-run it.**
+That version moves the CI secret into an environment, pins gitleaks against
+in-repo loosening, and makes the path scan whole-word. The re-run overwrites
+`.github/workflows/pii-denylist-guard.yml` wholesale, including local edits. A repo
+that hand-added `--ignore-gitleaks-allow` (bogheorghiu/semi-autonomous did) gets
+that flag back from the shipped file, plus the rest. After the re-run:
+
+1. Do the environment setup in step 3 below, then **delete the repository-level
+   `PII_DENYLIST`**. Until you do, branch runs warn that the secret is readable
+   from a branch.
+2. Expect the `secrets` job to go red if history holds a real secret that an
+   inline `gitleaks:allow` or a `.gitleaks.toml` allowlist used to hide. That is
+   the fix working. Rotate the secret if it is real. If it is a false positive,
+   add its fingerprint to `.gitleaksignore`.
+3. Expect the path scan to stop flagging filenames that only contain a term
+   inside a longer word.
+
 **It can refuse, and a refusal is information rather than a fault.** In every
 case below it writes nothing at all and exits non-zero. There are three:
 
@@ -109,12 +126,28 @@ someone else's by content, not by filename.
    real list would go unread while the gate reported itself active on the new,
    nearly-empty file.
 2. **Commit the gate files before adding a remote.**
-3. **Once a GitHub remote exists**, the operator runs
-   `.githooks/overwrite-ci-denylist` themselves to set the `PII_DENYLIST` Actions
-   secret. It needs an authenticated `gh` and a typed `Yes`. Pushing only *warns*
-   when the local file has drifted from the secret — it never writes it, because
-   an Actions secret is write-only and an overwrite destroys a value nobody can
-   read back.
+3. **Once a GitHub remote exists**, the operator puts the denylist into an
+   **environment** secret, never a repository one (why, and what it costs:
+   [The CI secret lives in an environment](#the-ci-secret-lives-in-an-environment)).
+   They do the setup themselves, since it needs repo admin rights:
+   1. Settings → Environments → **New environment**, named exactly `pii-denylist`.
+      It may already exist: the first default-branch run of the workflow creates it
+      automatically, with **no** branch rule (GitHub docs). An environment that
+      exists is not one that is protected, so do step 2 either way.
+   2. **Deployment branches and tags** → *Selected branches and tags* → add **one**
+      rule: type *branch*, name = the repo's default branch (usually `main`). No
+      other rules, no tags.
+   3. Run `.githooks/overwrite-ci-denylist`. It checks the environment first and
+      refuses unless step 2 is exactly in place. Then it writes the secret there.
+      It needs an authenticated `gh` and a typed `Yes`.
+   4. If a **repository-level** `PII_DENYLIST` exists from an older install, delete
+      it: `gh secret delete PII_DENYLIST --app actions`. The tool tells you when one
+      is still there. An **organization-level** secret of that name also reaches
+      every branch, and the tool cannot see it, so check the org settings too.
+
+   Pushing only *warns* when the local file has drifted from the secret. It never
+   writes it, because an Actions secret is write-only and an overwrite destroys a
+   value nobody can read back.
 
 ## Prove it can fail — this step is not optional
 
@@ -165,8 +198,68 @@ not installed the way you think — check that `git config core.hooksPath` retur
 `.githooks`.
 
 The same applies to CI: the workflow's first *armed* run (secret set, terms
-present) is its first real test. Read that run's log rather than inferring from a
-green check.
+present) is its first real test. That run is on the **default branch**, because
+branch runs cannot read the secret. Read that run's log rather than inferring from
+a green check.
+
+## The CI secret lives in an environment
+
+**Why.** GitHub runs a branch's *own* copy of the workflow, and a repository-level
+secret reaches every run in the repo. So anyone who can push a branch, including an
+agent that is careless or prompt-injected, can push an edited workflow that prints
+the secret into a run log, base64-encoded so the masking misses it. That secret is
+the list of names the gate protects. CODEOWNERS and branch protection gate
+*merging*, not *running*. An environment whose deployment branches are the default
+branch only is applied by GitHub, outside the workflow file. Per GitHub's docs, a
+job "must follow any protection rules for the environment before running or
+accessing the environment's secrets" (read 2026-11-03).
+
+**How the workflow uses it.** The `denylist` and `history` jobs name the
+`pii-denylist` environment only when the run is on the default branch. On any other
+branch they run without it, the secret reads as empty, and they log *"Branch run:
+... NOT checked ... by design"*. `secrets` (gitleaks) and `parity` run on every
+branch as before. If a branch run *can* read the secret, the jobs warn that a
+repository- or organization-level copy exists. That warning means the exposure is
+still open.
+
+**The trade-off.** No remote PII scan runs before a merge. Until then the local
+hooks are the only name scan: pre-commit on the staged diff, and pre-push on
+everything a push carries. After the merge, the default-branch run scans the tree
+and walks `--all` history. That includes every other branch the runner fetched, so a
+name pushed to an unmerged branch is still found, at the next default-branch run.
+That is detection after the fact. A pushed name is already exposed, which is why the
+hooks matter more under this design, not less.
+
+**Plans.** Environment secrets in a **private** repo need GitHub Pro, Team or
+Enterprise. On Free, GitHub offers environments for public repos only, and GitHub
+ignores the protection rules and environment secrets of a repo converted from
+public to private. On a private Free repo, leave the secret unset: the jobs say
+"NOT checked", and the hooks carry the whole load. Do not fall back to a
+repository-level secret. (GitHub docs, *Managing environments for deployment*, read
+2026-11-03.)
+
+**Prove the branch rule holds: the operator runs this once, on a throwaway
+branch.** The design rests on GitHub refusing the environment's secrets to any other
+branch, *including a workflow edited to ask for them*. The documentation says so in
+general terms. It does not say whether the refusal shows as a failed or a waiting
+job. Nor does it say whether an edit adding `deployment: false` (an option to skip
+the deployment record) is held to the same branch rule. So test it directly:
+
+```
+git switch -c probe-env-policy
+# Edit .github/workflows/pii-denylist-guard.yml: in the `denylist` job, replace the
+# environment block's `name:` expression with the plain string pii-denylist (keep
+# `deployment: false`), and put this step FIRST in its steps:
+#   - env: { P: "${{ secrets.PII_DENYLIST }}" }
+#     run: if [ -n "$P" ]; then echo "SECRET VISIBLE ON A BRANCH"; exit 1; fi; echo "secret not visible"
+git commit -am "probe: env policy" && git push -u origin probe-env-policy
+```
+
+**Pass:** GitHub refuses or holds the `denylist` job before it runs, or the step
+prints `secret not visible`. **Fail:** `SECRET VISIBLE ON A BRANCH`. Stop and fix the
+environment's branch rule, because it is protecting nothing. The probe prints only
+whether the secret is empty, never the secret itself. Afterwards delete the branch,
+locally and on the remote.
 
 ## Retrofitting a repo that already has a remote
 
@@ -239,7 +332,15 @@ find a personal name and will return clean while one sits in your history. Two
 scans, two different questions; neither substitutes for the other.
 
 The two venues do not use the same ruleset. CI runs gitleaks with its built-in
-rules. pre-commit passes `--config "$HOME/.config/gitleaks/config.toml"` when
+rules, pinned so that the scanned repo cannot loosen them. `--config` points at a
+file the job writes outside the checkout (`[extend] useDefault = true`), so a
+repo-root `.gitleaks.toml` is ignored. `--ignore-gitleaks-allow` makes an inline
+`gitleaks:allow` comment, in any file, hide nothing. `.gitleaksignore` is still
+honoured. Each entry suppresses one finding by fingerprint, and in a full-history
+scan it is the only fix for a false positive already committed, so give that file
+a code owner. Measured with gitleaks v8.30.1 on 2026-11-03: a repo-root allowlist
+and two inline comments hid all 3 planted tokens; with these flags all 3 were
+found. pre-commit passes `--config "$HOME/.config/gitleaks/config.toml"` when
 that file exists, and falls back to the built-ins when it does not — so if you
 keep a personal gitleaks config, your commit-time scan is the one it governs, and
 a supplied config replaces the defaults unless it sets `[extend] useDefault`.
@@ -268,30 +369,33 @@ the denylist layers are unaffected either way.
 that errored rather than not-matched — each blocks instead of passing. "Could not
 check" must never read the same as "checked, clean."
 
-Matching is case-insensitive, fixed-string, and **whole-word everywhere it reads
-content** — staged diffs, pushed history, and both CI content scans. No
-wildcards, so list diacritic and ASCII spellings as separate terms. A matched
-term is never echoed by any layer — not in hook output, not in CI logs.
+Matching is case-insensitive, fixed-string, and **whole-word everywhere** —
+staged diffs, pushed history, both CI content scans, and CI's scan of tracked
+file *paths*. No wildcards, so list diacritic and ASCII spellings as separate
+terms. A matched term is never echoed by any layer — not in hook output, not in
+CI logs.
 
-**One deliberate exception: CI's scan of tracked file *paths* is a substring
-match.** A filename concatenates where prose does not — `assets/<name>scan.png`
-offers no word boundary — so whole-word matching there would miss exactly the
-case that scan exists to catch. The consequence to know before it bites: with the
-term `Ana`, a tracked file named `banana.png` fails CI. That job logs counts
-only, never the offending path (a path can itself contain the term), so the
-failure arrives without a filename. To find it, run the same substring match
-locally:
+**The path scan used to be a substring match, and is now whole-word.** The
+substring match was kept so that a term glued into a filename was still caught.
+The cost was false positives: with the term `Ana`, `banana.png` and `analysis/`
+failed CI, and a check that fails on unrelated paths teaches people to ignore it.
+Now a path matches when the term stands between `/`, `-`, `.`, a space, or either
+end: `assets/<name>-scan.png`, `<Name> Smith.pdf`, `photos/<name>/`. **The blind
+spot this leaves, in every layer:** a term glued to a letter, a digit or `_`, as
+in `<name>scan.png` or `<name>_scan.png`. Measured on GNU grep 3.11, 2026-11-03.
+If your names tend to appear in filenames like that, check the file list by eye
+before you push. The CI job logs counts only, never the offending path (a path
+can itself contain the term), so a failure arrives without a filename. To find
+it, run the same match locally:
 
 ```
 DL=$([ -f pii-denylist.local ] && echo pii-denylist.local || echo pii-denylist.txt)
-git ls-files | grep -i -F -f <(norm < "$DL")   # norm() as defined above
+git ls-files | grep -i -F -w -f <(norm < "$DL")   # norm() as defined above
 ```
 
-Same `norm()` as above, and for an overlapping reason. Two extra ways the raw
-file misfires here, both verified on GNU grep 3.11: a **blank** line becomes an
-empty pattern that matches every line, and a **comment** line becomes a literal
-pattern — a bare `#` then matches any path containing one. This scan has no `-w`,
-so neither is filtered out and you get most of your file list back.
+Same `norm()` as above, and for an overlapping reason. A **blank** line in the
+raw file becomes an empty pattern, and that still matches some paths even with
+`-w` (verified on GNU grep 3.11). A **comment** line becomes a literal pattern.
 
 A note on `-w`, since this document leans on it as the content scans' safety
 property: it tests the characters **around** a match, not the characters in the

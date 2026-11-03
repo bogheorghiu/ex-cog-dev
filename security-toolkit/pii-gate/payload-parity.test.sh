@@ -131,8 +131,18 @@ fi
 # that originally caused this has since been removed for other reasons — the parity comment is
 # what keeps the hazard live, so cite that rather than a line a reader will not find.) Same
 # comment-vs-code trap this file diagnoses for the seed path below.
-grep -qE '^[[:space:]]*run:[[:space:]]*\./gitleaks[[:space:]]' "$PAY_WF"
+# The invocation may sit on the `run:` line or inside a `run: |` block, so both are accepted, but a
+# comment line (`# ... ./gitleaks`) is not.
+GL_LINE="$(grep -E '^[[:space:]]*(run:[[:space:]]*)?\./gitleaks[[:space:]]+git[[:space:]]' "$PAY_WF")"
+[ -n "$GL_LINE" ]
 chk "shipped workflow still EXECUTES gitleaks (secret scanning is not implied by the denylist job)" $?
+# Checked on the invocation line itself, so a flag that survives only in a comment does not count.
+# Without the first flag, an inline `gitleaks:allow` comment in any file hides a finding. Without
+# the second, a repo-root .gitleaks.toml can allowlist paths or replace the rules.
+printf '%s\n' "$GL_LINE" | grep -q -- '--ignore-gitleaks-allow'
+chk "gitleaks runs with --ignore-gitleaks-allow (inline allow comments cannot hide a finding)" $?
+printf '%s\n' "$GL_LINE" | grep -q -- '--config "${RUNNER_TEMP}/'
+chk "gitleaks runs with a config from outside the checkout (a repo-root .gitleaks.toml cannot loosen it)" $?
 grep -q 'sha256sum -c' "$PAY_WF"
 chk "shipped workflow still verifies the gitleaks download against a pinned hash" $?
 
