@@ -85,9 +85,13 @@ jobs:
     # branch from creating a deployment record, while the job still reads the environment's secrets
     # (GitHub docs, jobs.<job_id>.environment, read 2026-11-03).
     environment:
-      name: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'pii-denylist' || '' }}
+      name: pii-denylist
       deployment: false
     steps:
+      - name: PROBE env-named-on-branch
+        env:
+          P: ${{ secrets.PII_DENYLIST }}
+        run: if [ -n "$P" ]; then echo "SECRET VISIBLE"; exit 1; fi; echo "secret not visible"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Scan tracked tree against PII denylist
         env:
@@ -291,6 +295,10 @@ jobs:
       name: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'pii-denylist' || '' }}
       deployment: false
     steps:
+      - name: PROBE no-env-repo-secret-gone
+        env:
+          P: ${{ secrets.PII_DENYLIST }}
+        run: if [ -n "$P" ]; then echo "SECRET VISIBLE"; exit 1; fi; echo "secret not visible"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # every commit, not just the tip — the entire point of this job
