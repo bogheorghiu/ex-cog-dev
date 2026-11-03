@@ -8,9 +8,26 @@ name: PII denylist guard
 # `git config core.hooksPath .githooks` per clone, and a clone that skipped that step has no
 # local coverage at all while still being able to push.
 #
-# The denylist is NOT stored in the repo (that would BE the leak). It lives in the repo secret
-# PII_DENYLIST — newline-separated terms. Set it in: Settings → Secrets and variables → Actions.
-# Until it is set, the gate logs a warning and passes (inactive), so it never blocks unrelated work.
+# The denylist is NOT stored in the repo (that would BE the leak). It lives in the secret
+# PII_DENYLIST, newline-separated terms, scoped to the GitHub Environment `pii-denylist`. That
+# environment's deployment branches are the default branch ONLY. Until the secret is set, the gate
+# logs a warning and passes (inactive), so it never blocks unrelated work.
+#
+# WHY AN ENVIRONMENT AND NOT A REPOSITORY SECRET. GitHub runs a branch's OWN copy of this file, and
+# hands a repository-level secret to every run in the repo. So anyone who can push a branch,
+# including an agent that is careless or prompt-injected, can push an edited copy that prints the
+# secret into a run log. Base64 defeats the masking. And the secret IS the list of names this gate
+# protects. CODEOWNERS and branch protection gate MERGING, not running. An environment's deployment
+# branch policy is applied by GitHub, outside this file. A job on another branch that names the
+# environment cannot reach its secrets, edited workflow or not (GitHub docs, read 2026-11-03).
+#
+# So the two scanning jobs name the environment only when the run is on the default branch. On
+# every other branch they run WITHOUT it, the secret reads as empty, and they fall through to the
+# "NOT checked" warning. THE COST, stated plainly: no remote PII scan runs before a merge. Until
+# then the local hooks are the only layer that sees a branch's content (pre-push scans everything
+# a push carries), and the default-branch run after the merge is the remote backstop.
+# Setup (environment, branch policy, secret, deleting any repo-level copy, the probe that proves
+# the policy holds): skills/pii-gate/SKILL.md in the security-toolkit plugin.
 #
 # SCOPE. The `denylist` job scans the TRACKED TREE at the single checked-out commit — it is not a
 # history scan, and on its own it cannot see a name that was committed and then removed on the same
@@ -34,8 +51,10 @@ name: PII denylist guard
 #   - unfiltered `push` PLUS `pull_request` fires this workflow TWICE for every push to a PR
 #     branch — same workflow, same commit, two identical checks in the rollup;
 #   - filtering `push` to main leaves a branch that is pushed with no PR open never tree-scanned.
-# Unfiltered `push` alone scans EVERY branch exactly once, which is the property that matters
-# here: a name is exposed the moment the commit reaches the remote, not when a PR is opened.
+# Unfiltered `push` alone runs on EVERY branch exactly once. With the secret in the environment,
+# a branch run cannot scan for names; it still runs `secrets` and `parity`, and it states openly
+# that the denylist was NOT checked rather than going quiet. (With a repository-level secret,
+# every branch is scanned, and that secret is exposed to every branch.)
 # Nothing is lost on pull requests — a check run attaches to the head COMMIT, so the push-triggered
 # result still appears in the PR's own rollup.
 # The one shape this does not cover is a PR from a FORK, whose head commits are pushed to the fork
@@ -59,24 +78,45 @@ permissions:
 jobs:
   denylist:
     runs-on: ubuntu-latest
+    # Names the environment only on a default-branch run; elsewhere the name is empty, meaning no
+    # environment, so a branch run starts normally and never sees the secret. Naming it
+    # unconditionally would have GitHub refuse this job on every branch push, and a permanently red
+    # check is worse than an honest warning. `deployment: false` keeps each push to the default
+    # branch from creating a deployment record, while the job still reads the environment's secrets
+    # (GitHub docs, jobs.<job_id>.environment, read 2026-11-03).
+    environment:
+      name: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'pii-denylist' || '' }}
+      deployment: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Scan tracked tree against PII denylist
         env:
           DENYLIST: ${{ secrets.PII_DENYLIST }}
+          ON_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
         run: |
           set -euo pipefail
+          if [ -z "${DENYLIST}" ] && [ "${ON_DEFAULT_BRANCH}" != "true" ]; then
+            # The designed outcome on a branch: the secret lives in an environment this run does not
+            # name, so it cannot be read here and nothing is scanned remotely before the merge.
+            echo "::warning::Branch run: the PII denylist was NOT checked and this tree was NOT scanned for personal names, by design. The PII_DENYLIST secret lives in the pii-denylist environment, which only default-branch runs can use, so that no branch, edited workflow or not, can print it. Before merge, the local hooks are the only name scan; the default-branch run after merge is the remote one."
+            exit 0
+          fi
+          if [ -n "${DENYLIST}" ] && [ "${ON_DEFAULT_BRANCH}" != "true" ]; then
+            # This run did not name the environment, yet it got the secret. So a repository- or
+            # organization-level PII_DENYLIST exists, and every branch can read it. That is the
+            # exposure the environment exists to close. A warning, not a failure, so that repos still
+            # migrating keep a working gate. The scan runs, since the secret is already exposed.
+            echo "::warning::PII_DENYLIST is readable from a branch run, so it is a repository- or organization-level secret. Any branch can push an edited workflow that prints it. Move it into the pii-denylist environment (deployment branches: the default branch only) and delete the repository-level copy; see the security-toolkit pii-gate skill."
+          fi
           if [ -z "${DENYLIST}" ]; then
             # Says "nothing was checked", not just "inactive": an "INACTIVE" line inside an otherwise
             # green check reads to a reviewer as "passed", so the wording has to carry the gap.
-            # Two ways to land here, and the message names both because they need opposite actions.
-            # Either the secret is genuinely unset, or the run was triggered by a bot whose runs
-            # read that bot's own secret store rather than Actions secrets — a Dependabot update
-            # branch pushed into this repo is the standing case, since `push:` here is unfiltered.
-            # (prose-review.yml carries an explicit skip arm for the same reason.) NOT a fork pull
+            # Only a default-branch run reaches this arm: branch runs, including a Dependabot update
+            # branch (whose runs read Dependabot's own secret store), leave through the branch arm
+            # above. So an empty secret here means it is not set in the environment. NOT a fork pull
             # request: the triggers here are push and workflow_dispatch only, so a fork PR never
             # creates a run in this repo at all. Earlier wordings claimed each of those in turn.
-            echo "::warning::PII_DENYLIST secret is unavailable — the denylist gate DID NOT RUN and this tree was NOT checked for personal names. A green check here means nothing was verified. If this is a bot-triggered run (e.g. a Dependabot branch), its runs cannot see Actions secrets and this is expected; otherwise set the secret in Settings → Secrets and variables → Actions."
+            echo "::warning::PII_DENYLIST secret is unavailable — the denylist gate DID NOT RUN and this tree was NOT checked for personal names. A green check here means nothing was verified. This is a default-branch run, so the secret should be readable: set PII_DENYLIST as a secret of the pii-denylist environment (Settings → Environments), whose deployment branches are this branch only."
             exit 0
           fi
           # Write terms to a temp file (never echoed), normalized EXACTLY as .githooks/pre-push's
@@ -157,8 +197,18 @@ jobs:
           # POSIX path may legally contain a newline; converting to newlines here would hand that
           # guarantee back, splitting such a path into two fragments that each match nothing. The
           # conversion happens at COUNTING time instead, where it is only arithmetic.
+          #
+          # -w here too, like the content scan and the hooks. This scan used to be a substring
+          # match, so that a term glued into a filename (`<name>scan.png`) was still caught. The
+          # price was false positives: a short term flagged every path containing it (`Ana` failed
+          # on `banana.js` and `analysis/`), and a check that fails on unrelated paths teaches people
+          # to ignore it. The hooks already match paths whole-word, inside the `+++ b/<path>` headers
+          # they scan, so now all layers agree on a path too. What -w still catches: the term between
+          # `/ - . space` or at either end (`assets/<name>-scan.png`, `<Name> Smith.pdf`). What NO
+          # layer catches: the term glued to a letter, digit or `_` (`<name>scan.png`,
+          # `<name>_scan.png`). Measured on GNU grep 3.11, 2026-11-03.
           git ls-files -z \
-            | { grep -z -i -F -f "${RUNNER_TEMP}/denylist.txt"; gs=$?; [ "${gs}" -le 1 ]; } \
+            | { grep -z -i -F -w -f "${RUNNER_TEMP}/denylist.txt"; gs=$?; [ "${gs}" -le 1 ]; } \
             > "${RUNNER_TEMP}/path-hits.txt" || pst=$?
           if [ "${pst}" -ne 0 ]; then
             echo "::error::The PII denylist path scan itself failed (exit ${pst}) — the tree was NOT verified. Failing closed."
@@ -190,7 +240,23 @@ jobs:
           echo "${SHA}  gitleaks.tgz" | sha256sum -c -
           tar -xzf gitleaks.tgz gitleaks
       - name: Scan full git history for secrets
-        run: ./gitleaks git --redact --no-banner .
+        # Two ways the scanned repo could otherwise loosen its own scan, both closed here:
+        #   --ignore-gitleaks-allow: by default gitleaks drops any finding whose line carries an
+        #     inline `gitleaks:allow` comment, and that comment can sit in ANY file, so one line in
+        #     an ordinary diff hides a real secret.
+        #   --config to a file written OUTSIDE the checkout: otherwise a repo-root .gitleaks.toml
+        #     (or a GITLEAKS_CONFIG env var) wins, and it can allowlist paths or replace the rules.
+        #     `useDefault = true` and nothing else gives gitleaks' built-in rules.
+        # .gitleaksignore is still read. Each entry suppresses one finding by fingerprint (commit,
+        # file, rule, line), and in a full-history scan it is the only fix for a false positive
+        # already committed. Gate that file with CODEOWNERS.
+        # Measured with v8.30.1 on a scratch repo, 2026-11-03: a repo-root allowlist plus two inline
+        # comments hid all 3 planted tokens (0 found). These flags found all 3, and a .gitleaksignore
+        # fingerprint still suppressed its one.
+        run: |
+          set -euo pipefail
+          printf '[extend]\nuseDefault = true\n' > "${RUNNER_TEMP}/gitleaks.toml"
+          ./gitleaks git --redact --no-banner --ignore-gitleaks-allow --config "${RUNNER_TEMP}/gitleaks.toml" .
 
   parity:
     # The one job here that scans the GATE rather than the repository. Which layers it compares is
@@ -216,7 +282,14 @@ jobs:
     # cloned — single-digit milliseconds on a small repo. On a large or long-lived history it costs
     # more; measure it on YOUR repo before assuming, and if it becomes the slow step, gate this job
     # on a branch filter rather than deleting it.
+    #
+    # Same environment rule as `denylist`, for the same reason. On the default branch this job walks
+    # `--all`, and checkout with fetch-depth 0 fetches every branch. So a name pushed to a branch
+    # that nobody has merged is still found, at the next default-branch run.
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'pii-denylist' || '' }}
+      deployment: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -224,10 +297,18 @@ jobs:
       - name: Scan every commit's diff against the PII denylist
         env:
           DENYLIST: ${{ secrets.PII_DENYLIST }}
+          ON_DEFAULT_BRANCH: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
         run: |
           set -euo pipefail
+          if [ -z "${DENYLIST}" ] && [ "${ON_DEFAULT_BRANCH}" != "true" ]; then
+            echo "::warning::Branch run: HISTORY WAS NOT SCANNED for personal names, by design. The PII_DENYLIST secret lives in the pii-denylist environment, which only default-branch runs can use. The next default-branch run scans every branch's history, this one included."
+            exit 0
+          fi
+          if [ -n "${DENYLIST}" ] && [ "${ON_DEFAULT_BRANCH}" != "true" ]; then
+            echo "::warning::PII_DENYLIST is readable from a branch run, so it is a repository- or organization-level secret. Any branch can push an edited workflow that prints it. Move it into the pii-denylist environment (deployment branches: the default branch only) and delete the repository-level copy; see the security-toolkit pii-gate skill."
+          fi
           if [ -z "${DENYLIST}" ]; then
-            echo "::warning::PII_DENYLIST secret is unavailable — HISTORY WAS NOT SCANNED for personal names. A green check here means nothing was verified. If this is a bot-triggered run (e.g. a Dependabot branch), its runs cannot see Actions secrets and this is expected; otherwise set the secret in Settings → Secrets and variables → Actions."
+            echo "::warning::PII_DENYLIST secret is unavailable — HISTORY WAS NOT SCANNED for personal names. A green check here means nothing was verified. This is a default-branch run, so the secret should be readable: set PII_DENYLIST as a secret of the pii-denylist environment (Settings → Environments), whose deployment branches are this branch only."
             exit 0
           fi
           # Normalized EXACTLY as norm() does in .githooks/pre-push, for the reason every layer is:

@@ -126,15 +126,34 @@ chk "no pre-commit scan reaches the denylist without -w" $?
 grep -q 'git grep -a -l -i -F -w -f' "$WF"
 chk "the CI content scan uses -w, like the hooks" $?
 
-# KNOWN, DELIBERATE EXCEPTION — recorded here rather than hidden by omission. The CI *path* scan
-# runs without -w, because a filename concatenates where prose does not: `assets/<name>scan.png`
-# offers no word boundary, so -w would miss exactly the case that scan exists to catch. The local
-# hooks see paths only incidentally, inside the `+++ b/<path>` headers of the diff text they scan
-# WITH -w — so the two layers genuinely disagree about that one input, and this is an open design
-# question, not a settled invariant. It is asserted so that changing it is a decision someone makes
-# on purpose and this comment gets read, rather than a flag quietly appearing in a diff.
-grep -q "git ls-files -z" "$WF" && ! grep -q 'grep -z -i -F -w -f' "$WF"
-chk "CI path scan is still the recorded -w exception (see comment; open question)" $?
+# The CI *path* scan used to be a recorded exception: a substring match, so that `<name>scan.png`
+# was caught. It now uses -w like everything else. Short terms were failing CI on unrelated paths,
+# and a check that fails on everything gets ignored. The hooks already see paths whole-word, in the
+# `+++ b/<path>` headers they scan. Stated as an absence, for the same reason as the hook checks
+# above: any path scan that reaches the denylist without -w is the failure.
+grep -q "git ls-files -z" "$WF" && grep -q 'grep -z -i -F -w -f' "$WF" && ! grep -q 'grep -z -i -F -f' "$WF"
+chk "the CI path scan uses -w, like the content scans and the hooks" $?
+
+echo ""
+echo "${YEL}--- Secret exposure: only default-branch runs may name the secret's environment ---${NC}"
+
+# The denylist secret is scoped to the `pii-denylist` environment so that a branch, which runs its
+# own copy of this workflow, cannot read it. A later edit could undo that in two ways:
+#  - a scanning job stops naming the environment. It then falls back to a repo-level secret that
+#    every branch can read, or, on the default branch, to no secret at all, and scans nothing;
+#  - a job names it UNCONDITIONALLY. Every branch push is then refused, and the check stays red.
+# The count is taken against the jobs that read the secret, so a third such job added later has to
+# follow the same rule.
+N_SECRET_JOBS="$(grep -c 'DENYLIST: \${{ secrets.PII_DENYLIST }}' "$WF")"
+N_COND_ENV="$(grep -cF "name: \${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && 'pii-denylist' || '' }}" "$WF")"
+[ "$N_SECRET_JOBS" -ge 2 ] && [ "$N_COND_ENV" -eq "$N_SECRET_JOBS" ]
+chk "every job reading PII_DENYLIST names pii-denylist only on default-branch runs ($N_COND_ENV of $N_SECRET_JOBS)" $?
+# Any non-comment `environment:`/`name:` line that mentions pii-denylist, other than the guarded
+# expression itself, is a naming of the environment. That covers trailing comments, quoting and the
+# `environment: { name: ... }` flow form, which an exact-line match would miss.
+! grep -E "^[[:space:]]*[^#[:space:]].*(environment|name):[^#]*pii-denylist|^[[:space:]]*(environment|name):[^#]*pii-denylist" "$WF" \
+  | grep -vF "default_branch) && 'pii-denylist' || '' }}" | grep -q .
+chk "no job names pii-denylist unconditionally (GitHub would refuse it on every branch push)" $?
 
 echo ""
 echo "${YEL}--- Coverage: something other than a hook must see history ---${NC}"

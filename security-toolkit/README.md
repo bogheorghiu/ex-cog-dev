@@ -40,6 +40,8 @@ Everything the gate does and how to run it lives in `skills/pii-gate/SKILL.md` a
 
 **Installing it is not arming it.** The skill's "Prove it can fail" section is the step that matters and the one most likely to be skipped; it explains why a green run means nothing until the gate has blocked once, and walks through making it block on purpose.
 
+**The CI denylist secret goes in a GitHub Environment, not in the repository's secrets.** A repository secret reaches every branch's run, and a branch runs its own copy of the workflow, so anyone who can push a branch could print the denylist. Since 0.7.0 the workflow reads `PII_DENYLIST` from the `pii-denylist` environment, and only on default-branch runs. The environment's deployment branches must be the default branch alone. Branch runs report the name scan as "NOT checked", by design: no remote name scan runs before a merge, and the local hooks are the only one. Setup, the plan requirement for private repos, and the probe that proves the branch rule holds are in the skill's section "The CI secret lives in an environment". **Repos installed with an earlier version should re-run `install.sh`**, then move the secret and delete the repository-level copy. That includes bogheorghiu/semi-autonomous, where the re-run also replaces its hand-added `--ignore-gitleaks-allow` with the shipped workflow, which carries that flag and more.
+
 ## `hooks.json` quoting convention
 
 The hook commands are written as `"\"${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh\""` — JSON-escaped outer double-quotes wrap the shell-level double-quoted path. The inner quotes are intentional: they protect against word-splitting when `$CLAUDE_PLUGIN_ROOT` resolves to a path containing spaces. Don't "simplify" them away.
